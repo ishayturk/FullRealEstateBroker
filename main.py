@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1230-G2
+# Project: מתווך בקליק | Version: 1231-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -62,8 +62,6 @@ if "step" not in st.session_state:
         "show_nav": False, "lesson_txt": "", "selected_topic": None, "current_sub": None
     })
 
-# --- ניהול שלבים ---
-
 if st.session_state.step == "login":
     u = st.text_input("שם מלא:")
     if st.button("כניסה") and u:
@@ -85,7 +83,6 @@ elif st.session_state.step == "study":
     if sel != "בחר נושא":
         st.session_state.selected_topic = sel
         subs = SYLLABUS[sel]
-        st.write(f"תתי-נושאים ב{sel}:")
         cols = st.columns(len(subs))
         for i, s in enumerate(subs):
             if cols[i].button(s):
@@ -107,7 +104,7 @@ elif st.session_state.step == "exam_prep":
     st.header("📝 הכנה למבחן")
     if not st.session_state.exam_qs:
         st.session_state.exam_qs = EXAMS_DATABASE["test_exam_1"]["questions"][:5]
-    if st.button("🚀 התחל מבחן (3 דק')"):
+    if st.button("🚀 התחל מבחן"):
         st.session_state.update({"current_exam_id": "test_exam_1", "step": "exam_run", "start_time": time.time()})
         st.rerun()
 
@@ -116,7 +113,6 @@ elif st.session_state.step == "exam_run":
     rem = max(0, 180 - int(elapsed))
     if rem <= 0: st.session_state.step = "time_up"; st.rerun()
     mins, secs = divmod(rem, 60)
-    # תיקון ה-SyntaxError בשורה הבאה:
     st.markdown(f'<div class="timer-box">⏳ {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
     if st.button("📱 לוח ניווט"): st.session_state.show_nav = not st.session_state.show_nav
@@ -141,4 +137,34 @@ elif st.session_state.step == "exam_run":
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        if idx > 0 and st.button("⬅️
+        if idx > 0 and st.button("⬅️ הקודם", key="prev_btn"): 
+            st.session_state.current_q_idx -= 1; st.rerun()
+    with c2:
+        if st.button("🏁 הגש", key="submit_btn"): 
+            st.session_state.step = "results"; st.rerun()
+    with c3:
+        if idx < 24 and st.button("הבא ➡️", key="next_btn"):
+            if idx == st.session_state.max_reached_idx: st.session_state.max_reached_idx += 1
+            if idx == len(st.session_state.exam_qs)-1:
+                st.session_state.exam_qs += EXAMS_DATABASE["test_exam_1"]["questions"][idx+1:idx+6]
+            st.session_state.current_q_idx += 1; st.rerun()
+
+elif st.session_state.step == "time_up":
+    st.error("⌛ נגמר הזמן!"); st.button("צפה בתוצאות", on_click=lambda: st.session_state.update({"step":"results"}))
+
+elif st.session_state.step == "results":
+    st.header("📊 תוצאות")
+    exam = EXAMS_DATABASE[st.session_state.current_exam_id]
+    corrects = 0
+    for i, q in enumerate(exam['questions']):
+        u_ans = st.session_state.exam_answers.get(i)
+        c_ans = q['options'][q['correct_idx']]
+        is_ok = (u_ans == c_ans)
+        if is_ok: corrects += 1
+        with st.expander(f"{'✅' if is_ok else '❌'} שאלה {i+1}"):
+            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'}")
+            st.write(f"**התשובה הנכונה:** {c_ans}")
+    st.subheader(f"ציון: {(corrects/25)*100:.0f}")
+    if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
+
+st.markdown(f'<div class="v-footer">Version: 1231-G2</div>', unsafe_allow_html=True)
