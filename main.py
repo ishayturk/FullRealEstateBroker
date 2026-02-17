@@ -69,7 +69,6 @@ def stream_ai_lesson(p):
         return full_text
     except: return "⚠️ תקלה בטעינה."
 
-# אתחול Session State
 if "step" not in st.session_state:
     st.session_state.update({
         "user": None, "step": "login", "q_count": 0, "quiz_active": False, 
@@ -163,29 +162,4 @@ elif st.session_state.step == "lesson_run":
                     with st.spinner("מעלה שאלה..."):
                         res = fetch_q_ai(topic)
                         if res:
-                            st.session_state.update({"q_data": res, "q_count": 1, "quiz_active": True, "show_ans": False, "correct_answers": 0})
-                            st.rerun()
-            
-            elif not st.session_state.show_ans:
-                if st.button("✅ בדיקת תשובה"):
-                    user_choice = st.session_state.get(f"q_{st.session_state.q_count}")
-                    if user_choice == st.session_state.q_data['correct']:
-                        st.session_state.correct_answers += 1
-                    st.session_state.show_ans = True
-                    st.rerun()
-            
-            else:
-                if st.session_state.q_count < 10:
-                    if st.button("➡️ שאלה הבאה"):
-                        with st.spinner("מעלה שאלה..."):
-                            res = fetch_q_ai(topic)
-                            if res:
-                                st.session_state.update({"q_data": res, "q_count": st.session_state.q_count + 1, "show_ans": False})
-                                st.rerun()
-                else:
-                    if st.button("🏁 סיכום שאלון"):
-                        st.session_state.quiz_finished = True
-                        st.rerun()
-
-    with f_cols[1]:
-        if st
+                            st.session_state.update({"q_data": res, "q_count": 1, "quiz_active": True, "show_ans": False, "correct_
