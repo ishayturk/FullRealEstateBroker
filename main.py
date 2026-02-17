@@ -1,97 +1,132 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1234-G2
+# Project: מתווך בקליק | Version: 1235-G2
 # ==========================================
 import streamlit as st
+import google.generativeai as genai
 import time
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide")
 
-# CSS בסיסי בלבד לטיימר וניווט
 st.markdown("""
 <style>
     * { direction: rtl; text-align: right; }
-    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }
     .timer-box {
         position: fixed; top: 10px; left: 10px; background: #ff4b4b; color: white;
-        padding: 8px; border-radius: 8px; z-index: 1000;
+        padding: 8px; border-radius: 8px; z-index: 1000; font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
+
+# כותרת האפליקציה - תמיד למעלה
+st.title("🏠 מתווך בקליק")
 
 # אתחול State
 if "step" not in st.session_state:
     st.session_state.update({
         "user": None, "step": "login",
         "exam_qs": [], "current_q_idx": 0, "max_reached_idx": 0,
-        "exam_answers": {}, "start_time": None
+        "exam_answers": {}, "start_time": None, "lesson_txt": ""
     })
 
-# מאגר בדיקה (25 שאלות)
+# נתוני סילבוס ומאגר שאלות לבדיקה
+SYLLABUS = {
+    "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב"],
+    "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים"],
+}
 TEST_EXAM = [{"q": f"שאלה לבדיקה {i+1}", "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"], "correct_idx": 0} for i in range(25)]
 
-# --- שלב 1: כניסה ---
+# --- פונקציית AI ---
+def stream_ai_lesson(p):
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        m = genai.GenerativeModel('gemini-2.0-flash')
+        res = m.generate_content(p, stream=True)
+        ph = st.empty(); txt = ""
+        for chunk in res:
+            txt += chunk.text
+            ph.markdown(txt + "▌")
+        ph.markdown(txt)
+        return txt
+    except: return "⚠️ תקלה בחיבור ל-AI."
+
+# --- ניהול שלבים ---
+
 if st.session_state.step == "login":
     u = st.text_input("שם מלא:")
     if st.button("כניסה") and u:
         st.session_state.user = u
         st.session_state.step = "menu"; st.rerun()
 
-# --- שלב 2: תפריט ---
 elif st.session_state.step == "menu":
     st.write(f"שלום, {st.session_state.user}")
-    if st.button("⏱️ גש למבחן מלא (3 דקות לבדיקה)"):
-        st.session_state.update({
-            "step": "exam_run", "start_time": time.time(),
-            "exam_qs": TEST_EXAM[:5], "exam_answers": {}, 
-            "current_q_idx": 0, "max_reached_idx": 0
-        })
-        st.rerun()
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("📚 לימוד לפי נושאים"): st.session_state.step = "study"; st.rerun()
+    with c2:
+        if st.button("⏱️ גש למבחן מלא (3 דק')"):
+            st.session_state.update({
+                "step": "exam_run", "start_time": time.time(),
+                "exam_qs": TEST_EXAM[:5], "exam_answers": {}, 
+                "current_q_idx": 0, "max_reached_idx": 0
+            })
+            st.rerun()
 
-# --- שלב 3: הרצת מבחן ---
+elif st.session_state.step == "study":
+    sel = st.selectbox("בחר נושא:", ["בחר נושא"] + list(SYLLABUS.keys()))
+    if sel != "בחר נושא":
+        subs = SYLLABUS[sel]
+        cols = st.columns(len(subs))
+        for i, s in enumerate(subs):
+            if cols[i].button(s):
+                st.session_state.current_sub = s
+                st.session_state.step = "lesson_run"
+                st.session_state.lesson_txt = "LOADING"; st.rerun()
+    if st.button("🏠 חזרה"): st.session_state.step = "menu"; st.rerun()
+
+elif st.session_state.step == "lesson_run":
+    st.subheader(f"📖 {st.session_state.current_sub}")
+    if st.session_state.lesson_txt == "LOADING":
+        st.session_state.lesson_txt = stream_ai_lesson(f"הסבר על {st.session_state.current_sub}")
+    else: st.markdown(st.session_state.lesson_txt)
+    if st.button("⬅️ חזרה"): st.session_state.step = "study"; st.session_state.lesson_txt = ""; st.rerun()
+
 elif st.session_state.step == "exam_run":
-    # טיימר בדיקה - 180 שניות
     elapsed = time.time() - st.session_state.start_time
     rem = max(0, 180 - int(elapsed))
     if rem <= 0: st.session_state.step = "results"; st.rerun()
-    
     mins, secs = divmod(rem, 60)
     st.markdown(f'<div class="timer-box">⏳ {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
     idx = st.session_state.current_q_idx
     q = st.session_state.exam_qs[idx]
-    
     st.subheader(f"שאלה {idx + 1}")
-    curr_val = st.session_state.exam_answers.get(idx)
-    ans = st.radio(q['q'], q['options'], index=None if curr_val is None else q['options'].index(curr_val), key=f"q_{idx}")
+    curr_ans = st.session_state.exam_answers.get(idx)
+    ans = st.radio(q['q'], q['options'], index=None if curr_ans is None else q['options'].index(curr_ans), key=f"r_{idx}")
     if ans: st.session_state.exam_answers[idx] = ans
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     with c1:
-        if idx > 0 and st.button("⬅️ הקודם"): 
-            st.session_state.current_q_idx -= 1; st.rerun()
+        if idx > 0 and st.button("⬅️ הקודם"): st.session_state.current_q_idx -= 1; st.rerun()
     with c2:
-        if idx < 24:
-            if st.button("הבא ➡️"):
-                if idx == st.session_state.max_reached_idx: st.session_state.max_reached_idx += 1
-                if idx == len(st.session_state.exam_qs)-1:
-                    st.session_state.exam_qs += TEST_EXAM[idx+1:idx+6]
-                st.session_state.current_q_idx += 1; st.rerun()
-        else:
-            if st.button("🏁 הגש מבחן"): st.session_state.step = "results"; st.rerun()
+        if st.button("🏁 הגש"): st.session_state.step = "results"; st.rerun()
+    with c3:
+        if idx < 24 and st.button("הבא ➡️"):
+            if idx == st.session_state.max_reached_idx: st.session_state.max_reached_idx += 1
+            if idx == len(st.session_state.exam_qs)-1:
+                st.session_state.exam_qs += TEST_EXAM[idx+1:idx+6]
+            st.session_state.current_q_idx += 1; st.rerun()
 
-# --- שלב 4: תוצאות (סיכום מילולי) ---
 elif st.session_state.step == "results":
     st.header("📊 סיכום מבחן")
     corrects = 0
     for i, q in enumerate(TEST_EXAM):
         u_ans = st.session_state.exam_answers.get(i)
         c_ans = q['options'][q['correct_idx']]
-        is_correct = (u_ans == c_ans)
-        if is_correct: corrects += 1
-        
-        with st.expander(f"{'✅' if is_correct else '❌'} שאלה {i+1}"):
-            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא ענית'}")
+        is_ok = (u_ans == c_ans)
+        if is_ok: corrects += 1
+        with st.expander(f"{'✅' if is_ok else '❌'} שאלה {i+1}"):
+            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'}")
             st.write(f"**התשובה הנכונה:** {c_ans}")
-    
     st.subheader(f"ציון: {(corrects/25)*100:.0f}")
     if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
