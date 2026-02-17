@@ -1,4 +1,4 @@
-# Project: מתווך בקליק | Version: B01
+# Project: מתווך בקליק | Version: B02
 # File: main.py
 import streamlit as st
 from syllabus_data import SYLLABUS
@@ -6,8 +6,8 @@ from styles import apply_styles, show_footer
 from ai_engine import stream_lesson, fetch_quick_question
 
 # הגדרות דף בסיסיות
-st.set_page_config(page_title="מתווך בקליק - B01", layout="wide")
-apply_styles("B01")
+st.set_page_config(page_title="מתווך בקליק - B02", layout="wide")
+apply_styles("B02")
 
 # אתחול Session State
 if "step" not in st.session_state:
@@ -63,7 +63,6 @@ elif st.session_state.step == "lesson_view":
     topic = st.session_state.selected_topic
     st.header(f"📖 {topic}")
     
-    # תתי נושאים תמיד למעלה
     subs = SYLLABUS.get(topic, [])
     cols = st.columns(len(subs))
     for i, s in enumerate(subs):
@@ -73,22 +72,32 @@ elif st.session_state.step == "lesson_view":
                 "lesson_txt": "LOADING",
                 "quiz_active": False,
                 "q_data": None,
-                "q_count": 0
+                "q_count": 0,
+                "show_ans": False
             })
             st.rerun()
 
-    # הצגת שיעור
+    # הצגת שיעור עם הגנה מפני קריסה
     if st.session_state.lesson_txt == "LOADING":
         st.subheader(st.session_state.current_sub)
         response = stream_lesson(topic, st.session_state.current_sub)
-        full_txt = ""
-        placeholder = st.empty()
-        for chunk in response:
-            full_txt += chunk.text
-            placeholder.markdown(full_txt + "▌")
-        placeholder.markdown(full_txt)
-        st.session_state.lesson_txt = full_txt
-        st.rerun()
+        
+        if response:
+            full_txt = ""
+            placeholder = st.empty()
+            try:
+                for chunk in response:
+                    full_txt += chunk.text
+                    placeholder.markdown(full_txt + "▌")
+                placeholder.markdown(full_txt)
+                st.session_state.lesson_txt = full_txt
+            except Exception as e:
+                st.error("הייתה בעיה בהזרמת התוכן מה-AI. נסה ללחוץ שוב על הנושא.")
+                st.session_state.lesson_txt = ""
+        else:
+            st.error("שגיאה: לא התקבל מענה מה-AI. בדוק את ה-API Key ב-Secrets.")
+            st.session_state.lesson_txt = ""
+
     elif st.session_state.lesson_txt:
         st.subheader(st.session_state.current_sub)
         st.markdown(st.session_state.lesson_txt)
@@ -118,21 +127,25 @@ elif st.session_state.step == "lesson_view":
     with footer_cols[0]:
         if st.session_state.lesson_txt and not st.session_state.quiz_active:
             if st.button("📝 שאלות בזק לשיעור זה"):
-                st.session_state.q_data = fetch_quick_question(topic, st.session_state.current_sub)
-                st.session_state.quiz_active = True
-                st.session_state.q_count = 1
-                st.rerun()
+                with st.spinner("מייצר שאלת בזק..."):
+                    st.session_state.q_data = fetch_quick_question(topic, st.session_state.current_sub)
+                    if st.session_state.q_data:
+                        st.session_state.quiz_active = True
+                        st.session_state.q_count = 1
+                        st.rerun()
+                    else:
+                        st.error("לא הצלחתי לייצר שאלה. נסה שוב.")
     with footer_cols[1]:
         if st.button("🏠 תפריט ראשי"):
             st.session_state.step = "menu"
             st.rerun()
 
-# --- מצב מבחן (שלד להמשך) ---
+# --- מצב מבחן ---
 elif st.session_state.step == "exam_mode":
     st.header("⏱️ מערכת המבחנים המלאה")
-    st.info("כאן נחבר את המאגר הגדול שלך ביום רביעי.")
+    st.info("כאן נחבר את המאגר הגדול שלך.")
     if st.button("חזרה לתפריט"):
         st.session_state.step = "menu"
         st.rerun()
 
-show_footer("B01")
+show_footer("B02")
