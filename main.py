@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1216-G2
+# Project: מתווך בקליק | Version: 1217-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -58,3 +58,47 @@ def stream_ai_lesson(p):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
+        full_p = p + " כתוב שיעור הכנה מעמיק למבחן המתווכים. ללא כותרות."
+        response = m.generate_content(full_p, stream=True)
+        placeholder = st.empty()
+        txt = ""
+        for chunk in response:
+            txt += chunk.text
+            placeholder.markdown(txt + "▌")
+        placeholder.markdown(txt)
+        return txt
+    except: 
+        return "⚠️ תקלה בטעינה."
+
+if "step" not in st.session_state:
+    st.session_state.update({
+        "user": None, "step": "login", "q_count": 0, "quiz_active": False, 
+        "show_ans": False, "lesson_txt": "", "q_data": None, 
+        "correct_answers": 0, "quiz_finished": False
+    })
+
+st.title("🏠 מתווך בקליק")
+
+if st.session_state.step == "login":
+    u = st.text_input("שם מלא:")
+    if st.button("כניסה") and u:
+        st.session_state.update({"user": u, "step": "menu"})
+        st.rerun()
+
+elif st.session_state.step == "menu":
+    st.subheader(f"👤 שלום, {st.session_state.user}")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("📚 לימוד לפי נושאים"):
+            st.session_state.step = "study"; st.rerun()
+    with c2:
+        if st.button("⏱️ גש/י למבחן"): st.info("בקרוב!")
+
+elif st.session_state.step == "study":
+    st.subheader(f"👤 שלום, {st.session_state.user}")
+    sel = st.selectbox("בחר נושא:", ["בחר נושא"] + list(SYLLABUS.keys()))
+    if sel != "בחר נושא" and st.button("טען נושא"):
+        st.session_state.update({
+            "selected_topic": sel, "step": "lesson_run", "quiz_active": False, 
+            "lesson_txt": "", "q_data": None, "q_count": 0, 
+            "correct
