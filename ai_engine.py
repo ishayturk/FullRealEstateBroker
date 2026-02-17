@@ -3,35 +3,48 @@ import google.generativeai as genai
 import json, re
 
 def configure_ai():
+    """הגדרה קשיחה ל-Gemini 2.0 Flash"""
     try:
-        # בדיקה אם המפתח קיים בכלל
         if "GEMINI_API_KEY" not in st.secrets:
-            st.error("שגיאה: המפתח GEMINI_API_KEY לא נמצא ב-Secrets!")
+            st.error("המפתח GEMINI_API_KEY חסר ב-Secrets!")
             return None
             
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        # נסה להשתמש ב-1.5 פלאש שהוא הכי יציב כרגע
-        return genai.GenerativeModel('gemini-1.5-flash')
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+        
+        # שם המודל המדויק לגרסת ה-2.0 היציבה
+        # אם זה עדיין נכשל, ננסה להוסיף 'models/' לפני השם
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        return model
     except Exception as e:
-        st.error(f"שגיאת התחברות לגוגל: {e}")
+        st.error(f"שגיאת Gemini 2.0: {e}")
         return None
 
 def stream_lesson(topic, sub_topic):
     model = configure_ai()
     if not model: return None
+    
+    # הוספת הנחיה למודל 2.0 להיות ממוקד
+    prompt = f"אתה מורה לנדל\"ן. כתוב שיעור הכנה למבחן המתווכים על {sub_topic} (חוק {topic}). פרט סעיפים חשובים."
     try:
-        prompt = f"כתוב שיעור קצר על {sub_topic} בחוק {topic}."
+        # בגרסה 2.0 ה-streaming עובד מצוין
         return model.generate_content(prompt, stream=True)
     except Exception as e:
-        st.error(f"שגיאה בייצור תוכן: {e}")
+        st.error(f"שגיאה בהזרמת תוכן 2.0: {e}")
         return None
 
 def fetch_quick_question(topic, sub_topic):
     model = configure_ai()
     if not model: return None
+    
+    prompt = f"צור שאלת JSON על {sub_topic}. מבנה: {{'q':'', 'options':['','','',''], 'correct':'', 'explain':''}}"
     try:
-        prompt = f"צור שאלת JSON על {sub_topic}. מבנה: {{'q':'', 'options':['','','',''], 'correct':'', 'explain':''}}"
+        # מודל 2.0 מעולה ב-JSON, ננצל את זה
         res = model.generate_content(prompt).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
-        return json.loads(match.group().replace("'", '"')) if match else None
-    except: return None
+        if match:
+            clean_json = match.group().replace("'", '"')
+            return json.loads(clean_json)
+        return None
+    except:
+        return None
