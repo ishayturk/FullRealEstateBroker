@@ -1,29 +1,50 @@
-# Project: מתווך בקליק | Version: B01
+# Project: מתווך בקליק | Version: B04
 # File: styles.py
 import streamlit as st
 
-def apply_styles(version_name="B01"):
+def apply_styles(version_label):
+    """מחיל עיצוב RTL וסידור כפתורים נקי"""
     st.markdown(f"""
     <style>
-        * {{ direction: rtl; text-align: right; }}
-        .stButton>button {{ width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }}
-        .top-link {{ 
-            display: inline-block; width: 100%; text-align: center; 
-            border-radius: 8px; text-decoration: none; border: 1px solid #d1d5db;
-            font-weight: bold; height: 2.8em; line-height: 2.8em;
-            background-color: transparent; color: inherit;
-        }}
-        .v-footer {{
-            text-align: center;
-            color: rgba(255, 255, 255, 0.1); /* לבן שקוף מאוד */
-            font-size: 0.7em;
-            margin-top: 50px;
-            width: 100%;
-        }}
-        [data-testid="stSidebar"] {{ display: none; }}
+    /* הגדרת כיוון כללית */
+    .stApp {{
+        direction: rtl;
+        text-align: right;
+    }}
+    
+    /* מניעת מריחת כפתורים וסידורם מימין לשמאל */
+    .stButton>button {{
+        width: auto !important;
+        min-width: 140px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s;
+    }}
+    
+    .stButton>button:hover {{
+        border-color: #ff4b4b;
+        color: #ff4b4b;
+    }}
+
+    /* סידור אלמנטים של בחירה (Selectbox) */
+    div[data-baseweb="select"] {{
+        direction: rtl;
+    }}
+
+    /* עיצוב כותרות */
+    h1, h2, h3, h4, p, span {{
+        text-align: right !important;
+        direction: rtl !important;
+    }}
+
+    /* הסתרת תפריטים מובנים של סטרימליט למראה נקי */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
     </style>
-    <div id="top"></div>
     """, unsafe_allow_html=True)
 
-def show_footer(version_name="B01"):
-    st.markdown(f'<div class="v-footer">Version: {version_name}</div>', unsafe_allow_html=True)
+def show_footer(version_label):
+    """מציג קרדיט וגרסה בתחתית הדף"""
+    st.markdown("---")
+    st.caption(f"מתווך בקליק | גרסה {version_label} | הכנה למבחן המתווכים 2026")
