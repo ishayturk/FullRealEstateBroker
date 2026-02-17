@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1235-G2
+# Project: מתווך בקליק | Version: 1236-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -18,7 +18,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# כותרת האפליקציה - תמיד למעלה
+# כותרת ראשית
 st.title("🏠 מתווך בקליק")
 
 # אתחול State
@@ -26,17 +26,26 @@ if "step" not in st.session_state:
     st.session_state.update({
         "user": None, "step": "login",
         "exam_qs": [], "current_q_idx": 0, "max_reached_idx": 0,
-        "exam_answers": {}, "start_time": None, "lesson_txt": ""
+        "exam_answers": {}, "start_time": None, "lesson_txt": "", "current_sub": None
     })
 
-# נתוני סילבוס ומאגר שאלות לבדיקה
-SYLLABUS = {
-    "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב"],
-    "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים"],
-}
-TEST_EXAM = [{"q": f"שאלה לבדיקה {i+1}", "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"], "correct_idx": 0} for i in range(25)]
+# הצגת שם משתמש (גדול ומודגש) מתחת לכותרת
+if st.session_state.user:
+    st.markdown(f"### **שלום, {st.session_state.user}**")
 
-# --- פונקציית AI ---
+# סילבוס מלא (כפי שהיה בעוגן)
+SYLLABUS = {
+    "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב", "בלעדיות"],
+    "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "הערות אזהרה", "עסקאות ורישום"],
+    "חוק החוזים": ["כריתת חוזה", "פגמים בחוזה", "תרופות בשל הפרה"],
+    "חוק התכנון והבנייה": ["מוסדות תכנון", "היתרים", "שימוש חורג", "היטל השבחה"],
+    "חוק הגנת הצרכן": ["הטעיה וניצול מצוקה", "ביטול עסקה"],
+    "חוק מיסוי מקרקעין": ["מס שבח", "מס רכישה", "פטורים"],
+}
+
+# מאגר בדיקה לטיימר
+TEST_EXAM = [{"q": f"שאלה לבדיקה {i+1}", "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"], "correct_idx": 0} for i in range(25)]
+
 def stream_ai_lesson(p):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -50,7 +59,7 @@ def stream_ai_lesson(p):
         return txt
     except: return "⚠️ תקלה בחיבור ל-AI."
 
-# --- ניהול שלבים ---
+# --- שלבים ---
 
 if st.session_state.step == "login":
     u = st.text_input("שם מלא:")
@@ -59,7 +68,6 @@ if st.session_state.step == "login":
         st.session_state.step = "menu"; st.rerun()
 
 elif st.session_state.step == "menu":
-    st.write(f"שלום, {st.session_state.user}")
     c1, c2 = st.columns(2)
     with c1:
         if st.button("📚 לימוד לפי נושאים"): st.session_state.step = "study"; st.rerun()
@@ -73,7 +81,7 @@ elif st.session_state.step == "menu":
             st.rerun()
 
 elif st.session_state.step == "study":
-    sel = st.selectbox("בחר נושא:", ["בחר נושא"] + list(SYLLABUS.keys()))
+    sel = st.selectbox("בחר נושא מהסילבוס:", ["בחר נושא"] + list(SYLLABUS.keys()))
     if sel != "בחר נושא":
         subs = SYLLABUS[sel]
         cols = st.columns(len(subs))
@@ -82,14 +90,14 @@ elif st.session_state.step == "study":
                 st.session_state.current_sub = s
                 st.session_state.step = "lesson_run"
                 st.session_state.lesson_txt = "LOADING"; st.rerun()
-    if st.button("🏠 חזרה"): st.session_state.step = "menu"; st.rerun()
+    if st.button("🏠 חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
 
 elif st.session_state.step == "lesson_run":
-    st.subheader(f"📖 {st.session_state.current_sub}")
+    st.subheader(f"📖 שיעור: {st.session_state.current_sub}")
     if st.session_state.lesson_txt == "LOADING":
-        st.session_state.lesson_txt = stream_ai_lesson(f"הסבר על {st.session_state.current_sub}")
+        st.session_state.lesson_txt = stream_ai_lesson(f"הסבר מקצועי למתווכים על: {st.session_state.current_sub}")
     else: st.markdown(st.session_state.lesson_txt)
-    if st.button("⬅️ חזרה"): st.session_state.step = "study"; st.session_state.lesson_txt = ""; st.rerun()
+    if st.button("⬅️ חזרה לסילבוס"): st.session_state.step = "study"; st.session_state.lesson_txt = ""; st.rerun()
 
 elif st.session_state.step == "exam_run":
     elapsed = time.time() - st.session_state.start_time
@@ -100,7 +108,7 @@ elif st.session_state.step == "exam_run":
 
     idx = st.session_state.current_q_idx
     q = st.session_state.exam_qs[idx]
-    st.subheader(f"שאלה {idx + 1}")
+    st.write(f"**שאלה {idx + 1}**")
     curr_ans = st.session_state.exam_answers.get(idx)
     ans = st.radio(q['q'], q['options'], index=None if curr_ans is None else q['options'].index(curr_ans), key=f"r_{idx}")
     if ans: st.session_state.exam_answers[idx] = ans
@@ -118,7 +126,7 @@ elif st.session_state.step == "exam_run":
             st.session_state.current_q_idx += 1; st.rerun()
 
 elif st.session_state.step == "results":
-    st.header("📊 סיכום מבחן")
+    st.header("📊 סיכום תוצאות")
     corrects = 0
     for i, q in enumerate(TEST_EXAM):
         u_ans = st.session_state.exam_answers.get(i)
@@ -127,6 +135,4 @@ elif st.session_state.step == "results":
         if is_ok: corrects += 1
         with st.expander(f"{'✅' if is_ok else '❌'} שאלה {i+1}"):
             st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'}")
-            st.write(f"**התשובה הנכונה:** {c_ans}")
-    st.subheader(f"ציון: {(corrects/25)*100:.0f}")
-    if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
+            st.write
