@@ -1,125 +1,128 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1219-G2
+# Project: מתווך בקליק | Version: 1225-G2 (Test Mode)
 # ==========================================
 import streamlit as st
-import google.generativeai as genai
-import json, re, time, random
+import time, random
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide")
-st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 
-# CSS עם תמיכה בטיימר קבוע למעלה
 st.markdown("""
 <style>
     * { direction: rtl; text-align: right; }
-    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; }
     .timer-box {
-        position: fixed; top: 50px; left: 20px; background: #ff4b4b; color: white;
-        padding: 10px; border-radius: 10px; z-index: 1000; font-weight: bold;
+        position: fixed; top: 10px; left: 10px; background: #ff4b4b; color: white;
+        padding: 8px; border-radius: 8px; z-index: 1000; font-size: 0.9em;
+    }
+    .nav-overlay {
+        background-color: #f0f2f6; padding: 15px; border-radius: 15px;
+        border: 1px solid #d1d5db; margin-bottom: 20px;
     }
     .v-footer { text-align: center; color: rgba(255, 255, 255, 0.1); font-size: 0.7em; }
 </style>
 """, unsafe_allow_html=True)
 
-# פונקציות עזר (ללא שינוי מהותי מהעוגן)
-def fetch_q_ai(topic):
-    try:
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        m = genai.GenerativeModel('gemini-2.0-flash')
-        p = f"צור שאלה אמריקאית על {topic} למבחן המתווכים. החזר JSON תקני בלבד."
-        res = m.generate_content(p).text
-        match = re.search(r'\{.*\}', res, re.DOTALL)
-        return json.loads(match.group().replace("'", '"')) if match else None
-    except: return None
+# מאגר לבדיקה מהירה
+EXAMS_DATABASE = {
+    "test_exam": {
+        "name": "מבחן בדיקה מהיר (3 דקות)",
+        "questions": [
+            {"q": f"שאלה לבדיקה מספר {i+1}", "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"], "correct_idx": 0}
+            for i in range(25)
+        ]
+    }
+}
 
-# מנגנון טעינת שאלות למבחן (5 בכל פעם)
-def load_exam_chunk(count=5):
-    new_qs = []
-    topics = ["חוק המתווכים", "חוק המקרקעין", "חוק החוזים", "מיסוי", "תכנון ובנייה"]
-    for _ in range(count):
-        t = random.choice(topics)
-        q = fetch_q_ai(t)
-        if q: new_qs.append(q)
-    return new_qs
-
-# אתחול ה-State
 if "step" not in st.session_state:
     st.session_state.update({
-        "user": None, "step": "login", "used_exams": [],
-        "exam_qs": [], "current_q_idx": 0, "exam_active": False,
-        "start_time": None, "exam_answers": {}
+        "user": None, "step": "login", "used_exams": [], 
+        "current_exam_id": None, "exam_qs": [], 
+        "current_q_idx": 0, "max_reached_idx": 0,
+        "exam_answers": {}, "start_time": None, "show_nav": False
     })
-
-st.title("🏠 מתווך בקליק")
-
-# --- לוגיקת ניהול שלבים ---
 
 if st.session_state.step == "login":
     u = st.text_input("שם מלא:")
     if st.button("כניסה") and u:
-        st.session_state.update({"user": u, "step": "menu"})
-        st.rerun()
+        st.session_state.update({"user": u, "step": "menu"}); st.rerun()
 
 elif st.session_state.step == "menu":
-    st.subheader(f"👤 שלום, {st.session_state.user}")
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("📚 לימוד לפי נושאים"):
-            st.session_state.step = "study"; st.rerun()
-    with c2:
-        if st.button("⏱️ גש למבחן מלא (90 דק')"):
-            # בדיקת כפילות: כאן נכניס בעתיד מזהה בחינה אמיתי
-            st.session_state.update({
-                "step": "exam_run", "exam_active": True, "exam_qs": [],
-                "current_q_idx": 0, "start_time": time.time(), "exam_answers": {}
-            })
-            with st.spinner("מכין 5 שאלות ראשונות..."):
-                st.session_state.exam_qs = load_exam_chunk(5)
-            st.rerun()
+    st.title("🏠 מתווך בקליק - מצב בדיקה")
+    if st.button("⏱️ התחל מבחן בדיקה (3 דקות)"):
+        st.session_state.update({
+            "current_exam_id": "test_exam", "step": "exam_run", "start_time": time.time(),
+            "exam_qs": EXAMS_DATABASE["test_exam"]["questions"][:5],
+            "exam_answers": {}, "current_q_idx": 0, "max_reached_idx": 0
+        })
+        st.rerun()
 
 elif st.session_state.step == "exam_run":
-    # חישוב טיימר
+    # טיימר - הוגדר ל-180 שניות (3 דקות)
     elapsed = time.time() - st.session_state.start_time
-    rem = max(0, 5400 - int(elapsed)) # 90 דקות בשניות
+    rem = max(0, 180 - int(elapsed)) 
+    
+    if rem <= 0:
+        st.session_state.step = "time_up"; st.rerun()
+    
     mins, secs = divmod(rem, 60)
     st.markdown(f'<div class="timer-box">⏳ {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
-    if rem <= 0:
-        st.error("נגמר הזמן!")
-        st.session_state.step = "menu"; st.rerun()
-
-    # הצגת שאלה נוכחית
-    idx = st.session_state.current_q_idx
-    qs = st.session_state.exam_qs
-
-    if idx < len(qs):
-        q = qs[idx]
-        st.subheader(f"שאלה {idx + 1} מתוך 25")
-        choice = st.radio(q['q'], q['options'], key=f"ex_{idx}", index=None)
-        st.session_state.exam_answers[idx] = choice
-
-        # כפתורי ניווט
-        col1, col2, col3 = st.columns([1,1,1])
-        with col1:
-            if idx > 0:
-                if st.button("⬅️ הקודם"):
-                    st.session_state.current_q_idx -= 1; st.rerun()
-        with col2:
-            if st.button("🏠 צא מהמבחן"):
-                st.session_state.step = "menu"; st.rerun()
-        with col3:
-            label = "הבא ➡️" if idx < 24 else "🏁 הגש מבחן"
-            if st.button(label):
-                # טעינה ברקע: אם הגענו לסוף המנה וצריך עוד
-                if idx == len(qs) - 1 and len(qs) < 25:
-                    with st.spinner("טוען את 5 השאלות הבאות..."):
-                        st.session_state.exam_qs += load_exam_chunk(5)
-                
-                if idx < 24:
-                    st.session_state.current_q_idx += 1
+    # לוח ניווט
+    if st.button("📱 לוח ניווט"): st.session_state.show_nav = not st.session_state.show_nav
+    if st.session_state.show_nav:
+        st.markdown('<div class="nav-overlay">', unsafe_allow_html=True)
+        cols = st.columns(5)
+        for i in range(25):
+            with cols[i%5]:
+                if i > st.session_state.max_reached_idx:
+                    st.button(f"🔒 {i+1}", key=f"n_{i}", disabled=True)
                 else:
-                    st.success("המבחן הוגש בהצלחה!")
-                    st.session_state.step = "menu"
-                st.rerun()
+                    label = f"{i+1} {'✅' if i in st.session_state.exam_answers else ''}"
+                    if st.button(label, key=f"n_{i}"):
+                        st.session_state.current_q_idx = i; st.session_state.show_nav = False; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown(f'<div class="v-footer">Version: 1219-G2</div>', unsafe_allow_html=True)
+    # הצגת שאלה
+    idx = st.session_state.current_q_idx
+    q = st.session_state.exam_qs[idx]
+    st.subheader(f"שאלה {idx + 1}")
+    ans = st.radio(q['q'], q['options'], key=f"q_{idx}", index=None if idx not in st.session_state.exam_answers else q['options'].index(st.session_state.exam_answers[idx]))
+    if ans: st.session_state.exam_answers[idx] = ans
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if idx > 0:
+            if st.button("⬅️ הקודם"): st.session_state.current_q_idx -= 1; st.rerun()
+    with c2:
+        if st.button("🏠 תפריט"): st.session_state.step = "menu"; st.rerun()
+    with c3:
+        if idx < 24:
+            if st.button("הבא ➡️"):
+                if idx == st.session_state.max_reached_idx: st.session_state.max_reached_idx += 1
+                if idx == len(st.session_state.exam_qs) - 1 and len(st.session_state.exam_qs) < 25:
+                    st.session_state.exam_qs += EXAMS_DATABASE["test_exam"]["questions"][len(st.session_state.exam_qs):len(st.session_state.exam_qs)+5]
+                st.session_state.current_q_idx += 1; st.rerun()
+        else:
+            if st.button("🏁 הגש מבחן"): st.session_state.step = "results"; st.rerun()
+
+elif st.session_state.step == "time_up":
+    st.error("⌛ נגמר הזמן!")
+    if st.button("צפה בתוצאות"): st.session_state.step = "results"; st.rerun()
+
+elif st.session_state.step == "results":
+    st.header("📊 סיכום מבחן בדיקה")
+    exam = EXAMS_DATABASE[st.session_state.current_exam_id]
+    correct_count = 0
+    for i, q in enumerate(exam['questions']):
+        user_ans = st.session_state.exam_answers.get(i)
+        correct_ans = q['options'][q['correct_idx']]
+        is_correct = user_ans == correct_ans
+        if is_correct: correct_count += 1
+        with st.expander(f"{'✅' if is_correct else '❌'} שאלה {i+1}"):
+            st.write(f"**התשובה שלך:** {user_ans if user_ans else 'לא נענתה'}")
+            st.write(f"**התשובה הנכונה:** {correct_ans}")
+
+    st.subheader(f"ציון: {(correct_count/25)*100:.0f}")
+    if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
+
+st.markdown(f'<div class="v-footer">Version: 1225-G2 (3-Min Test)</div>', unsafe_allow_html=True)
