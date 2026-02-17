@@ -1,81 +1,58 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1218-G2
+# Project: מתווך בקליק | Version: 1219-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
-import json, re
+import json, re, time, random
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide")
 st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 
+# CSS עם תמיכה בטיימר קבוע למעלה
 st.markdown("""
 <style>
     * { direction: rtl; text-align: right; }
-    .stButton>button { 
-        width: 100%; border-radius: 8px; font-weight: bold; height: 3em; 
+    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }
+    .timer-box {
+        position: fixed; top: 50px; left: 20px; background: #ff4b4b; color: white;
+        padding: 10px; border-radius: 10px; z-index: 1000; font-weight: bold;
     }
-    .top-link { 
-        display: inline-block; width: 100%; text-align: center; 
-        border-radius: 8px; text-decoration: none; border: 1px solid #d1d5db;
-        font-weight: bold; height: 2.8em; line-height: 2.8em;
-        background-color: transparent; color: inherit;
-    }
-    .v-footer {
-        text-align: center; color: rgba(255, 255, 255, 0.1);
-        font-size: 0.7em; margin-top: 50px; width: 100%;
-    }
+    .v-footer { text-align: center; color: rgba(255, 255, 255, 0.1); font-size: 0.7em; }
 </style>
 """, unsafe_allow_html=True)
 
-SYLLABUS = {
-    "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה"],
-    "תקנות המתווכים": ["פרטי הזמנה 1997", "פעולות שיווק 2004", "דמי תיווך"],
-    "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "הערות אזהרה"],
-    "חוק המכר (דירות)": ["מפרט וגילוי", "בדק ואחריות", "הבטחת השקעות"],
-    "חוק החוזים": ["כריתת חוזה", "פגמים בחוזה", "תרופות והפרה"],
-    "חוק התכנון והבנייה": ["היתרים", "היטל השבחה", "תוכניות מתאר"],
-    "חוק מיסוי מקרקעין": ["מס שבח", "מס רכישה", "שווי שוק"],
-    "חוק הגנת הצרכן": ["ביטול עסקה", "הטעיה בפרסום"],
-    "דיני ירושה": ["סדר הירושה", "צוואות"],
-    "חוק העונשין": ["עבירות מרמה וזיוף"]
-}
-
+# פונקציות עזר (ללא שינוי מהותי מהעוגן)
 def fetch_q_ai(topic):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        p = f"צור שאלה אמריקאית על {topic} למבחן המתווכים."
-        p += " החזר אך ורק JSON תקני במבנה הבא:"
-        p += " {'q':'','options':['','','',''],'correct':'','explain':''}"
+        p = f"צור שאלה אמריקאית על {topic} למבחן המתווכים. החזר JSON תקני בלבד."
         res = m.generate_content(p).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
-        if match: 
-            return json.loads(match.group().replace("'", '"'))
+        return json.loads(match.group().replace("'", '"')) if match else None
     except: return None
-    return None
 
-def stream_ai_lesson(p):
-    try:
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        m = genai.GenerativeModel('gemini-2.0-flash')
-        full_p = p + " כתוב שיעור הכנה מעמיק למבחן המתווכים. ללא כותרות."
-        response = m.generate_content(full_p, stream=True)
-        placeholder = st.empty()
-        txt = ""
-        for chunk in response:
-            txt += chunk.text
-            placeholder.markdown(txt + "▌")
-        placeholder.markdown(txt)
-        return txt
-    except: return "⚠️ תקלה בטעינה."
+# מנגנון טעינת שאלות למבחן (5 בכל פעם)
+def load_exam_chunk(count=5):
+    new_qs = []
+    topics = ["חוק המתווכים", "חוק המקרקעין", "חוק החוזים", "מיסוי", "תכנון ובנייה"]
+    for _ in range(count):
+        t = random.choice(topics)
+        q = fetch_q_ai(t)
+        if q: new_qs.append(q)
+    return new_qs
 
+# אתחול ה-State
 if "step" not in st.session_state:
-    st.session_state.update({"user": None, "step": "login", "q_count": 0})
-    st.session_state.update({"quiz_active": False, "show_ans": False})
-    st.session_state.update({"lesson_txt": "", "q_data": None})
-    st.session_state.update({"correct_answers": 0, "quiz_finished": False})
+    st.session_state.update({
+        "user": None, "step": "login", "used_exams": [],
+        "exam_qs": [], "current_q_idx": 0, "exam_active": False,
+        "start_time": None, "exam_answers": {}
+    })
 
 st.title("🏠 מתווך בקליק")
+
+# --- לוגיקת ניהול שלבים ---
 
 if st.session_state.step == "login":
     u = st.text_input("שם מלא:")
@@ -90,98 +67,59 @@ elif st.session_state.step == "menu":
         if st.button("📚 לימוד לפי נושאים"):
             st.session_state.step = "study"; st.rerun()
     with c2:
-        if st.button("⏱️ גש/י למבחן"): st.info("בקרוב!")
-
-elif st.session_state.step == "study":
-    st.subheader(f"👤 שלום, {st.session_state.user}")
-    sel = st.selectbox("בחר נושא:", ["בחר נושא"] + list(SYLLABUS.keys()))
-    if sel != "בחר נושא" and st.button("טען נושא"):
-        st.session_state.update({"selected_topic": sel, "step": "lesson_run"})
-        st.session_state.update({"quiz_active": False, "lesson_txt": ""})
-        st.session_state.update({"q_data": None, "q_count": 0})
-        st.session_state.update({"correct_answers": 0, "quiz_finished": False})
-        st.rerun()
-
-elif st.session_state.step == "lesson_run":
-    st.subheader(f"👤 שלום, {st.session_state.user}")
-    topic = st.session_state.selected_topic
-    st.header(f"📖 {topic}")
-    subs = SYLLABUS.get(topic, [])
-    cols = st.columns(len(subs))
-    for i, s in enumerate(subs):
-        if cols[i].button(s, key=f"s_{i}"):
-            st.session_state.update({"current_sub": s, "lesson_txt": "LOADING"})
-            st.session_state.update({"quiz_active": False, "show_ans": False})
-            st.session_state.update({"quiz_finished": False, "q_data": None})
-            st.session_state.update({"q_count": 0, "correct_answers": 0})
+        if st.button("⏱️ גש למבחן מלא (90 דק')"):
+            # בדיקת כפילות: כאן נכניס בעתיד מזהה בחינה אמיתי
+            st.session_state.update({
+                "step": "exam_run", "exam_active": True, "exam_qs": [],
+                "current_q_idx": 0, "start_time": time.time(), "exam_answers": {}
+            })
+            with st.spinner("מכין 5 שאלות ראשונות..."):
+                st.session_state.exam_qs = load_exam_chunk(5)
             st.rerun()
 
-    if st.session_state.get("lesson_txt") == "LOADING":
-        st.subheader(st.session_state.current_sub)
-        st.session_state.lesson_txt = stream_ai_lesson(
-            f"שיעור על {st.session_state.current_sub} בחוק {topic}"
-        )
-        st.rerun()
-    elif st.session_state.get("lesson_txt"):
-        st.subheader(st.session_state.current_sub)
-        st.markdown(st.session_state.lesson_txt)
+elif st.session_state.step == "exam_run":
+    # חישוב טיימר
+    elapsed = time.time() - st.session_state.start_time
+    rem = max(0, 5400 - int(elapsed)) # 90 דקות בשניות
+    mins, secs = divmod(rem, 60)
+    st.markdown(f'<div class="timer-box">⏳ {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
-    if st.session_state.quiz_finished:
-        st.markdown("---")
-        st.balloons()
-        st.header(f"🏆 סיכום: {st.session_state.correct_answers} מתוך 10")
-    elif st.session_state.quiz_active and st.session_state.q_data:
-        st.markdown("---")
-        q = st.session_state.q_data
-        st.subheader(f"📝 שאלה {st.session_state.q_count} מתוך 10")
-        ans = st.radio(q['q'], q['options'], index=None, key=f"q_{st.session_state.q_count}")
-        if st.session_state.show_ans:
-            if ans == q['correct']: st.success("נכון!")
-            else: st.error(f"טעות. התשובה היא: {q['correct']}")
-            st.info(f"הסבר: {q['explain']}")
+    if rem <= 0:
+        st.error("נגמר הזמן!")
+        st.session_state.step = "menu"; st.rerun()
 
-    st.write("")
-    f_cols = st.columns([2.5, 2, 1.5, 3])
-    with f_cols[0]:
-        if st.session_state.lesson_txt not in ["", "LOADING"]:
-            if st.session_state.quiz_finished:
-                if st.button("📝 נסה שאלון חדש בנושא"):
-                    st.session_state.update({"quiz_finished": False})
-                    st.session_state.update({"quiz_active": False, "q_count": 0})
-                    st.rerun()
-            elif not st.session_state.quiz_active:
-                if st.button("📝 שאלון לבחינה עצמית"):
-                    with st.spinner("מעלה שאלה..."):
-                        res = fetch_q_ai(topic)
-                        if res:
-                            st.session_state.update({"q_data": res, "q_count": 1})
-                            st.session_state.update({"quiz_active": True})
-                            st.session_state.update({"show_ans": False})
-                            st.session_state.update({"correct_answers": 0})
-                            st.rerun()
-            elif not st.session_state.show_ans:
-                if st.button("✅ בדיקת תשובה"):
-                    u_c = st.session_state.get(f"q_{st.session_state.q_count}")
-                    if u_c == st.session_state.q_data['correct']: 
-                        st.session_state.correct_answers += 1
-                    st.session_state.show_ans = True; st.rerun()
-            else:
-                if st.session_state.q_count < 10:
-                    if st.button("➡️ שאלה הבאה"):
-                        with st.spinner("מעלה שאלה..."):
-                            res = fetch_q_ai(topic)
-                            if res:
-                                st.session_state.update({"q_data": res})
-                                st.session_state.update({"show_ans": False})
-                                st.session_state.update({"q_count": st.session_state.q_count + 1})
-                                st.rerun()
+    # הצגת שאלה נוכחית
+    idx = st.session_state.current_q_idx
+    qs = st.session_state.exam_qs
+
+    if idx < len(qs):
+        q = qs[idx]
+        st.subheader(f"שאלה {idx + 1} מתוך 25")
+        choice = st.radio(q['q'], q['options'], key=f"ex_{idx}", index=None)
+        st.session_state.exam_answers[idx] = choice
+
+        # כפתורי ניווט
+        col1, col2, col3 = st.columns([1,1,1])
+        with col1:
+            if idx > 0:
+                if st.button("⬅️ הקודם"):
+                    st.session_state.current_q_idx -= 1; st.rerun()
+        with col2:
+            if st.button("🏠 צא מהמבחן"):
+                st.session_state.step = "menu"; st.rerun()
+        with col3:
+            label = "הבא ➡️" if idx < 24 else "🏁 הגש מבחן"
+            if st.button(label):
+                # טעינה ברקע: אם הגענו לסוף המנה וצריך עוד
+                if idx == len(qs) - 1 and len(qs) < 25:
+                    with st.spinner("טוען את 5 השאלות הבאות..."):
+                        st.session_state.exam_qs += load_exam_chunk(5)
+                
+                if idx < 24:
+                    st.session_state.current_q_idx += 1
                 else:
-                    if st.button("🏁 סיכום שאלון"): 
-                        st.session_state.quiz_finished = True; st.rerun()
+                    st.success("המבחן הוגש בהצלחה!")
+                    st.session_state.step = "menu"
+                st.rerun()
 
-    with f_cols[1]:
-        if st.button("🏠 לתפריט הראשי"): st.session_state.step = "menu"; st.rerun()
-    with f_cols[2]:
-        st.markdown('<a href="#top" class="top-link">🔝 לראש הדף</a>', unsafe_allow_html=True)
-
-    st.markdown(f'<div class="v-footer">Version: 1218-G2</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="v-footer">Version: 1219-G2</div>', unsafe_allow_html=True)
