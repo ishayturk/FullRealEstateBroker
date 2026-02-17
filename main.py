@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1229-G2
+# Project: מתווך בקליק | Version: 1230-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -25,7 +25,6 @@ st.markdown("""
 
 st.title("🏠 מתווך בקליק")
 
-# נתוני עזר
 SYLLABUS = {
     "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב"],
     "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "הערות אזהרה"],
@@ -42,7 +41,6 @@ EXAMS_DATABASE = {
     }
 }
 
-# פונקציות
 def stream_ai_lesson(p):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -56,7 +54,6 @@ def stream_ai_lesson(p):
         return txt
     except: return "⚠️ תקלה בחיבור ל-AI."
 
-# אתחול State
 if "step" not in st.session_state:
     st.session_state.update({
         "user": None, "step": "login", "used_exams": [], 
@@ -103,7 +100,6 @@ elif st.session_state.step == "lesson_run":
         st.session_state.lesson_txt = stream_ai_lesson(f"כתוב שיעור מקיף ומקצועי על {st.session_state.current_sub} כהכנה למבחן המתווכים.")
     else:
         st.markdown(st.session_state.lesson_txt)
-    
     if st.button("⬅️ חזרה לבחירת נושא"): 
         st.session_state.step = "study"; st.session_state.lesson_txt = ""; st.rerun()
 
@@ -120,4 +116,29 @@ elif st.session_state.step == "exam_run":
     rem = max(0, 180 - int(elapsed))
     if rem <= 0: st.session_state.step = "time_up"; st.rerun()
     mins, secs = divmod(rem, 60)
-    st.markdown(f'<div class="timer-box">⏳ {mins:
+    # תיקון ה-SyntaxError בשורה הבאה:
+    st.markdown(f'<div class="timer-box">⏳ {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+
+    if st.button("📱 לוח ניווט"): st.session_state.show_nav = not st.session_state.show_nav
+    if st.session_state.show_nav:
+        st.markdown('<div class="nav-overlay">', unsafe_allow_html=True)
+        cols = st.columns(5)
+        for i in range(25):
+            with cols[i%5]:
+                if i > st.session_state.max_reached_idx: st.button(f"🔒 {i+1}", key=f"n_{i}", disabled=True)
+                else:
+                    lbl = f"{i+1} {'✅' if i in st.session_state.exam_answers else ''}"
+                    if st.button(lbl, key=f"n_{i}"):
+                        st.session_state.current_q_idx = i; st.session_state.show_nav = False; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    idx = st.session_state.current_q_idx
+    q = st.session_state.exam_qs[idx]
+    st.subheader(f"שאלה {idx + 1}")
+    curr_ans = st.session_state.exam_answers.get(idx)
+    ans = st.radio(q['q'], q['options'], index=None if curr_ans is None else q['options'].index(curr_ans), key=f"r_{idx}")
+    if ans: st.session_state.exam_answers[idx] = ans
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if idx > 0 and st.button("⬅️
