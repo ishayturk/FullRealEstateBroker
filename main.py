@@ -1,17 +1,16 @@
-# Project: מתווך בקליק | Version: B03
+# Project: מתווך בקליק | Version: B04
 # File: main.py
 import streamlit as st
 from syllabus_data import SYLLABUS
 from styles import apply_styles, show_footer
 from ai_engine import stream_lesson, fetch_quick_question
 
-# הגדרות דף
-st.set_page_config(page_title="מתווך בקליק", layout="wide")
-apply_styles("B03")
+# הגדרות דף בסיסיות
+st.set_page_config(page_title="מתווך בקליק", layout="wide", page_icon="🏠")
+apply_styles("B04")
 
-# --- כותרת קבועה שנשארת תמיד למעלה ---
+# --- כותרת קבועה (לא נעלמת) ---
 st.title("🏠 מתווך בקליק")
-st.write("") # רווח קטן
 
 # אתחול Session State
 if "step" not in st.session_state:
@@ -21,59 +20,65 @@ if "step" not in st.session_state:
         "selected_topic": None,
         "current_sub": None,
         "lesson_txt": "",
-        "quiz_active": False,
         "q_data": None,
-        "q_count": 0,
         "show_ans": False
     })
 
 # --- דף כניסה ---
 if st.session_state.step == "login":
-    u = st.text_input("שם מלא:")
-    if st.button("כניסה") and u:
-        st.session_state.user = u
-        st.session_state.step = "menu"
-        st.rerun()
+    col_login, _ = st.columns([2, 3])
+    with col_login:
+        u = st.text_input("שם מלא:")
+        if st.button("כניסה") and u:
+            st.session_state.user = u
+            st.session_state.step = "menu"
+            st.rerun()
 
 # --- תפריט ראשי ---
 elif st.session_state.step == "menu":
     st.subheader(f"שלום, {st.session_state.user}")
-    c1, c2 = st.columns(2)
+    # כפתורים בגודל טבעי, אחד ליד השני
+    c1, c2, _ = st.columns([1.2, 1.2, 5])
     with c1:
-        if st.button("📚 לימוד לפי נושאים", use_container_width=True):
+        if st.button("📚 לימוד לפי נושאים"):
             st.session_state.step = "study_select"
             st.rerun()
     with c2:
-        if st.button("⏱️ מבחן מלא", use_container_width=True):
+        if st.button("⏱️ מבחן מלא"):
             st.session_state.step = "exam_mode"
             st.rerun()
 
-# --- בחירת נושא לימוד ---
+# --- בחירת נושא ---
 elif st.session_state.step == "study_select":
     st.subheader("בחר נושא:")
     sel = st.selectbox("", ["בחר..."] + list(SYLLABUS.keys()))
-    if sel != "בחר..." and st.button("טען נושא"):
-        st.session_state.selected_topic = sel
-        st.session_state.step = "lesson_view"
-        st.rerun()
-    if st.button("🔙 חזרה"):
-        st.session_state.step = "menu"
-        st.rerun()
+    
+    c1, c2, _ = st.columns([0.8, 0.8, 6])
+    with c1:
+        if sel != "בחר..." and st.button("טען נושא"):
+            st.session_state.selected_topic = sel
+            st.session_state.step = "lesson_view"
+            st.rerun()
+    with c2:
+        if st.button("🔙 חזרה"):
+            st.session_state.step = "menu"
+            st.rerun()
 
-# --- דף שיעור ---
+# --- דף שיעור ותת-נושאים ---
 elif st.session_state.step == "lesson_view":
     topic = st.session_state.selected_topic
     st.header(f"📖 {topic}")
     
+    # הצגת תת-נושאים בשורה
     subs = SYLLABUS.get(topic, [])
-    cols = st.columns(len(subs) if len(subs) > 0 else 1)
+    sub_cols = st.columns(min(len(subs), 6))
     for i, s in enumerate(subs):
-        if cols[i % len(cols)].button(s, key=f"sub_{i}"):
+        if sub_cols[i % 6].button(s, key=f"sub_{i}"):
             st.session_state.update({
                 "current_sub": s,
                 "lesson_txt": "LOADING",
-                "quiz_active": False,
-                "q_data": None
+                "q_data": None,
+                "show_ans": False
             })
             st.rerun()
 
@@ -81,19 +86,15 @@ elif st.session_state.step == "lesson_view":
         st.divider()
         st.subheader(st.session_state.current_sub)
         response = stream_lesson(topic, st.session_state.current_sub)
-        
         if response:
             full_txt = ""
             placeholder = st.empty()
-            try:
-                for chunk in response:
-                    if chunk.text:
-                        full_txt += chunk.text
-                        placeholder.markdown(full_txt + "▌")
-                placeholder.markdown(full_txt)
-                st.session_state.lesson_txt = full_txt
-            except Exception as e:
-                st.error(f"הזרמת התוכן נפסקה. נסה שוב.")
+            for chunk in response:
+                if chunk.text:
+                    full_txt += chunk.text
+                    placeholder.markdown(full_txt + "▌")
+            placeholder.markdown(full_txt)
+            st.session_state.lesson_txt = full_txt
         else:
             st.error("לא התקבל מענה מה-AI. בדוק את המפתח ב-Secrets.")
 
@@ -101,13 +102,36 @@ elif st.session_state.step == "lesson_view":
         st.divider()
         st.subheader(st.session_state.current_sub)
         st.markdown(st.session_state.lesson_txt)
+        
+        # כפתורי פעולה בתחתית כל תת-שיעור
+        st.write("---")
+        b1, b2, _ = st.columns([1.5, 1.5, 5])
+        with b1:
+            if st.button("📝 שאלת בדיקת הבנה"):
+                with st.spinner("מכין שאלה..."):
+                    st.session_state.q_data = fetch_quick_question(topic, st.session_state.current_sub)
+                    st.rerun()
+        with b2:
+            if st.button("🏠 לתפריט הראשי"):
+                st.session_state.step = "menu"
+                st.rerun()
+        
+        # תצוגת השאלון
+        if st.session_state.q_data:
+            st.info(f"**שאלה:** {st.session_state.q_data['q']}")
+            ans = st.radio("בחר תשובה:", st.session_state.q_data['options'], key="quiz_radio")
+            if st.button("בדיקת תשובה"):
+                if ans == st.session_state.q_data['correct']:
+                    st.success(f"נכון! {st.session_state.q_data['explain']}")
+                else:
+                    st.error(f"לא מדויק. {st.session_state.q_data['explain']}")
 
-    # כפתורי ניווט למטה
-    st.write("")
-    f1, f2 = st.columns([1, 5])
-    with f1:
-        if st.button("🏠 תפריט"):
-            st.session_state.step = "menu"
-            st.rerun()
+# --- דף מבחן מלא ---
+elif st.session_state.step == "exam_mode":
+    st.header("⏱️ סימולציית מבחן מלא")
+    st.info("כאן יופיעו שאלות המבחן המלא בקרוב.")
+    if st.button("🏠 לתפריט הראשי"):
+        st.session_state.step = "menu"
+        st.rerun()
 
-show_footer("B03")
+show_footer("B04")
