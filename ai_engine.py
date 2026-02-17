@@ -1,50 +1,58 @@
-# Project: מתווך בקליק | Version: B01
+# Project: מתווך בקליק | Version: B02-Fixed
 # File: ai_engine.py
 import streamlit as st
 import google.generativeai as genai
 import json, re
 
 def configure_ai():
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    return genai.GenerativeModel('gemini-2.0-flash')
-
-def fetch_quick_question(topic, sub_topic):
-    """מייצר שאלה קצרה ומהירה לבדיקת הבנה (בזק)"""
-    model = configure_ai()
-    prompt = f"""
-    צור שאלת הבנה קצרה מאוד על {sub_topic} (בתוך חוק {topic}).
-    השאלה והתשובות חייבות להיות תמציתיות (משפט אחד).
-    החזר אך ורק JSON:
-    {{
-      'q': 'השאלה הקצרה',
-      'options': ['א', 'ב', 'ג', 'ד'],
-      'correct': 'התשובה המדויקת',
-      'explain': 'הסבר של שורה אחת'
-    }}
-    """
+    """מוצא אוטומטית את המודל שהמפתח שלך מורשה להפעיל"""
     try:
-        res = model.generate_content(prompt).text
-        match = re.search(r'\{.*\}', res, re.DOTALL)
-        return json.loads(match.group()) if match else None
-    except:
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+        
+        # רשימת המודלים שאנחנו מעדיפים, לפי סדר עדיפות
+        preferred_models = [
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro'
+        ]
+        
+        # בדיקה איזה מהם זמין עבור המפתח שלך
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        for model_id in preferred_models:
+            # הוספת הקידומת models/ אם היא חסרה ברשימה שגוגל החזיר
+            full_id = f"models/{model_id}"
+            if full_id in available_models or model_id in available_models:
+                return genai.GenerativeModel(model_id)
+        
+        # אם לא מצאנו מהמועדפים, ניקח את הראשון שזמין בכלל
+        if available_models:
+            return genai.GenerativeModel(available_models[0].replace('models/', ''))
+            
+        return None
+    except Exception as e:
+        print(f"Detailed Auth Error: {e}")
         return None
 
-def fetch_exam_question(topic):
-    """מייצר שאלה ברמת מבחן (ארוכה ומורכבת)"""
+def fetch_quick_question(topic, sub_topic):
     model = configure_ai()
-    # בשלב זה AI מייצר, בשלב הבא נחבר למאגר הקבצים שלך
-    prompt = f"צור שאלה אמריקאית מורכבת וארוכה בסגנון מבחן המתווכים על {topic}. החזר JSON בלבד."
+    if not model: return None
+    
+    prompt = f"צור שאלת הבנה קצרה בפורמט JSON על {sub_topic} בחוק {topic}. מבנה: {{'q':'', 'options':['','','',''], 'correct':'', 'explain':''}}"
     try:
         res = model.generate_content(prompt).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
-        return json.loads(match.group()) if match else None
+        return json.loads(match.group().replace("'", '"')) if match else None
     except:
         return None
 
 def stream_lesson(topic, sub_topic):
-    """מזרים את תוכן השיעור למסך"""
     model = configure_ai()
-    prompt = f"כתוב שיעור הכנה מעמיק למבחן המתווכים על {sub_topic} בחוק {topic}. פרט סעיפי חוק ודוגמאות. ללא כותרות."
+    if not model: return None
+    
+    prompt = f"כתוב שיעור הכנה למבחן המתווכים על {sub_topic} בחוק {topic}."
     try:
         return model.generate_content(prompt, stream=True)
     except:
