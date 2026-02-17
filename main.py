@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1238-G2
+# Project: מתווך בקליק | Version: 1239-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -30,7 +30,8 @@ if "step" not in st.session_state:
 if st.session_state.user:
     st.markdown(f"### **שלום, {st.session_state.user}**")
 
-SYLLABUS = {
+# מאגר נושאים ותתי-נושאים (ללא המילה סילבוס)
+TOPICS_DATA = {
     "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב", "בלעדיות", "פעולות שיווק", "איסור פעולות משפטיות"],
     "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "הערות אזהרה", "עסקאות ורישום", "זכויות במקרקעין", "פירוק שיתוף"],
     "חוק החוזים": ["כריתת חוזה", "פגמים בחוזה", "תרופות בשל הפרה", "ביטול חוזה", "תום לב"],
@@ -76,23 +77,29 @@ elif st.session_state.step == "menu":
             st.rerun()
 
 elif st.session_state.step == "study":
-    sel = st.selectbox("בחר נושא מהסילבוס:", ["בחר נושא"] + list(SYLLABUS.keys()))
+    sel = st.selectbox("בחר נושא לימוד:", ["בחר נושא"] + list(TOPICS_DATA.keys()))
     if sel != "בחר נושא":
-        subs = SYLLABUS[sel]
+        subs = TOPICS_DATA[sel]
         cols = st.columns(len(subs))
         for i, s in enumerate(subs):
             if cols[i].button(s):
                 st.session_state.current_sub = s
                 st.session_state.step = "lesson_run"
                 st.session_state.lesson_txt = "LOADING"; st.rerun()
-    if st.button("🏠 חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
+    if st.button("🏠 חזרה לתפריט ראשי"): st.session_state.step = "menu"; st.rerun()
 
 elif st.session_state.step == "lesson_run":
-    st.subheader(f"📖 שיעור: {st.session_state.current_sub}")
+    st.subheader(f"📖 שיעור בנושא: {st.session_state.current_sub}")
     if st.session_state.lesson_txt == "LOADING":
         st.session_state.lesson_txt = stream_ai_lesson(f"הסבר מקצועי למתווכים על: {st.session_state.current_sub}")
     else: st.markdown(st.session_state.lesson_txt)
-    if st.button("⬅️ חזרה לסילבוס"): st.session_state.step = "study"; st.session_state.lesson_txt = ""; st.rerun()
+    
+    # התפריט התחתון שהוחזר
+    st.markdown("---")
+    if st.button("⬅️ חזרה לבחירת נושא"): 
+        st.session_state.step = "study"
+        st.session_state.lesson_txt = ""
+        st.rerun()
 
 elif st.session_state.step == "exam_run":
     elapsed = time.time() - st.session_state.start_time
@@ -103,34 +110,3 @@ elif st.session_state.step == "exam_run":
 
     idx = st.session_state.current_q_idx
     q = st.session_state.exam_qs[idx]
-    st.write(f"**שאלה {idx + 1}**")
-    curr_ans = st.session_state.exam_answers.get(idx)
-    ans = st.radio(q['q'], q['options'], index=None if curr_ans is None else q['options'].index(curr_ans), key=f"r_{idx}")
-    if ans: st.session_state.exam_answers[idx] = ans
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if idx > 0 and st.button("⬅️ הקודם"): st.session_state.current_q_idx -= 1; st.rerun()
-    with c2:
-        if st.button("🏁 הגש"): st.session_state.step = "results"; st.rerun()
-    with c3:
-        if idx < 24 and st.button("הבא ➡️"):
-            if idx == st.session_state.max_reached_idx: st.session_state.max_reached_idx += 1
-            if idx == len(st.session_state.exam_qs)-1:
-                st.session_state.exam_qs += TEST_EXAM[idx+1:idx+6]
-            st.session_state.current_q_idx += 1; st.rerun()
-
-elif st.session_state.step == "results":
-    st.header("📊 סיכום תוצאות")
-    corrects = 0
-    for i, q in enumerate(TEST_EXAM):
-        u_ans = st.session_state.exam_answers.get(i)
-        c_ans = q['options'][q['correct_idx']]
-        is_ok = (u_ans == c_ans)
-        if is_ok: corrects += 1
-        with st.expander(f"{'✅' if is_ok else '❌'} שאלה {i+1}"):
-            # תיקון השורה הבעייתית:
-            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'}")
-            st.write(f"**התשובה הנכונה:** {c_ans}")
-    st.subheader(f"ציון: {(corrects/25)*100:.0f}")
-    if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
