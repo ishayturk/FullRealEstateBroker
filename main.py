@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1237-G2
+# Project: מתווך בקליק | Version: 1238-G2
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -30,7 +30,6 @@ if "step" not in st.session_state:
 if st.session_state.user:
     st.markdown(f"### **שלום, {st.session_state.user}**")
 
-# שחזור הטבלה המלאה של הנושאים ותתי-הנושאים
 SYLLABUS = {
     "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה בכתב", "בלעדיות", "פעולות שיווק", "איסור פעולות משפטיות"],
     "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "הערות אזהרה", "עסקאות ורישום", "זכויות במקרקעין", "פירוק שיתוף"],
@@ -130,4 +129,8 @@ elif st.session_state.step == "results":
         is_ok = (u_ans == c_ans)
         if is_ok: corrects += 1
         with st.expander(f"{'✅' if is_ok else '❌'} שאלה {i+1}"):
-            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'
+            # תיקון השורה הבעייתית:
+            st.write(f"**התשובה שלך:** {u_ans if u_ans else 'לא נענתה'}")
+            st.write(f"**התשובה הנכונה:** {c_ans}")
+    st.subheader(f"ציון: {(corrects/25)*100:.0f}")
+    if st.button("חזרה לתפריט"): st.session_state.step = "menu"; st.rerun()
