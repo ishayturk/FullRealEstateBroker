@@ -1,4 +1,4 @@
-# main.py | Version: C-03
+# main.py | Version: C-04
 import streamlit as st
 from app_data import TOPICS_DATA
 from ai_logic import stream_ai_lesson
@@ -7,7 +7,6 @@ from exam_logic import run_exam
 
 st.set_page_config(page_title="מתווך בקליק", layout="centered")
 
-# הפעלת העיצוב והכותרת הקבועה
 apply_design()
 
 if "step" not in st.session_state:
@@ -27,8 +26,6 @@ if st.session_state.step == "login":
 
 elif st.session_state.step == "menu":
     st.header(f"שלום, {st.session_state.user}")
-    
-    # סידור כפתורים ב-2 עמודות כמו ב-1213
     col1, col2 = st.columns(2)
     with col1:
         if st.button("📚 לימוד לפי נושאים"):
@@ -44,16 +41,13 @@ elif st.session_state.step == "study":
     selected_main = st.selectbox("בחר נושא:", ["בחר נושא"] + list(TOPICS_DATA.keys()))
     
     if selected_main != "בחר נושא":
-        # תצוגת תתי-נושאים ב-2 עמודות
-        subs = TOPICS_DATA[selected_main]
-        cols = st.columns(2)
-        for i, sub in enumerate(subs):
-            with cols[i % 2]:
-                if st.button(sub, key=f"btn_{sub}"):
-                    st.session_state.current_sub = sub
-                    st.session_state.step = "lesson_run"
-                    st.session_state.lesson_txt = "LOADING"
-                    st.rerun()
+        # כפתורים בשורות מלאות (אחד מתחת לשני)
+        for sub in TOPICS_DATA[selected_main]:
+            if st.button(sub, key=f"btn_{sub}"):
+                st.session_state.current_sub = sub
+                st.session_state.step = "lesson_run"
+                st.session_state.lesson_txt = "LOADING"
+                st.rerun()
     navigation_footer()
 
 elif st.session_state.step == "lesson_run":
