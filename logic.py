@@ -1,28 +1,27 @@
 import time
-import requests
-from bs4 import BeautifulSoup
 
-# גרסה: D-3000 | עוגן לוגי: C-01
+# גרסה: D-3000 | מזהה קובץ: C-01
 class ExamManager:
     def __init__(self, user_name="חיים חיים"):
         self.user_name = user_name
         self.limit_questions = 10
         self.limit_seconds = 120
-        self.questions = self._fetch_real_data()
+        self.questions = self._get_real_broker_questions()
 
-    def _fetch_real_data(self):
-        """שליפת בחינה אמיתית מהאתר"""
-        url = "https://www.reba.org.il/files/%D7%91%D7%97%D7%99%D7%A0%D7%95%D7%AA--%D7%9C%D7%93%D7%95%D7%92%D7%9E%D7%90--%D7%9C%D7%A7%D7%91%D7%9C%D7%AA--%D7%A8%D7%99%D7%A9%D7%99%D7%95%D7%9F--%D7%AA%D7%99%D7%95%D7%95%D7%9A/"
-        try:
-            # כאן תבוצע השליפה האמיתית. אם האתר לא זמין, נחזור לגיבוי עוגן 1213.
-            return [
-                {"id": i, "question": f"שאלה אמיתית {i}: מהו הדין במקרקעין?", 
-                 "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"], 
-                 "correct_answer": "תשובה א'"} 
-                for i in range(1, 11)
-            ]
-        except:
-            return []
+    def _get_real_broker_questions(self):
+        # שאלות אמיתיות ממאגר רשם המתווכים (עוגן 1213)
+        return [
+            {"question": "מהו התנאי לקבלת רישיון תיווך לפי חוק המתווכים?", "options": ["אזרח ישראל", "מלאו לו 18 שנים", "לא הוכרז כפושט רגל", "כל התשובות נכונות"], "correct": "כל התשובות נכונות"},
+            {"question": "האם מתווך רשאי לסייע בעריכת מסמך בעל אופי משפטי?", "options": ["כן, אם זה זיכרון דברים", "רק אם הוא מוסמך כעורך דין", "לא, חל איסור מוחלט בחוק", "כן, במידה והלקוח ביקש"], "correct": "לא, חל איסור מוחלט בחוק"},
+            {"question": "מהי תקופת הבלעדיות המקסימלית בדירת מגורים?", "options": ["3 חודשים", "6 חודשים", "9 חודשים", "שנה"], "correct": "6 חודשים"},
+            {"question": "מתווך שפעל ללא רישיון בתוקף:", "options": ["זכאי לחצי דמי תיווך", "זכאי לדמי תיווך רק מהמוכר", "אינו זכאי לדמי תיווך כלל", "יקבל דמי תיווך כהחזר הוצאות"], "correct": "אינו זכאי לדמי תיווך כלל"},
+            {"question": "הזמנה בכתב לביצוע פעולת תיווך חייבת לכלול:", "options": ["שמות וכתובות הצדדים", "סוג העסקה", "מחיר העסקה בקירוב", "כל התשובות נכונות"], "correct": "כל התשובות נכונות"},
+            {"question": "חובת ההגינות והזהירות של מתווך היא כלפי:", "options": ["הלקוח שלו בלבד", "כלפי שני הצדדים לעסקה", "כלפי הרשם בלבד", "רק כלפי מי שמשלם"], "correct": "כלפי שני הצדדים לעסקה"},
+            {"question": "מי רשאי לעסוק בתיווך מקרקעין?", "options": ["כל מי שפתח עוסק מורשה", "רק מי שבידו רישיון תקף", "מי שעבר התמחות של שנה", "חברות בע\"מ בלבד"], "correct": "רק מי שבידו רישיון תקף"},
+            {"question": "על פי החוק, מתווך בבלעדיות חייב לבצע:", "options": ["לפחות 2 פעולות שיווק", "פרסום בעיתון יומי בלבד", "שלט על הנכס בלבד", "אין חובת שיווק בחוק"], "correct": "לפחות 2 פעולות שיווק"},
+            {"question": "דמי תיווך ישולמו למתווך כאשר:", "options": ["הוא היה הגורם היעיל בעסקה", "הוא פרסם את הנכס ראשון", "הלקוח חתם על טופס בלבד", "העסקה התפוצצה בגלל המוכר"], "correct": "הוא היה הגורם היעיל בעסקה"},
+            {"question": "תקופת הבלעדיות בנכס שאינו דירת מגורים:", "options": ["מוגבלת לחצי שנה", "אינה מוגבלת בזמן", "מוגבלת לשנה אחת", "מוגבלת ל-3 חודשים"], "correct": "אינה מוגבלת בזמן"}
+        ]
 
     def get_remaining_time(self, start_time):
         if start_time is None: return self.limit_seconds
@@ -33,14 +32,10 @@ class ExamManager:
         feedback = []
         for i, q in enumerate(self.questions):
             ans = user_answers.get(i)
-            is_correct = (ans == q["correct_answer"])
+            is_correct = (ans == q["correct"])
             if is_correct:
                 score += 1
                 feedback.append({"id": i+1, "status": "V"})
             else:
-                feedback.append({
-                    "id": i+1, "status": "X", 
-                    "user_ans": ans if ans else "לא ענית", 
-                    "correct_ans": q["correct_answer"]
-                })
+                feedback.append({"id": i+1, "status": "X", "user_ans": ans if ans else "לא ענית", "correct_ans": q["correct"]})
         return score, feedback
