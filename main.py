@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1213
+# Project: מתווך בקליק | Version: 1213-Fixed
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -35,7 +35,7 @@ SYLLABUS = {
     "חוק המכר (דירות)": ["מפרט וגילוי", "בדק ואחריות", "איחור במסירה", "הבטחת השקעות"],
     "חוק החוזים": ["כריתת חוזה", "פגמים בחוזה", "תרופות והפרה", "ביטול והשבה"],
     "חוק התכנון והבנייה": ["היתרים ושימוש חורג", "היטל השבחה", "תוכניות מתאר", "מוסדות התכנון"],
-    "חוק מיסוי מקרקעין": ["מס שבח (חישוב ופפורים)", "מס רכישה", "הקלות לדירת מגורים", "שווי שוק"],
+    "חוק מיסוי מקרקעין": ["מס שבח", "מס רכישה", "הקלות לדירת מגורים", "שווי שוק"],
     "חוק הגנת הצרכן": ["ביטול עסקה", "הטעיה בפרסום"],
     "דיני ירושה": ["סדר הירושה", "צוואות"],
     "חוק העונשין": ["עבירות מרמה וזיוף"]
@@ -157,8 +157,8 @@ elif st.session_state.step == "lesson_run":
     f_cols = st.columns([2.5, 2, 1.5, 3])
     
     with f_cols[0]:
-        if st.session_state.lesson_txt not in ["", "LOADING"] and not st.session_state.quiz_finished:
-            # לוגיקת כפתורים
+        # התיקון כאן: מאפשר לכפתור להופיע גם כשנמצאים בתוך נושא נבחר
+        if (st.session_state.get("selected_topic") or st.session_state.lesson_txt not in ["", "LOADING"]) and not st.session_state.quiz_finished:
             if not st.session_state.quiz_active:
                 if st.button("📝 שאלון לבחינה עצמית"):
                     with st.spinner("מעלה שאלה..."):
@@ -169,15 +169,13 @@ elif st.session_state.step == "lesson_run":
             
             elif not st.session_state.show_ans:
                 if st.button("✅ בדיקת תשובה"):
-                    # בדיקה אם צדק לעדכון הציון
-                    # אנחנו בודקים את ה-radio לפי ה-key שלו
                     user_choice = st.session_state.get(f"q_{st.session_state.q_count}")
                     if user_choice == st.session_state.q_data['correct']:
                         st.session_state.correct_answers += 1
                     st.session_state.show_ans = True
                     st.rerun()
             
-            else: # המשתמש כבר ראה את התשובה
+            else:
                 if st.session_state.q_count < 10:
                     if st.button("➡️ שאלה הבאה"):
                         with st.spinner("מעלה שאלה..."):
@@ -196,4 +194,4 @@ elif st.session_state.step == "lesson_run":
     with f_cols[2]:
         st.markdown('<a href="#top" class="top-link">🔝 לראש הדף</a>', unsafe_allow_html=True)
 
-    st.markdown(f'<div class="v-footer">Version: 1213</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="v-footer">Version: 1213-Fixed</div>', unsafe_allow_html=True)
