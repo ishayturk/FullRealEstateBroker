@@ -12,38 +12,24 @@ class ExamManager:
         self.data_folder = "exams_data"
         
         if 'questions' not in st.session_state: st.session_state.questions = []
-        if 'answers' not in st.session_state: st.session_state.answers = {}
         if 'full_exam_data' not in st.session_state: st.session_state.full_exam_data = None
 
     def load_exam_from_json(self):
-        """טעינת מבחן אקראי מתיקיית הנתונים"""
         if st.session_state.full_exam_data is not None:
             return True
         try:
-            if not os.path.exists(self.data_folder):
-                st.error(f"שגיאה: התיקייה {self.data_folder} לא נמצאה.")
-                return False
-
-            # סריקה גמישה לסיומות JSON/json
-            files = [f for f in os.listdir(self.data_folder) 
-                     if f.startswith('test') and f.lower().endswith('.json')]
-            
-            if not files:
-                st.error("לא נמצאו קבצי מבחן בתיקייה.")
-                return False
-            
+            if not os.path.exists(self.data_folder): return False
+            files = [f for f in os.listdir(self.data_folder) if f.lower().endswith('.json')]
+            if not files: return False
             chosen_file = random.choice(files)
             path = os.path.join(self.data_folder, chosen_file)
-            
             with open(path, 'r', encoding='utf-8') as f:
                 st.session_state.full_exam_data = json.load(f)
             return True
-        except Exception as e:
-            st.error(f"שגיאה בטעינת נתונים: {e}")
+        except Exception:
             return False
 
     def fetch_batch(self, start_idx):
-        """לוגיקת 5-5-5 לשאיבת שאלות"""
         if not st.session_state.full_exam_data: return
         all_q = st.session_state.full_exam_data.get('questions', [])
         st.session_state.questions.extend(all_q[start_idx : start_idx + 5])
