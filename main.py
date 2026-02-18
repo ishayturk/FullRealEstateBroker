@@ -1,74 +1,102 @@
 # ==========================================
 # Project Identification: C-01
-# Version: 1218-G2 (Stable)
+# Version: 1218-G4 (Stable Production)
 # Anchor: 1213
 # ==========================================
 
 import streamlit as st
 import time
+import random
 
-# 1. הגדרות דף - חייב להיות בראש הקובץ
+# הגדרות דף בסיסיות
 st.set_page_config(page_title="Ludo - 1213", layout="centered")
 
+# פונקציה ליישור לימין (CSS פשוט ויציב)
+st.markdown("""
+    <style>
+    .stApp { direction: RTL; text-align: right; }
+    </style>
+    """, unsafe_content_html=True)
+
 def main():
-    # כותרת לודו
+    # אתחול משתני סשן
+    if 'page_state' not in st.session_state:
+        st.session_state.page_state = 'home'
+    if 'data_loaded' not in st.session_state:
+        st.session_state.data_loaded = False
+
+    # כותרת לודו קבועה
     st.title("Ludo - 1213")
-    
-    # ניהול מצבים בסרגל הצד (ימינה/שמאלה אוטומטי ב-Streamlit)
-    mode = st.sidebar.radio("תפריט", ["לימודים", "בחינה"])
+    st.divider()
 
-    if mode == "לימודים":
-        st.header("מצב לימודים")
-        st.write("כאן התוכן הלימודי המקורי.")
-        # הקוד הלימודי המקורי שלך כאן
+    # --- תצוגת דף הבית (מסך כניסה) ---
+    if st.session_state.page_state == 'home':
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("📚 כניסה ללימודים", use_container_width=True):
+                st.session_state.page_state = 'study'
+                st.rerun()
+        
+        with col2:
+            if st.button("📝 כניסה לבחינה", use_container_width=True):
+                st.session_state.page_state = 'exam_intro'
+                st.rerun()
 
-    elif mode == "בחינה":
-        run_exam_module()
-
-def run_exam_module():
-    # אתחול משתנים בזיכרון (Session State)
-    if 'data_ready' not in st.session_state:
-        st.session_state.data_ready = False
-    
-    # דף פתיחה
-    if 'active_exam' not in st.session_state:
-        st.subheader("הנחיות לבחינה")
-        st.write("בזמן הקריאה המערכת טוענת את המבחן (3 דקות לגרסת בדיקה).")
+    # --- דף פתיח לבחינה (C-01) ---
+    elif st.session_state.page_state == 'exam_intro':
+        st.header("הנחיות לבחינה")
+        st.write("בזמן קריאת ההנחיות, המערכת מכינה את השאלות בזיכרון (עד 10 שניות).")
+        st.info("זמן בחינה: 3 דקות (גרסת בדיקה).")
 
         # טעינה שקטה ברקע
-        if not st.session_state.data_ready:
-            with st.spinner("טוען..."):
-                time.sleep(3) # הדמיית טעינה מהלינק
-                st.session_state.data_ready = True
+        if not st.session_state.data_loaded:
+            with st.spinner("טוען נתונים מהמאגר..."):
+                time.sleep(4) # הדמיית משיכה והגרלה מ-1213
+                st.session_state.data_loaded = True
                 st.rerun()
 
-        # הצ'ק-בוקס שלך
-        agreed = st.checkbox("קראתי ואישרתי")
+        # הצ'ק-בוקס
+        agreed = st.checkbox("קראתי ואישרתי את ההנחיות")
 
-        # הכפתור מופיע רק אם סימנו V
+        # כפתור מעבר - מופיע ופעיל רק לפי התנאים
         if agreed:
-            # הכפתור פעיל רק אם הטעינה הסתיימה
-            if st.button("עבור/י לבחינה", disabled=not st.session_state.data_ready):
-                st.session_state.active_exam = True
+            if st.button("עבור/י לבחינה", disabled=not st.session_state.data_ready if 'data_ready' in st.session_state else not st.session_state.data_loaded):
+                st.session_state.page_state = 'exam_active'
                 st.session_state.start_time = time.time()
                 st.rerun()
+        
+        if st.button("חזרה"):
+            st.session_state.page_state = 'home'
+            st.rerun()
 
-    # מצב בחינה פעיל
-    else:
+    # --- מצב לימודים (חלק לימודי מקורי) ---
+    elif st.session_state.page_state == 'study':
+        st.header("מצב לימודים")
+        st.write("כאן מופיע התוכן הלימודי המקורי של 1213.")
+        if st.button("חזרה לתפריט"):
+            st.session_state.page_state = 'home'
+            st.rerun()
+
+    # --- מצב בחינה פעיל ---
+    elif st.session_state.page_state == 'exam_active':
         elapsed = time.time() - st.session_state.start_time
-        remaining = max(0, 180 - int(elapsed)) # 3 דקות
-
-        st.sidebar.metric("זמן נותר", f"{remaining} שניות")
-
+        remaining = max(0, 180 - int(elapsed)) # 3 דקות = 180 שניות
+        
+        st.subheader(f"זמן נותר: {remaining} שניות")
+        
         if remaining > 0:
-            st.write("הבחינה החלה.")
-            if st.button("סיים בחינה"):
-                del st.session_state.active_exam
+            st.write("הבחינה בשימוש. מציג 5 שאלות ראשונות...")
+            # כאן תרוץ לוגיקת השאלות
+            if st.button("סיום בחינה"):
+                st.session_state.page_state = 'home'
+                st.session_state.data_loaded = False
                 st.rerun()
         else:
-            st.error("הזמן נגמר.")
+            st.error("הזמן הסתיים. הבחינה נעולה.")
             if st.button("חזרה לתפריט"):
-                del st.session_state.active_exam
+                st.session_state.page_state = 'home'
+                st.session_state.data_loaded = False
                 st.rerun()
 
 if __name__ == "__main__":
