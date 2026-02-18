@@ -6,7 +6,7 @@ import random
 from exam_logic import get_unique_exam, prepare_question_data
 from ui_utils import show_instructions, render_navigation, show_results_summary
 
-# הגדרות עמוד ויישור לימין (RTL)
+# הגדרות עמוד ויישור לימין (RTL) - חובה להרצה תקינה בעברית
 st.set_page_config(page_title="פורטל הכנה למתווכים", layout="wide")
 
 st.markdown("""
@@ -15,68 +15,118 @@ st.markdown("""
     div[role="radiogroup"] { direction: rtl; text-align: right; }
     section[data-testid="stSidebar"] > div { direction: rtl; text-align: right; }
     p, span, h1, h2, h3, h4, label { text-align: right; direction: rtl; }
-    .main-nav { display: flex; gap: 10px; margin-bottom: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
-# אתחול מצב אפליקציה (Login -> Menu -> Exam/Study)
-if 'app_mode' not in st.session_state:
-    st.session_state.app_mode = 'login'
+# אתחול מצב אפליקציה - ברירת מחדל לתפריט ראשי
+if 'page' not in st.session_state:
+    st.session_state.page = 'main_menu'
+if 'finished_exams' not in st.session_state:
+    st.session_state.finished_exams = []
 
-# --- 1. דף כניסה (Login Page) ---
-if st.session_state.app_mode == 'login':
-    st.title("🔑 כניסה למערכת")
-    user_name = st.text_input("שם משתמש")
-    if st.button("התחבר"):
-        if user_name:
-            st.session_state.user = user_name
-            st.session_state.app_mode = 'main_menu'
-            st.rerun()
+# טעינת נתונים
+@st.cache_data
+def load_data():
+    if not os.path.exists("exam_data.csv"):
+        # יצירת נתונים בסיסיים אם הקובץ חסר
+        data = {
+            'שאלה': [f'שאלת נדל"ן מספר {i}' for i in range(1, 26)],
+            'מועד_א': [str(random.randint(1, 4)) for _ in range(25)],
+            'תשובה_נכונה': ["1"] * 25
+        }
+        pd.DataFrame(data).to_csv("exam_data.csv", index=False, encoding='utf-8-sig')
+    return pd.read_csv("exam_data.csv")
 
-# --- 2. תפריט ראשי (Main Menu) ---
-elif st.session_state.app_mode == 'main_menu':
-    st.title(f"שלום, {st.session_state.get('user', 'אורח')}")
-    st.subheader("מה ברצונך לעשות היום?")
+df = load_data()
+
+# --- ניהול דפי המערכת ---
+
+# 1. תפריט ראשי
+if st.session_state.page == 'main_menu':
+    st.title("🏠 תפריט ראשי - הכנה למבחן המתווכים")
+    st.divider()
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📚 מרכז לימודים ושיעורים"):
-            st.session_state.app_mode = 'study'
+        if st.button("📚 שיעורים ולימודים", use_container_width=True):
+            st.session_state.page = 'study'
             st.rerun()
     with col2:
-        if st.button("📝 תרגול בחינה (25 שאלות)"):
+        if st.button("📝 התחל בחינה חדשה", use_container_width=True):
+            st.session_state.page = 'exam'
             st.session_state.step = 'instructions'
-            st.session_state.app_mode = 'exam_mode'
             st.rerun()
 
-# --- 3. מרכז לימודים (Study Center) ---
-elif st.session_state.app_mode == 'study':
+# 2. דף לימודים
+elif st.session_state.page == 'study':
     st.title("📚 מרכז לימודים")
     if st.button("🔙 חזרה לתפריט"):
-        st.session_state.app_mode = 'main_menu'
+        st.session_state.page = 'main_menu'
         st.rerun()
-    
-    st.write("כאן יופיעו חומרי הלימוד והשיעורים שלך.")
-    # כאן ניתן להוסיף רשימת שיעורים, PDF או וידאו
+    st.divider()
+    st.write("כאן מופיעים חומרי הלימוד והשיעורים שלך.")
 
-# --- 4. מצב בחינה (Exam Mode) ---
-elif st.session_state.app_mode == 'exam_mode':
-    # כאן נכנסת הלוגיקה של הבחינה (C-05.2)
-    # לצורך קיצור, אני מניח שקובץ ה-CSV נטען וקיים כפי שהוגדר קודם
-    
-    if st.session_state.get('step') == 'instructions':
-        # קריאה ל-show_instructions() מ-ui_utils
-        st.title("📋 הוראות לבחינה")
-        st.write("הבחינה כוללת 25 שאלות, זמן מוקצב: 3 דקות.")
-        if st.button("התחל כעת"):
-            st.session_state.start_time = time.time()
-            st.session_state.step = 'exam_active'
-            st.rerun()
-        if st.button("ביטול וחזרה לתפריט"):
-            st.session_state.app_mode = 'main_menu'
+# 3. דף בחינה
+elif st.session_state.page == 'exam':
+    # לוגיקת בחינה מלאה
+    if st.session_state.step == 'instructions':
+        if 'current_exam_col' not in st.session_state:
+            st.session_state.current_exam_col = get_unique_exam(df, st.session_state.finished_exams)
+        
+        if st.session_state.current_exam_col:
+            show_instructions()
+            if st.button("בטל וחזור לתפריט"):
+                st.session_state.page = 'main_menu'
+                st.rerun()
+        else:
+            st.warning("לא נותרו מבחנים חדשים בסשן זה.")
+            if st.button("חזרה לתפריט"):
+                st.session_state.page = 'main_menu'
+                st.rerun()
+
+    elif st.session_state.step == 'exam':
+        # הפעלת מנוע הבחינה (מזהה C-01)
+        if 'current_exam_data' not in st.session_state or st.session_state.current_exam_data is None:
+            st.session_state.current_exam_data = prepare_question_data(df, st.session_state.current_exam_col, 0, 25)
+        
+        # ניהול זמן
+        elapsed = time.time() - st.session_state.start_time
+        rem = max(0, 180 - elapsed)
+        st.sidebar.metric("⏳ זמן נותר", f"{int(rem//60):02d}:{int(rem%60):02d}")
+        
+        if rem <= 0:
+            st.session_state.step = 'results'
             st.rerun()
 
-    elif st.session_state.get('step') == 'exam_active':
-        # כאן מורץ המנוע של ה-25 שאלות
-        st.write("המבחן רץ...")
-        # (המשך הקוד של C-05.2 מיושם כאן)
+        # ניווט וטעינה מדורגת
+        q_num = render_navigation(st.session_state.loaded_count, st.sidebar.toggle("נייד"))
+        q_idx = q_num - 1
+        
+        st.subheader(f"שאלה {q_num} | {st.session_state.current_exam_col}")
+        st.write(st.session_state.current_exam_data[q_idx]['שאלה'])
+        
+        # תשובות
+        opts = ["1", "2", "3", "4"]
+        ans = st.radio("בחר תשובה:", opts, 
+                       index=opts.index(st.session_state.answers[q_idx]) if q_idx in st.session_state.answers else None,
+                       key=f"q_{q_idx}")
+        st.session_state.answers[q_idx] = ans
+
+        st.divider()
+        if st.session_state.loaded_count < 25 and q_num == st.session_state.loaded_count:
+            if st.button("טען עוד 5 שאלות"):
+                st.session_state.loaded_count += 5
+                st.rerun()
+        elif st.session_state.loaded_count == 25:
+            if st.button("סיום והגשה"):
+                st.session_state.finished_exams.append(st.session_state.current_exam_col)
+                st.session_state.step = 'results'
+                st.rerun()
+
+    elif st.session_state.step == 'results':
+        show_results_summary(st.session_state.answers, st.session_state.current_exam_data)
+        if st.button("חזרה לתפריט הראשי"):
+            for k in ['current_exam_col', 'answers', 'loaded_count', 'start_time', 'current_exam_data']:
+                st.session_state.pop(k, None)
+            st.session_state.page = 'main_menu'
+            st.rerun()
