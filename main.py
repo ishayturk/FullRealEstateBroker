@@ -2,33 +2,14 @@ import streamlit as st
 import time
 import logic 
 
-# הגדרה ראשונית
+# הגדרת דף
 st.set_page_config(layout="centered")
 
-# הזרקת סטייל ייעודי שפועל על המעטפת של Streamlit
-st.markdown("""
-    <style>
-    /* יישור כללי לימין */
-    .stApp {
-        direction: RTL;
-        text-align: right;
-    }
-    /* יישור ספציפי לכפתורים ותפריטים */
-    div.stButton > button {
-        direction: rtl;
-    }
-    /* תיקון יישור לטקסטים ושאלות */
-    .stMarkdown, .stText, .stHeader, p, label {
-        text-align: right !important;
-        direction: rtl !important;
-    }
-    /* יישור רדיו (תשובות) */
-    [data-testid="stWidgetLabel"] {
-        text-align: right !important;
-        direction: rtl !important;
-    }
-    </style>
-    """, unsafe_content_html=True)
+# הזרקת סטייל בשורות בודדות כדי למנוע את ה-TypeError של Python 3.13
+st.markdown('<style>div.stApp { direction: rtl; text-align: right; }</style>', unsafe_content_html=True)
+st.markdown('<style>div.stMarkdown { text-align: right; }</style>', unsafe_content_html=True)
+st.markdown('<style>div.row-widget { text-align: right; }</style>', unsafe_content_html=True)
+st.markdown('<style>.stRadio > label { text-align: right; direction: rtl; }</style>', unsafe_content_html=True)
 
 def main():
     # משיכת שם משתמש
@@ -37,33 +18,27 @@ def main():
     if 'page_state' not in st.session_state:
         st.session_state.page_state = 'intro'
 
-    # --- דף פתיחה ---
+    # --- ניווט דפים ---
     if st.session_state.page_state == 'intro':
         st.header(f"שלום {user_name}")
-        st.subheader("הנחיות לבחינה המקוצרת")
-        st.write("• 10 שאלות")
-        st.write("• דקה אחת (60 שניות)")
+        st.write("בחינה מקוצרת: 10 שאלות | דקה אחת")
         
-        if st.checkbox("אני מאשר/ת את ההנחיות"):
-            if st.button("התחל בחינה"):
+        if st.checkbox("אישור הנחיות"):
+            if st.button("התחל"):
                 logic.init_exam()
                 st.session_state.start_time = time.time()
                 st.session_state.page_state = 'exam'
                 st.rerun()
 
-    # --- דף בחינה ---
     elif st.session_state.page_state == 'exam':
         logic.run_exam()
 
-    # --- דף תוצאות ---
     elif st.session_state.page_state == 'results':
         logic.calculate_results()
 
     # תפריט תחתון
     st.divider()
     if st.button("🔙 יציאה"):
-        # איפוס נתונים ביציאה
-        if 'exam_data' in st.session_state: del st.session_state.exam_data
         st.session_state.page_state = 'intro'
         st.rerun()
 
