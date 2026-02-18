@@ -1,15 +1,24 @@
 # ID: C-01
 # Based on Anchor: 1218-G2
-# Logic: Unique exam selection per session & Lazy Loading (5-5)
 
-import pandas as pd
-import random
+import streamlit as st
+import time
 
-def get_unique_exam(df, finished_exams):
-    all_exams = [col for col in df.columns if col not in ['שאלה', 'תשובה_נכונה']]
-    available = [e for e in all_exams if e not in finished_exams]
-    return random.choice(available) if available else None
-
-def prepare_question_data(df, exam_col, start_idx, end_idx):
-    actual_end = min(end_idx, 25)
-    return df.iloc[start_idx:actual_end][['שאלה', exam_col, 'תשובה_נכונה']].to_dict('records')
+def show_instructions():
+    """מסך פתיחה עם המלל המדויק שביקשת"""
+    st.title("📄 הוראות לבחינה")
+    st.markdown("""
+    ### הנחיות:
+    * **מספר שאלות:** 25.
+    * **זמן בחינה:** 3 דקות (לצורך הבדיקה).
+    * **ניווט:** ניתן לעבור בין שאלות ולשנות תשובות.
+    
+    ---
+    **שימו לב: המבחן יתחיל ברגע שתלחץ/י על כפתור התחל בחינה**
+    """)
+    
+    # שינוי שם הכפתור לפי בקשתך
+    if st.button("התחל בחינה"):
+        st.session_state.start_time = time.time()
+        st.session_state.step = 'exam'
+        st.rerun()
