@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1213 (Restored)
+# Project: מתווך בקליק | Version: 1213
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -45,7 +45,7 @@ def fetch_q_ai(topic):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        p = f"צור שאלה אמריקאית קשה על {topic} למבחן המתווכים. החזר JSON תקני: {{'q':'','options':['','','',''],'correct':'','explain':''}}"
+        p = f"צור שאלה אמריקאית קשה על {topic} למבחן המתווכים בישראל. החזר אך ורק JSON תקני: {{'q':'','options':['','','',''],'correct':'','explain':''}}"
         res = m.generate_content(p).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match: return json.loads(match.group())
@@ -83,4 +83,13 @@ if st.session_state.step == "login":
         st.rerun()
 
 elif st.session_state.step == "menu":
-    st.subheader(f"👤 שלום
+    st.subheader(f"👤 שלום, {st.session_state.user}")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("📚 לימוד לפי נושאים"):
+            st.session_state.step = "study"; st.rerun()
+    with c2:
+        if st.button("⏱️ גש/י למבחן"): st.info("בקרוב!")
+
+elif st.session_state.step == "study":
+    sel = st.selectbox("ב
