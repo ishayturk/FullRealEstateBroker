@@ -1,37 +1,21 @@
-# Version: C-04
-# ID: C-01
-# Description: UI components for instructions, navigation, and results.
-
+# Version: C-05 | ID: C-01
 import streamlit as st
 import time
 
 def show_instructions():
-    """מסך פתיחה עם הוראות ברורות ותחילת טיימר מותנית"""
     st.title("📄 הוראות לבחינה")
-    st.markdown("""
-    ### הנחיות:
-    * **מספר שאלות:** 25.
-    * **זמן בחינה:** 3 דקות (לצורך הבדיקה).
-    * **ניווט:** ניתן לעבור בין שאלות ולשנות תשובות בכל עת.
-    
-    ---
-    **שימו לב: המבחן יתחיל ברגע שתלחץ/י על כפתור התחל בחינה**
-    """)
+    st.markdown("### הנחיות:\n* **מספר שאלות:** 25\n* **זמן:** 3 דקות\n* **שיטה:** טעינה מדורגת (Lazy Loading)")
     if st.button("התחל בחינה"):
         st.session_state.start_time = time.time()
         st.session_state.step = 'exam'
         st.rerun()
 
 def render_navigation(total_loaded, is_mobile):
-    """תפריט ניווט צידי לגישה מהירה לשאלות שנטענו"""
     if is_mobile:
-        with st.sidebar.expander("🔍 ניווט שאלות", expanded=False):
-            return st.radio("בחר שאלה:", range(1, total_loaded + 1), horizontal=True)
-    st.sidebar.title("ניווט")
+        return st.sidebar.radio("שאלה:", range(1, total_loaded + 1), horizontal=True)
     return st.sidebar.radio("דלג לשאלה:", range(1, total_loaded + 1))
 
 def show_results_summary(user_answers, exam_data):
-    """סיכום תוצאות והשוואה דינמית מול מפתח התשובות שנוצר"""
     st.title("📊 סיכום תוצאות")
     score = 0
     for i, q in enumerate(exam_data):
@@ -41,9 +25,5 @@ def show_results_summary(user_answers, exam_data):
             score += 1
             st.success(f"שאלה {i+1}: נכון ✅")
         else:
-            st.error(f"שאלה {i+1}: טעות ❌")
-            st.write(f"**התשובה שלך:** {user_ans}")
-            st.write(f"**התשובה הנכונה:** {correct_ans}")
-        st.divider()
-    final_grade = int((score / len(exam_data)) * 100)
-    st.metric("ציון סופי", f"{final_grade}/100")
+            st.error(f"שאלה {i+1}: טעות ❌ (תשובה נכונה: {correct_ans})")
+    st.metric("ציון סופי", f"{int((score/len(exam_data))*100)}/100")
