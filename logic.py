@@ -1,94 +1,49 @@
-# ==========================================
-# Project Identification: C-01
-# File: logic.py
-# Version: 1218-L3 (Sidebar Navigation)
-# ==========================================
-
 import streamlit as st
 import time
+import logic 
 
-def init_exam():
-    if 'exam_data' not in st.session_state:
-        questions = []
-        for i in range(1, 11):
-            questions.append({
-                "id": i,
-                "question": f"שאלה מספר {i}: האם התפריט הצדדי מופיע?",
-                "options": ["כן", "לא", "חלקית", "אולי"],
-                "correct": "כן",
-                "explanation": f"הסבר לשאלה {i}: זהו הניווט הצדדי המבוקש."
-            })
-        st.session_state.exam_data = questions
-        st.session_state.answers = {}
-        st.session_state.current_step = 0 
+# הגדרת דף
+st.set_page_config(layout="wide", page_title="Ludo Exam")
 
-def run_exam():
-    # בדיקת זמן (דקה אחת)
-    elapsed = time.time() - st.session_state.start_time
-    remaining = max(0, 60 - int(elapsed))
-    
-    if remaining <= 0:
-        st.error("⚠️ הזמן נגמר!")
-        show_finish_button()
-        return
+# הזרקת CSS בשיטה של "שורה אחת" - ככה זה לא יכול לייצר TypeError של רווחים
+rtl_css = '<style>div[data-testid="stAppViewContainer"]{direction:rtl;text-align:right;}div[data-testid="stHeader"]{direction:rtl;}div[data-testid="stSidebar"]{direction:rtl;text-align:right;}div[data-testid="stVerticalBlock"]{direction:rtl;text-align:right;}.stMarkdown,p,label,h1,h2,h3,h4{text-align:right!important;direction:rtl!important;}</style>'
+st.markdown(rtl_css, unsafe_content_html=True)
 
-    # --- תפריט צדדי (Sidebar) לניווט ---
-    with st.sidebar:
-        st.markdown("### 📋 ניווט שאלות")
-        st.write(f"⏱️ זמן נותר: {remaining} שניות")
-        st.divider()
+def main():
+    # משיכת שם משתמש
+    user_name = st.query_params.get("user", "אורח")
+
+    if 'page_state' not in st.session_state:
+        st.session_state.page_state = 'intro'
+
+    # --- מבנה הדף ---
+    if st.session_state.page_state == 'intro':
+        st.header(f"שלום {user_name}")
+        st.markdown("### בחינה מקוצרת (1213)")
+        st.write("• 10 שאלות")
+        st.write("• דקה אחת לביצוע")
         
-        # יצירת כפתור לכל שאלה
-        for i in range(10):
-            status = "⚪" # לא נענתה
-            if i in st.session_state.answers:
-                status = "🔵" # נענתה
-            if i == st.session_state.current_step:
-                status = "📍" # נוכחית
-                
-            if st.button(f"{status} שאלה {i+1}", key=f"nav_{i}", use_container_width=True):
-                st.session_state.current_step = i
-                st.rerun()
+        # מרכוז הכפתור בעזרת עמודות
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            if st.checkbox("אני מאשר/ת את תנאי הבחינה"):
+                if st.button("התחל בחינה עכשיו", use_container_width=True):
+                    logic.init_exam()
+                    st.session_state.start_time = time.time()
+                    st.session_state.page_state = 'exam'
+                    st.rerun()
 
-    # --- תצוגת השאלה במרכז המסך ---
-    idx = st.session_state.current_step
-    q_item = st.session_state.exam_data[idx]
-    
-    st.subheader(f"שאלה {idx + 1} מתוך 10")
-    st.write(q_item["question"])
-    
-    current_answer = st.radio(
-        "בחר/י תשובה:", 
-        q_item["options"], 
-        key=f"q_{idx}",
-        index=None if idx not in st.session_state.answers else q_item["options"].index(st.session_state.answers[idx])
-    )
+    elif st.session_state.page_state == 'exam':
+        logic.run_exam()
 
-    if current_answer:
-        st.session_state.answers[idx] = current_answer
+    elif st.session_state.page_state == 'results':
+        logic.calculate_results()
 
-    # כפתורי קדימה/אחורה בתחתית
-    col1, col2 = st.columns(2)
-    with col2:
-        if idx < 9 and st.button("לשאלה הבאה ⬅️"):
-            st.session_state.current_step += 1
-            st.rerun()
-    with col1:
-        if idx > 0 and st.button("➡️ לשאלה הקודמת"):
-            st.session_state.current_step -= 1
-            st.rerun()
-
-    if len(st.session_state.answers) >= 10:
-        show_finish_button()
-
-def show_finish_button():
-    if st.button("🏁 סיים בחינה", type="primary", use_container_width=True):
-        st.session_state.page_state = 'results'
+    # תפריט תחתון
+    st.sidebar.divider()
+    if st.sidebar.button("🔙 יציאה מהבחינה", use_container_width=True):
+        st.session_state.page_state = 'intro'
         st.rerun()
 
-def calculate_results():
-    st.header("📋 תוצאות")
-    # ... (אותה לוגיקה של משוב)
-    for i, q in enumerate(st.session_state.exam_data):
-        with st.expander(f"שאלה {i+1}"):
-            st.write(f"תשובה: {st.session_state.answers.get(i)}")
+if __name__ == "__main__":
+    main()
