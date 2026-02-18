@@ -1,74 +1,85 @@
-# main.py | Version: C-05
+# ID: C-01
+# Based on Anchor: 1218-G2
+# Main Entry Point: Managing session state, timer, and screen switching
+
 import streamlit as st
-from app_data import TOPICS_DATA
-from ai_logic import stream_ai_lesson
-from ui_utils import apply_design, navigation_footer
-from exam_logic import run_exam
+import pandas as pd
+from exam_logic import get_unique_exam, prepare_question_data
+from UI_UTILS import show_instructions, render_navigation, show_results_summary
 
-st.set_page_config(page_title="מתווך בקליק", layout="centered")
+# הגדרות דף בסיסיות
+st.set_page_config(page_title="מערכת בחינות C-01", layout="wide")
 
-apply_design()
+# אתחול Session State
+if 'step' not in st.session_state:
+    st.session_state.step = 'instructions'
+if 'finished_exams' not in st.session_state:
+    st.session_state.finished_exams = []
+if 'answers' not in st.session_state:
+    st.session_state.answers = {}
+if 'loaded_count' not in st.session_state:
+    st.session_state.loaded_count = 5
 
-if "step" not in st.session_state:
-    st.session_state.update({
-        "user": None,
-        "step": "login",
-        "lesson_txt": "",
-        "current_sub": None
-    })
+# טעינת נתונים (סימולציה של CSV)
+@st.cache_data
+def load_data():
+    # כאן תבוא הכתובת של ה-CSV שלך
+    return pd.read_csv("exam_data.csv")
 
-if st.session_state.step == "login":
-    user_input = st.text_input("שם מלא:")
-    if st.button("כניסה") and user_input:
-        st.session_state.user = user_input
-        st.session_state.step = "menu"
-        st.rerun()
+df = load_data()
 
-elif st.session_state.step == "menu":
-    st.header(f"שלום, {st.session_state.user}")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📚 לימוד לפי נושאים"):
-            st.session_state.step = "study"
-            st.rerun()
-    with col2:
-        if st.button("📝 מבחן תרגול מקיף"):
-            st.session_state.step = "exam"
-            st.rerun()
+# --- ניהול הצעדים (Steps) ---
 
-elif st.session_state.step == "study":
-    st.subheader("בחר נושא לימוד")
-    selected_main = st.selectbox("בחר נושא:", ["בחר נושא"] + list(TOPICS_DATA.keys()))
+if st.session_state.step == 'instructions':
+    # הגרלת מבחן ברקע
+    if 'current_exam_col' not in st.session_state:
+        st.session_state.current_exam_col = get_unique_exam(df, st.session_state.finished_exams)
     
-    if selected_main != "בחר נושא":
-        subs = TOPICS_DATA[selected_main]
-        # יצירת שורה של עמודות עבור תתי הנושאים (עד 4)
-        cols = st.columns(len(subs))
-        for i, sub in enumerate(subs):
-            with cols[i]:
-                if st.button(sub, key=f"btn_{sub}"):
-                    st.session_state.current_sub = sub
-                    st.session_state.step = "lesson_run"
-                    st.session_state.lesson_txt = "LOADING"
-                    st.rerun()
-    navigation_footer()
+    show_instructions()
 
-elif st.session_state.step == "lesson_run":
-    st.subheader(f"📖 שיעור: {st.session_state.current_sub}")
-    if st.session_state.lesson_txt == "LOADING":
-        full_text = ""
-        placeholder = st.empty()
-        response = stream_ai_lesson(st.session_state.current_sub)
-        if response:
-            for chunk in response:
-                if chunk.text:
-                    full_text += chunk.text
-                    placeholder.markdown(full_text + "▌")
-            st.session_state.lesson_txt = full_text
-    else:
-        st.markdown(st.session_state.lesson_txt)
-    navigation_footer()
+elif st.session_state.step == 'exam':
+    # הכנת השאלות שנטענו עד כה
+    current_questions = prepare_question_data(
+        df, 
+        st.session_state.current_exam_col, 
+        0, 
+        st.session_state.loaded_count
+    )
+    
+    # ניווט (תומך מובייל/דסקטופ)
+    is_mobile = st.sidebar.checkbox("תצוגת נייד", value=False)
+    q_idx = render_navigation(len(current_questions), is_mobile) - 1
+    
+    # הצגת השאלה הנוכחית
+    st.subheader(f"שאלה {q_idx + 1}")
+    st.write(current_questions[q_idx]['שאלה'])
+    
+    # בחירת תשובה (כאן יבואו האפשרויות מה-CSV)
+    # לצורך הדוגמה:
+    ans = st.radio("בחר תשובה:", ["א", "ב", "ג", "ד"], key=f"q_{q_idx}")
+    st.session_state.answers[q_idx] = ans
+    
+    # לוגיקת Lazy Loading - אם הגענו לשאלה האחרונה שנטענה
+    if q_idx + 1 == st.session_state.loaded_count and st.session_state.loaded_count < 25:
+        if st.button("טען שאלות נוספות"):
+            st.session_state.loaded_count = min(25, st.session_state.loaded_count + 5)
+            st.rerun()
+            
+    # כפתור סיום (מופיע רק בשאלה 25)
+    if st.session_state.loaded_count == 25:
+        if st.button("סיים בחינה והגש"):
+            st.session_state.finished_exams.append(st.session_state.current_exam_col)
+            st.session_state.step = 'results'
+            st.rerun()
 
-elif st.session_state.step == "exam":
-    run_exam()
-    navigation_footer()
+elif st.session_state.step == 'results':
+    # משיכת כל 25 השאלות לבדיקה סופית
+    full_exam = prepare_question_data(df, st.session_state.current_exam_col, 0, 25)
+    show_results_summary(st.session_state.answers, full_exam)
+    
+    if st.button("חזרה למסך הראשי"):
+        # איפוס נתונים לסבב הבא
+        for key in ['current_exam_col', 'answers', 'loaded_count']:
+            if key in st.session_state: del st.session_state[key]
+        st.session_state.step = 'instructions'
+        st.rerun()
