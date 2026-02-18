@@ -5,51 +5,53 @@ import streamlit as st
 from logic import ExamLogic
 import time
 
-# הגדרות דף
-st.set_page_config(page_title="מערכת בחינות - C-01", layout="wide")
-
-# אתחול לוגיקה ב-Session State
+# אתחול רכיבים
 if 'logic' not in st.session_state:
     st.session_state.logic = ExamLogic()
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = None
+if 'user_answers' not in st.session_state:
+    st.session_state.user_answers = {}
 
 logic = st.session_state.logic
 
-# --- פונקציות עזר ---
-def handle_interaction():
-    if not logic.timer_started:
-        logic.timer_started = True
+def trigger_start():
+    if st.session_state.start_time is None:
+        st.session_state.start_time = time.time()
 
-# --- סיידבר ---
-st.sidebar.title("ניווט שאלות")
-for i in range(1, 11):
-    is_answered = i in logic.user_answers
-    label = f"שאלה {i} {'✅' if is_answered else '❌'}"
-    if st.sidebar.button(label, key=f"side_{i}"):
-        handle_interaction()
-        st.session_state.current_q = i
-
-# --- אזור טיימר ---
-timer_placeholder = st.empty()
-if logic.timer_started:
-    timer_placeholder.metric("זמן נותר", logic.get_time_string())
-
-# --- גוף המבחן - תיקון הגרשיים ---
+# תצוגה
 st.title('מבחן נדל"ן - C-01')
 
-# --- כפתורי ניווט (הבא מימין, הקודם משמאל) ---
-col_prev, col_spacer, col_next = st.columns([1, 2, 1])
+# סיידבר - ניווט וצביעה
+st.sidebar.header("ניווט שאלות")
+for i in range(1, 11):
+    answered = i in st.session_state.user_answers
+    # צביעת רקע ב-Streamlit מתבצעת ע"י כפתורים/אינדיקטורים
+    label = f"שאלה {i} {'✅' if answered else '❌'}"
+    if st.sidebar.button(label, key=f"q_{i}"):
+        trigger_start()
+        st.session_state.current_question = i
 
-with col_prev:
+# אזור טיימר
+timer_place = st.empty()
+if st.session_state.start_time:
+    elapsed = time.time() - st.session_state.start_time
+    remaining = max(0, logic.total_seconds - int(elapsed))
+    timer_place.metric("זמן נותר", logic.get_time_string(remaining))
+else:
+    timer_place.metric("זמן נותר", "02:00:00 (קפוא)")
+
+# ניווט תחתון - [הקודם] משמאל, [הבא] מימין
+st.write("---")
+c1, c2, c3 = st.columns([1, 2, 1])
+with c1:
     if st.button("< הקודם"):
-        handle_interaction()
-        st.rerun()
-
-with col_next:
+        trigger_start()
+with c3:
     if st.button("הבא >"):
-        handle_interaction()
-        st.rerun()
+        trigger_start()
 
-# עדכון אוטומטי של הטיימר
-if logic.timer_started:
+# מנגנון רענון לטיימר
+if st.session_state.start_time:
     time.sleep(1)
     st.rerun()
