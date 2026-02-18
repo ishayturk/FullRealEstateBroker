@@ -1,25 +1,21 @@
-# ui_utils.py | Version: C-03
+# ID: C-01
+# Based on Anchor: 1218-G2
+# UI: Instructions screen, responsive navigation, and full-text feedback
+
 import streamlit as st
+import time
 
-def apply_design():
-    # יישור לימין של הכותרת הראשית
-    st.markdown("<h1 style='text-align: right;'>🏠 מתווך בקליק</h1>", unsafe_allow_html=True)
-    
-    st.markdown("""
-    <style>
-        * { direction: rtl; text-align: right; }
-        .stButton>button { 
-            width: 100%; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            height: 3.5em; 
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-def navigation_footer():
-    st.write("---")
-    if st.button("🏠 חזרה לתפריט ראשי"):
-        st.session_state.lesson_txt = ""
-        st.session_state.step = "menu"
+def show_instructions():
+    st.title("📄 הוראות לבחינה")
+    st.write("זמן: 90 דקות | שאלות: 25 | ניווט חופשי")
+    st.divider()
+    if st.button("עבור/י למבחן 🚀"):
+        st.session_state.start_time = time.time()
+        st.session_state.step = 'exam'
         st.rerun()
+
+def render_navigation(total_loaded, is_mobile):
+    if is_mobile:
+        with st.sidebar.expander("🔍 ניווט", expanded=False):
+            return st.radio("שאלה:", range(1, total_loaded + 1), horizontal=True)
+    return st.sidebar.radio("ניווט שאלות:", range(1, total_loaded + 1))
