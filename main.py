@@ -11,10 +11,10 @@ def apply_ui_fix():
             .main .block-container {
                 max-width: 800px !important;
                 margin: 0 auto !important;
-                padding-top: 80px !important;
+                padding-top: 50px !important;
                 direction: rtl !important;
             }
-            .stMarkdown, .stRadio label, p, div, h1, h2, h3, h4 {
+            .stMarkdown, .stRadio label, p, div, h1, h2, h3, h4, .stCheckbox {
                 direction: rtl !important;
                 text-align: right !important;
             }
@@ -22,7 +22,7 @@ def apply_ui_fix():
                 position: fixed; top: 0; left: 0; width: 100%; background: white;
                 color: #ff4b4b; text-align: center; padding: 15px;
                 font-size: 24px; font-weight: bold; border-bottom: 2px solid #ff4b4b;
-                z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                z-index: 9999;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -33,7 +33,7 @@ def main():
     exam_data = manager.load_exam()
     
     if not exam_data:
-        st.error("לא נמצאו קבצי מבחן בתיקיית exams_data")
+        # הודעת השגיאה כבר תגיע מ-logic.py
         return
 
     if 'current_step' not in st.session_state: st.session_state.current_step = 'intro'
@@ -55,10 +55,25 @@ def render_timer():
     st.markdown(f'<div class="custom-timer">זמן נותר: {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
 def render_intro(exam_data):
-    st.markdown("# דף כניסה לבחינה")
     info = exam_data.get('exam_info', {})
-    st.info(info.get('instructions', "אנא ענה על כל השאלות."))
-    if st.button("התחל בחינה 🚀"):
+    questions = exam_data.get('questions', [])
+    
+    # הצגת שם הקובץ לביקורת (בקטן)
+    st.caption(f"קובץ נטען: {st.session_state.get('current_filename', 'unknown')}")
+    
+    st.markdown(f"# {info.get('title', 'בחינת רישוי למתווכים')}")
+    st.markdown(f"### מועד: {info.get('date', 'לא צוין')}")
+    st.write("---")
+    
+    st.markdown("#### הנחיות לבחינה:")
+    st.write(info.get('instructions', "יש לענות על כל השאלות."))
+    st.write(f"**מספר שאלות:** {len(questions)}")
+    st.write("**זמן מוקצב:** 90 דקות")
+    
+    st.write("")
+    agreed = st.checkbox("קראתי את ההנחיות ואני מוכן להתחיל בבחינה")
+    
+    if st.button("התחל בחינה 🚀", disabled=not agreed):
         st.session_state.current_step = 'exam'
         st.session_state.start_time = time.time()
         st.rerun()
@@ -69,10 +84,17 @@ def render_exam_flow(exam_data):
     q = questions[st.session_state.q_idx]
     
     st.markdown(f"**שאלה {st.session_state.q_idx + 1} מתוך {len(questions)}**")
-    st.markdown(f"**{q['q']}**")
+    st.markdown(f"#### {q['q']}")
     
     current_ans = st.session_state.answers.get(str(q['id']), None)
-    choice = st.radio("", q['o'], index=None if current_ans is None else q['o'].index(current_ans), key=f"rad_{q['id']}")
+    
+    # מציאת האינדקס של התשובה השמורה
+    try:
+        def_idx = q['o'].index(current_ans) if current_ans in q['o'] else None
+    except:
+        def_idx = None
+
+    choice = st.radio("", q['o'], index=def_idx, key=f"rad_{q['id']}")
     
     if choice:
         st.session_state.answers[str(q['id'])] = choice
@@ -84,7 +106,6 @@ def render_exam_flow(exam_data):
                 st.session_state.q_idx -= 1
                 st.rerun()
     with col3:
-        # אכיפה: כפתור הבא פעיל רק אם נבחרה תשובה
         is_answered = str(q['id']) in st.session_state.answers
         if st.session_state.q_idx < len(questions) - 1:
             if st.button("הבא ➡️", disabled=not is_answered):
@@ -96,24 +117,28 @@ def render_exam_flow(exam_data):
                 st.rerun()
 
 def render_feedback(exam_data):
-    st.markdown("## סיכום בחינה")
+    st.markdown("## סיכום בחינה ומשוב")
     correct_count = 0
+    
     for q in exam_data['questions']:
         user_ans = st.session_state.answers.get(str(q['id']), "לא נענתה")
         is_correct = user_ans.strip().startswith(q['a'].strip())
+        
         if is_correct:
             correct_count += 1
-            st.markdown(f"<div style='text-align: right;'><b>שאלה {q['id']}: ✅</b></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: right;'>שאלה {q['id']}: ✅</div>", unsafe_allow_html=True)
         else:
-            st.markdown(f"<div style='text-align: right; border-bottom: 1px solid #eee; padding: 10px;'>", unsafe_allow_html=True)
-            st.markdown(f"<b>שאלה {q['id']}: ❌</b>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: right; border-bottom: 1px solid #eee; padding: 15px 0;'>", unsafe_allow_html=True)
+            st.markdown(f"**שאלה {q['id']}: ❌**")
             st.markdown(f"<p style='color:red;'>ענית: {user_ans}</p>", unsafe_allow_html=True)
             correct_text = next((opt for opt in q['o'] if opt.strip().startswith(q['a'].strip())), q['a'])
             st.markdown(f"<p style='color:green;'>התשובה הנכונה: {correct_text}</p>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
+
+    score = int((correct_count/len(exam_data['questions']))*100)
+    st.markdown(f"### ציון סופי: {score}")
     
-    st.subheader(f"ציון סופי: {int((correct_count/len(exam_data['questions']))*100)}")
-    if st.button("מבחן חדש"):
+    if st.button("למבחן נוסף"):
         st.session_state.clear()
         st.rerun()
 
