@@ -1,74 +1,106 @@
-# Version: C-07 | ID: C-01 | Anchor: 1218-G2
 import streamlit as st
 import pandas as pd
 import time
 import os
-from exam_logic import prepare_question_data
-from ui_utils import render_rtl, show_results
 
-render_rtl()
+# הגדרות תצוגה ויישור לימין
+st.set_page_config(page_title="מערכת בחינות", layout="wide")
+st.markdown("""
+    <style>
+    .stApp { direction: rtl; text-align: right; }
+    div[role="radiogroup"] { direction: rtl; text-align: right; }
+    section[data-testid="stSidebar"] > div { direction: rtl; text-align: right; }
+    p, span, h1, h2, h3, h4, label { text-align: right; direction: rtl; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# אתחול משתני מצב
+# פונקציות ליבה
+def load_data():
+    if os.path.exists("exam_data.csv"):
+        return pd.read_csv("exam_data.csv")
+    else:
+        st.error("קובץ exam_data.csv לא נמצא")
+        st.stop()
+
+# אתחול משתני סשן
 if 'page' not in st.session_state: st.session_state.page = 'home'
 if 'answers' not in st.session_state: st.session_state.answers = {}
 if 'loaded_count' not in st.session_state: st.session_state.loaded_count = 5
 
-@st.cache_data
-def load_data():
-    if not os.path.exists("exam_data.csv"):
-        # יצירת שלד קובץ אם חסר
-        df = pd.DataFrame({
-            'שאלה': [f'שאלה {i}' for i in range(1, 26)],
-            'תשובה_נכונה': ["1"] * 25
-        })
-        df.to_csv("exam_data.csv", index=False, encoding='utf-8-sig')
-    return pd.read_csv("exam_data.csv")
-
 df = load_data()
 
-# --- ניווט דפים ---
-
+# --- דף הבית ---
 if st.session_state.page == 'home':
-    c1, c2 = st.columns(2)
-    if c1.button("📚 לימודים", use_container_width=True):
-        st.session_state.page = 'study'; st.rerun()
-    if c2.button("📝 בחינה", use_container_width=True):
-        st.session_state.page = 'exam'; st.session_state.start_time = time.time(); st.rerun()
+    col1, col2 = st.columns(2)
+    if col1.button("📚 לימודים", use_container_width=True):
+        st.session_state.page = 'study'
+        st.rerun()
+    if col2.button("📝 בחינה", use_container_width=True):
+        st.session_state.page = 'exam'
+        st.session_state.start_time = time.time()
+        st.rerun()
 
+# --- דף לימודים ---
 elif st.session_state.page == 'study':
-    if st.button("🔙 חזור"): st.session_state.page = 'home'; st.rerun()
-    st.write("כאן יופיע תוכן הלימודים.")
+    if st.button("🔙 חזרה"):
+        st.session_state.page = 'home'
+        st.rerun()
+    st.write("תוכן לימודי")
 
+# --- דף בחינה ---
 elif st.session_state.page == 'exam':
-    # לוגיקת בחינה חסכונית (Lazy Loading)
-    if 'exam_data' not in st.session_state:
-        st.session_state.exam_data = prepare_question_data(df, 0, 25)
-
     # טיימר
-    rem = max(0, 180 - (time.time() - st.session_state.start_time))
-    st.sidebar.metric("⏳ זמן", f"{int(rem//60):02d}:{int(rem%60):02d}")
-    if rem <= 0: st.session_state.page = 'results'; st.rerun()
+    elapsed = time.time() - st.session_state.start_time
+    remaining = max(0, 180 - elapsed)
+    st.sidebar.metric("⏳ זמן נותר", f"{int(remaining//60):02d}:{int(remaining%60):02d}")
+    
+    if remaining <= 0:
+        st.session_state.page = 'results'
+        st.rerun()
 
-    # בחירת שאלה מתוך מה שנטען
-    q_num = st.sidebar.radio("שאלה:", range(1, st.session_state.loaded_count + 1))
+    # ניווט שאלות
+    q_num = st.sidebar.radio("בחר שאלה:", range(1, st.session_state.loaded_count + 1))
     q_idx = q_num - 1
     
-    st.write(st.session_state.exam_data[q_idx]['שאלה'])
-    ans = st.radio("בחר:", ["1","2","3","4"], 
-                   index=["1","2","3","4"].index(st.session_state.answers[q_idx]) if q_idx in st.session_state.answers else None,
+    # הצגת השאלה מהקובץ
+    question_row = df.iloc[q_idx]
+    st.subheader(f"שאלה {q_num}")
+    st.write(question_row['שאלה'])
+    
+    # תשובות
+    options = ["1", "2", "3", "4"]
+    current_selection = st.session_state.answers.get(q_idx, None)
+    
+    ans = st.radio("תשובה:", options, 
+                   index=options.index(current_selection) if current_selection in options else None,
                    key=f"q_{q_idx}")
     st.session_state.answers[q_idx] = ans
 
-    # שליטה בטעינה
+    # שליטה בטעינה וסיום
+    st.divider()
     if st.session_state.loaded_count < 25 and q_num == st.session_state.loaded_count:
-        if st.button("טען עוד 5 שאלות"):
-            st.session_state.loaded_count += 5; st.rerun()
+        if st.button("טען 5 שאלות נוספות"):
+            st.session_state.loaded_count += 5
+            st.rerun()
     elif st.session_state.loaded_count == 25:
         if st.button("סיום והגשה"):
-            st.session_state.page = 'results'; st.rerun()
+            st.session_state.page = 'results'
+            st.rerun()
 
+# --- דף תוצאות ---
 elif st.session_state.page == 'results':
-    show_results(st.session_state.answers, st.session_state.exam_data)
-    if st.button("🔙 חזרה לתפריט"):
-        for k in ['exam_data', 'answers', 'loaded_count']: st.session_state.pop(k, None)
-        st.session_state.page = 'home'; st.rerun()
+    st.title("תוצאות הבחינה")
+    score = 0
+    for i in range(25):
+        user_ans = str(st.session_state.answers.get(i, "")).strip()
+        correct_ans = str(df.iloc[i]['תשובה_נכונה']).strip()
+        if user_ans == correct_ans:
+            score += 1
+    
+    st.metric("ציון סופי", f"{int((score/25)*100)}/100")
+    
+    if st.button("חזרה לתפריט"):
+        for k in ['answers', 'loaded_count', 'start_time']: 
+            st.session_state.pop(k, None)
+        st.session_state.page = 'home'
+        st.rerun()
