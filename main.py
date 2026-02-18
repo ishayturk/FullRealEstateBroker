@@ -91,5 +91,4 @@ elif st.session_state.step == "menu":
     with c2:
         if st.button("⏱️ גש/י למבחן"): st.info("בקרוב!")
 
-elif st.session_state.step == "study":
-    sel = st.selectbox("ב
+elif st
