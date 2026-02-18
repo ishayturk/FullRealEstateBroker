@@ -1,117 +1,105 @@
 import streamlit as st
 import time
-import logic
+from logic import ExamManager
 
-# גרסה: D-3000 | עוגן לוגי: C-01
-def init_exam():
-    """איפוס מלא של נתוני הבחינה בסשן"""
-    st.session_state.user = "חיים חיים"
-    st.session_state.current_q = 0
-    st.session_state.answers = {}
-    st.session_state.start_time = None
-    st.session_state.exam_finished = False
-    st.session_state.questions = logic.get_real_exam_data()
-
+# גרסה: D-3000
 def main():
-    # הגדרות יישור לימין (RTL) ועיצוב
+    # יישור לימין (RTL)
     st.markdown("""
         <style>
             .stApp { direction: rtl; text-align: right; }
-            h1, h2, h3, p, span, label { text-align: right !important; direction: rtl !important; }
+            h1, h2, h3, p, span, label { text-align: right !important; }
             div[role="radiogroup"] { direction: rtl; text-align: right; }
             .timer-box { 
-                padding: 10px; border-radius: 5px; background: #fee; 
-                color: #e74c3c; font-weight: bold; text-align: center; 
-                font-size: 24px; border: 1px solid #e74c3c; margin-bottom: 20px;
+                padding: 15px; border-radius: 8px; background: #fff5f5; 
+                color: #d9534f; font-weight: bold; text-align: center; 
+                font-size: 28px; border: 2px solid #d9534f; margin-bottom: 20px;
             }
         </style>
     """, unsafe_allow_html=True)
 
-    # בדיקה אם צריך לאתחל את הסשן
-    if 'questions' not in st.session_state:
-        init_exam()
+    # שימוש בבנאי (Constructor) דרך ה-session_state
+    if 'exam' not in st.session_state:
+        st.session_state.exam = ExamManager()
+        st.session_state.current_q = 0
+        st.session_state.answers = {}
+        st.session_state.start_time = None
+        st.session_state.finished = False
 
-    # מסך פתיחה (Lobby)
+    # 1. מסך התחלה
     if st.session_state.start_time is None:
-        st.header("מבחן תיווך - בדיקת מערכת")
-        st.info("מבנה הבחינה: 10 שאלות | זמן: 2 דקות")
-        if st.button("התחל בחינה"):
+        st.header("מערכת בחינות - רשם המתווכים")
+        if st.button("התחל בחינה עכשיו"):
             st.session_state.start_time = time.time()
             st.rerun()
         return
 
-    # ניהול זמן
-    remaining = logic.manage_exam_timer(st.session_state.start_time)
+    # 2. ניהול והצגת הטיימר (החלק שחזר)
+    remaining = st.session_state.exam.get_remaining_time(st.session_state.start_time)
     
-    # הצגת טיימר בפריים הראשי
-    if not st.session_state.exam_finished:
+    if not st.session_state.finished:
         mins, secs = divmod(int(remaining), 60)
-        st.markdown(f'<div class="timer-box">זמן נותר: {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+        timer_placeholder = st.empty()
+        timer_placeholder.markdown(f'<div class="timer-box">⏳ זמן נותר: {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
 
-    # בדיקת סיום זמן
-    if remaining <= 0 and not st.session_state.exam_finished:
-        st.session_state.exam_finished = True
-        st.rerun()
+        if remaining <= 0:
+            st.session_state.finished = True
+            st.rerun()
 
-    # גוף הבחינה
-    if not st.session_state.exam_finished:
-        q_idx = st.session_state.current_q
-        q = st.session_state.questions[q_idx]
+    # 3. גוף המבחן
+    if not st.session_state.finished:
+        idx = st.session_state.current_q
+        q = st.session_state.exam.questions[idx]
 
-        st.subheader(f"שאלה {q_idx + 1}")
-        st.markdown(f"**{q['question']}**")
+        st.subheader(f"שאלה {idx + 1}")
+        st.write(q["question"])
         
-        # בחירת תשובה
-        choice = st.radio(
-            "בחר תשובה:", 
-            q["options"], 
-            index=q["options"].index(st.session_state.answers[q_idx]) if q_idx in st.session_state.answers else None,
-            key=f"q_{q_idx}",
-            label_visibility="collapsed"
-        )
+        choice = st.radio("תשובות:", q["options"], 
+                          index=q["options"].index(st.session_state.answers[idx]) if idx in st.session_state.answers else None,
+                          key=f"r_{idx}", label_visibility="collapsed")
         
         if choice:
-            st.session_state.answers[q_idx] = choice
+            st.session_state.answers[idx] = choice
 
-        # ניווט
+        # ניווט (חסימה לפי C-01)
         col1, col2 = st.columns(2)
-        with col2: # כפתור קודם בימין
-            if q_idx > 0:
+        with col2:
+            if idx > 0:
                 if st.button("שאלה קודמת"):
                     st.session_state.current_q -= 1
                     st.rerun()
-        with col1: # כפתור הבא בשמאל
-            can_next = logic.can_move_next(q_idx, st.session_state.answers)
-            if q_idx < len(st.session_state.questions) - 1:
+        with col1:
+            can_next = st.session_state.exam.can_navigate_next(idx, st.session_state.answers)
+            if idx < 9:
                 if st.button("שאלה הבאה", disabled=not can_next):
                     st.session_state.current_q += 1
                     st.rerun()
             else:
                 if st.button("סיים בחינה", disabled=not can_next):
-                    st.session_state.exam_finished = True
+                    st.session_state.finished = True
                     st.rerun()
 
-        # ריענון אוטומטי של הטיימר
+        # ריענון אוטומטי של השעון
         time.sleep(1)
         st.rerun()
-    
-    # מסך משוב (Feedback)
+
+    # 4. משוב סופי
     else:
-        score, feedback = logic.process_results(st.session_state.questions, st.session_state.answers)
-        st.header(f"{st.session_state.user} :: תוצאות בחינה רשם המתווכים")
-        st.success(f"ציון סופי: {score} מתוך {len(st.session_state.questions)}")
+        score, feedback = st.session_state.exam.process_results(st.session_state.answers)
+        st.header(f"{st.session_state.exam.user_name} :: תוצאות בחינה רשם המתווכים")
+        st.success(f"הציון שלך: {score} מתוך 10")
         
-        for item in feedback:
-            with st.expander(f"שאלה {item['id']} - {item['status']}", expanded=(item['status'] == "X")):
-                if item['status'] == "V":
+        for f in feedback:
+            with st.expander(f"שאלה {f['id']} - {f['status']}", expanded=(f['status'] == "X")):
+                if f['status'] == "V":
                     st.write("V")
                 else:
-                    st.write(f"התשובה שלך: {item['user_ans']}")
-                    st.write("") # שורת רווח לפי C-01
-                    st.write(f"**התשובה הנכונה:** {item['correct_ans']}")
+                    st.write(f"התשובה שלך: {f['user_ans']}")
+                    st.write("") # רווח
+                    st.write(f"**התשובה הנכונה:** {f['correct_ans']}")
         
-        if st.button("מבחן חדש (איפוס)"):
-            del st.session_state.questions
+        if st.button("מבחן חדש"):
+            del st.session_state.exam
             st.rerun()
 
 if __name__ == "__main__":
