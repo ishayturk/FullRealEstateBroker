@@ -1,60 +1,60 @@
 # FILE-ID: C-01
 # VERSION-ANCHOR: 1218-G2
-# DESCRIPTION: Main UI for Exam System - Navigation Fix (Next on Right) & Active Sidebar
+# DESCRIPTION: Streamlit UI conversion to fix ImportError (No Tkinter on Cloud)
 
-import tkinter as tk
+import streamlit as st
 from logic import ExamLogic
+import time
 
-class ExamApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("מערכת בחינות - C-01")
-        self.root.geometry("800x600")
-        
-        # אתחול הלוגיקה (מזהה עוגן 1218-G2)
-        self.logic = ExamLogic()
-        
-        # בניית הממשק
-        self.setup_ui()
+# הגדרות דף
+st.set_page_config(page_title="מערכת בחינות - C-01", layout="wide")
 
-    def setup_ui(self):
-        # 1. אזור הטיימר (בראש המסך)
-        self.timer_label = tk.Label(self.root, text=self.logic.get_time_string(), font=("Arial", 20, "bold"))
-        self.timer_label.pack(pady=15)
+# אתחול לוגיקה ב-Session State כדי שלא תתאפס בכל ריצה
+if 'logic' not in st.session_state:
+    st.session_state.logic = ExamLogic()
 
-        # 2. קונטיינר ראשי (תוכן + סיידבר)
-        self.main_container = tk.Frame(self.root)
-        self.main_container.pack(fill="both", expand=True, padx=20)
+logic = st.session_state.logic
 
-        # סיידבר ניווט (צד ימין)
-        self.sidebar_frame = tk.Frame(self.main_container, width=150, bg="#f8f9fa")
-        self.sidebar_frame.pack(side="right", fill="y", padx=10)
-        
-        # אזור הצגת השאלה (מרכז)
-        self.question_frame = tk.Frame(self.main_container, bg="white", relief="groove", bd=2)
-        self.question_frame.pack(side="right", fill="both", expand=True)
-        
-        self.question_text = tk.Label(self.question_frame, text="מוכן להתחיל? לחץ על אחד הכפתורים.", 
-                                     font=("Arial", 14), wraplength=500, bg="white")
-        self.question_text.pack(pady=100)
+# --- פונקציות עזר ---
+def handle_interaction():
+    if not logic.timer_started:
+        logic.timer_started = True
 
-        # 3. כפתורי ניווט (תחתית המסך - ממורכזים)
-        self.setup_navigation()
-        
-        # רינדור ראשוני של הסיידבר
-        self.update_sidebar()
+# --- סיידבר (סימון שאלות שלא נענו) ---
+st.sidebar.title("ניווט שאלות")
+for i in range(1, 11):
+    is_answered = i in logic.user_answers
+    label = f"שאלה {i} {'✅' if is_answered else '❌'}"
+    if st.sidebar.button(label, key=f"side_{i}"):
+        handle_interaction()
+        st.session_state.current_q = i
 
-    def setup_navigation(self):
-        """יצירת כפתורי הבא/הקודם כשהם ממורכזים והבא בצד ימין"""
-        nav_container = tk.Frame(self.root)
-        nav_container.pack(side="bottom", fill="x", pady=20)
-        
-        center_nav = tk.Frame(nav_container)
-        center_nav.pack(expand=True)
+# --- אזור טיימר ---
+timer_placeholder = st.empty()
+if logic.timer_started:
+    # הצגת זמן (ב-Streamlit הטיימר רץ קצת אחרת)
+    timer_placeholder.metric("זמן נותר", logic.get_time_string())
 
-        # כפתור 'הקודם' - בצד שמאל (נארז ראשון)
-        self.btn_prev = tk.Button(center_nav, text="< הקודם", width=15, height=2, 
-                                 command=self.handle_prev, bg="#e0e0e0")
-        self.btn_prev.pack(side="left", padx=20)
+# --- גוף המבחן ---
+st.title("מבחן נדל"ן - C-01")
 
-        # כפתור 'הבא' - בצד ימין (נארז
+# --- כפתורי ניווט (הבא מימין, הקודם משמאל) ---
+col_prev, col_spacer, col_next = st.columns([1, 2, 1])
+
+with col_prev:
+    if st.button("< הקודם"):
+        handle_interaction()
+        # לוגיקה לקודם
+        st.rerun()
+
+with col_next:
+    if st.button("הבא >"):
+        handle_interaction()
+        # לוגיקה להבא
+        st.rerun()
+
+# עדכון אוטומי של הטיימר אם הוא הופעל
+if logic.timer_started:
+    time.sleep(1)
+    # כאן אפשר להוסיף לוגיקת הפחתת זמן ב-logic
+    st.rerun()
