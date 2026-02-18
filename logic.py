@@ -8,23 +8,21 @@ import random
 class ExamManager:
     def __init__(self):
         self.data_folder = "exams_data"
-        # וידוא שקיים נתיב לתיקייה
-        if not os.path.exists(self.data_folder):
-            os.makedirs(self.data_folder)
 
     def load_exam(self):
-        # לוגיקה: לא להטעין פעמיים באותו סשן (מניעת כפילות)
+        # מניעת טעינה כפולה באותו סשן
         if 'full_exam_data' in st.session_state and st.session_state.full_exam_data:
             return st.session_state.full_exam_data
             
         try:
-            # קריאת כל הקבצים
-            files = [f for f in os.listdir(self.data_folder) if f.lower().endswith('.json')]
+            if not os.path.exists(self.data_folder):
+                return None
             
+            files = [f for f in os.listdir(self.data_folder) if f.lower().endswith('.json')]
             if not files:
                 return None
                 
-            # בחירת קובץ אקראי
+            # בחירת מבחן אקראי מהקבצים שהעלית
             chosen_file = random.choice(files)
             path = os.path.join(self.data_folder, chosen_file)
             
@@ -32,5 +30,5 @@ class ExamManager:
                 data = json.load(f)
                 st.session_state.full_exam_data = data
                 return data
-        except Exception as e:
+        except Exception:
             return None
