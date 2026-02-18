@@ -7,6 +7,7 @@ def main():
     st.markdown("""
         <style>
             .stApp { direction: rtl; text-align: right; }
+            [data-testid="stSidebar"] { direction: rtl; text-align: right; }
             h1, h2, h3, p, span, label, div { text-align: right !important; direction: rtl !important; }
             div[role="radiogroup"] { direction: rtl; text-align: right; }
             .timer-box { 
@@ -14,6 +15,7 @@ def main():
                 color: #d9534f; font-weight: bold; text-align: center; 
                 font-size: 24px; border: 1px solid #d9534f; margin-bottom: 20px;
             }
+            .stButton > button { width: 100%; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -24,34 +26,36 @@ def main():
         st.session_state.start_time = None
         st.session_state.finished = False
 
-    # מסך פתיחה
+    # --- Sidebar: ניווט בין שאלות ---
+    if st.session_state.start_time is not None and not st.session_state.finished:
+        st.sidebar.title("ניווט שאלות")
+        for i in range(len(st.session_state.exam.questions)):
+            # חסימת ניווט קדימה לפי C-01 (חובה לענות על הנוכחית כדי לפתוח את הבאה)
+            is_disabled = i > len(st.session_state.answers)
+            if st.sidebar.button(f"שאלה {i+1}", key=f"nav_{i}", disabled=is_disabled):
+                st.session_state.current_q = i
+                st.rerun()
+
+    # --- פריים מרכזי ---
     if st.session_state.start_time is None:
-        st.header("מבחן רשם המתווכים - פתיחה")
+        st.header("בחינת רשם המתווכים - פתיחה")
         if st.button("התחל בחינה"):
             st.session_state.start_time = time.time()
             st.rerun()
         return
 
-    # טיימר בפריים הראשי (לא בסידבר)
     remaining = st.session_state.exam.get_remaining_time(st.session_state.start_time)
+    
     if not st.session_state.finished:
+        # טיימר במרכז
         mins, secs = divmod(int(remaining), 60)
         st.markdown(f'<div class="timer-box">זמן נותר: {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+        
         if remaining <= 0:
             st.session_state.finished = True
             st.rerun()
 
-    # --- ניווט ב-Sidebar ---
-    st.sidebar.title("ניווט שאלות")
-    for i in range(len(st.session_state.exam.questions)):
-        # חסימת ניווט קדימה לשאלות שלא הגענו אליהן/ענינו עליהן
-        is_disabled = i > len(st.session_state.answers)
-        if st.sidebar.button(f"שאלה {i+1}", key=f"nav_{i}", disabled=is_disabled):
-            st.session_state.current_q = i
-            st.rerun()
-
-    # --- גוף השאלה ---
-    if not st.session_state.finished:
+        # תצוגת שאלה
         idx = st.session_state.current_q
         q = st.session_state.exam.questions[idx]
         st.subheader(f"שאלה {idx + 1}")
@@ -74,14 +78,15 @@ def main():
                 if st.button("שאלה הבאה ➡️", disabled=idx not in st.session_state.answers):
                     st.session_state.current_q += 1
                     st.rerun()
-            elif st.button("סיים בחינה 🏁", disabled=idx not in st.session_state.answers):
-                st.session_state.finished = True
-                st.rerun()
+            else:
+                if st.button("סיים בחינה 🏁", disabled=idx not in st.session_state.answers):
+                    st.session_state.finished = True
+                    st.rerun()
 
         time.sleep(1)
         st.rerun()
 
-    # --- משוב סופי ---
+    # --- משוב ---
     else:
         score, feedback = st.session_state.exam.process_results(st.session_state.answers)
         st.header(f"{st.session_state.exam.user_name} :: תוצאות בחינה רשם המתווכים")
