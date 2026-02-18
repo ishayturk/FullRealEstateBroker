@@ -4,16 +4,14 @@ import logic
 
 # גרסה: D-3000
 def main():
-    # הגדרת יישור לימין (RTL) ותיקוני תצוגה
+    # הזרקת CSS ליישור לימין (RTL)
     st.markdown("""
         <style>
             .stApp { direction: rtl; text-align: right; }
             div[role="radiogroup"] { direction: rtl; text-align: right; }
-            div.stButton > button { width: 100%; }
         </style>
     """, unsafe_allow_html=True)
 
-    # וידוא קיום משתמש ושאלות בסשן
     if 'user' not in st.session_state:
         st.session_state.user = "חיים חיים"
         st.session_state.current_q = 0
@@ -22,7 +20,7 @@ def main():
         st.session_state.exam_finished = False
         st.session_state.questions = logic.get_real_exam_data()
 
-    # מסך פתיחה (Lobby)
+    # שלב 1: מסך פתיחה
     if st.session_state.start_time is None:
         st.subheader("מבחן תיווך - בדיקת מערכת")
         if st.button("התחל בחינה"):
@@ -30,7 +28,7 @@ def main():
             st.rerun()
         return
 
-    # ניהול זמן
+    # שלב 2: ניהול זמן
     remaining = logic.manage_exam_timer(st.session_state.start_time)
     mins, secs = divmod(int(remaining), 60)
     st.sidebar.metric("זמן נותר", f"{mins:02d}:{secs:02d}")
@@ -39,7 +37,7 @@ def main():
         st.session_state.exam_finished = True
         st.rerun()
 
-    # גוף הבחינה
+    # שלב 3: הצגת השאלות
     if not st.session_state.exam_finished:
         q_idx = st.session_state.current_q
         q = st.session_state.questions[q_idx]
@@ -71,13 +69,13 @@ def main():
                     st.session_state.exam_finished = True
                     st.rerun()
     
-    # משוב (Feedback) - כאן מופיע השם האמיתי בכותרת
+    # שלב 4: משוב (כאן העדכון לבקשתך)
     else:
         score, feedback = logic.process_results(st.session_state.questions, st.session_state.answers)
         
-        # כותרת לפי הדרישה: שם משתמש :: תוצאות בחינה רשם המתווכים
+        # כותרת מעודכנת
         st.header(f"{st.session_state.user} :: תוצאות בחינה רשם המתווכים")
-        st.success(f"הציון שלך: {score} מתוך {len(st.session_state.questions)}")
+        st.success(f"ציון סופי: {score} מתוך {len(st.session_state.questions)}")
         
         for item in feedback:
             with st.expander(f"שאלה {item['id']} - {item['status']}", expanded=(item['status'] == "X")):
@@ -85,7 +83,7 @@ def main():
                     st.write("V")
                 else:
                     st.write(f"התשובה שלך: {item['user_ans']}")
-                    st.write("") # שורת רווח לפי C-01
+                    st.write("") # רווח לפי C-01
                     st.write(f"**התשובה הנכונה:** {item['correct_ans']}")
 
 if __name__ == "__main__":
