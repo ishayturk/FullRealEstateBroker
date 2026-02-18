@@ -1,29 +1,14 @@
 import streamlit as st
 from logic import ExamManager
+import time
 
-# הגדרות דף ויישור RTL מלא כולל כותרות
-st.set_page_config(page_title="בחינת מתווכים C-01", layout="wide")
+# הגדרות יישור RTL מלאות כולל כותרות
+st.set_page_config(layout="wide")
 st.markdown("""
     <style>
-    /* יישור כל האפליקציה לימין */
-    .stApp {
-        direction: rtl;
-        text-align: right;
-    }
-    /* תיקון ספציפי לכותרות (h1, h2, h3) */
-    h1, h2, h3, h4, p, span, label {
-        direction: rtl !important;
-        text-align: right !important;
-    }
-    /* הצמדת רכיבי טפסים לימין */
-    div[data-testid="stCheckbox"], div[data-testid="stRadio"] {
-        direction: rtl;
-        text-align: right;
-    }
-    /* סידבר */
-    section[data-testid="stSidebar"] {
-        direction: rtl;
-    }
+    .stApp, h1, h2, h3, p, label, div, button { direction: rtl !important; text-align: right !important; }
+    div[data-testid="stSidebarNav"] { direction: rtl; }
+    .stButton button { width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -31,59 +16,54 @@ exam = ExamManager(total_questions=10, time_limit=120)
 
 # --- דף מעבר (Lobby) ---
 if 'exam_started' not in st.session_state:
-    st.title("מערכת בחינת מתווכים") # כעת יהיה בימין
-    st.subheader("הנחיות לבחינה:")
-    st.write("1. בחינה זו כוללת 10 שאלות.")
-    st.write("2. לרשותך 120 שניות בדיוק.")
+    st.title("מערכת בחינת המתווכים - C-01")
     
-    # טעינת 5 ראשונות ברקע (בלובי)
+    # טעינת 5 ראשונות ברקע בזמן שהמשתמש בדף המעבר
     if not st.session_state.questions:
-        exam.fetch_questions_batch(0)
+        with st.spinner("מושך 5 שאלות ראשונות מהמאגר..."):
+            exam.fetch_batch(0)
+    
+    st.subheader("הנחיות:")
+    st.write(f"בחינה מקורית מהאתר. {exam.total_questions} שאלות, {exam.time_limit} שניות.")
     
     confirm = st.checkbox("קראתי את ההנחיות ממשיך לכל הבחינה")
     if st.button("התחל בחינה", disabled=not confirm):
-        exam.start_exam()
+        st.session_state.exam_started = True
+        st.session_state.start_time = time.time()
+        st.session_state.current_idx = 0
         st.rerun()
 
-# --- מהלך הבחינה ---
+# --- מסך הבחינה ---
 else:
     curr = st.session_state.current_idx
-    # טעינת 5 הבאות ברקע כשהמשתמש בשאלה הראשונה
-    if curr == 0 and len(st.session_state.questions) < 10:
-        exam.fetch_questions_batch(5)
     
-    # Sidebar - גריד מספרים
-    st.sidebar.title("ניווט בשאלות")
+    # טעינה מדורגת ברקע לפי הלוגיקה:
+    if curr == 0 and len(st.session_state.questions) < 10:
+        exam.fetch_batch(5) # טוען את 6-10 ברקע כשהמשתמש בשאלה 1
+    
+    # Sidebar - מספרים בלבד בגריד
+    st.sidebar.title("ניווט")
     cols = st.sidebar.columns(3)
     for i in range(exam.total_questions):
-        col_idx = i % 3
-        # חסימת כפתור אם השאלה טרם נטענה או אם לא ענו על הקודמת
-        is_disabled = i > len(st.session_state.questions) - 1 or (i > 0 and (i-1) not in st.session_state.answers)
-        if cols[col_idx].button(f"{i+1}", key=f"btn_{i}", disabled=is_disabled):
-            st.session_state.current_idx = i
-            st.rerun()
+        with cols[i % 3]:
+            # כפתור נעול אם השאלה טרם נטענה או אם לא ענו על הקודמת
+            locked = i >= len(st.session_state.questions) or (i > 0 and i-1 not in st.session_state.answers)
+            if st.button(f"{i+1}", key=f"n_{i}", disabled=locked):
+                st.session_state.current_idx = i
+                st.rerun()
 
-    # הצגת השאלה (לא ריקה)
-    if curr < len(st.session_state.questions):
+    # הצגת השאלה
+    if not exam.is_time_up():
         q = st.session_state.questions[curr]
         st.subheader(f"שאלה {q['id']}")
         st.write(q['question'])
         
-        choice = st.radio("בחר את התשובה הנכונה:", q['options'], key=f"q_{curr}", index=None)
-        
-        if choice:
-            st.session_state.answers[curr] = choice
-
-        col_prev, col_next = st.columns(2)
-        if curr > 0:
-            if col_prev.button("הקודם"):
-                st.session_state.current_idx -= 1
-                st.rerun()
-        
-        if curr < exam.total_questions - 1:
-            if col_next.button("הבא", disabled=curr not in st.session_state.answers):
-                st.session_state.current_idx += 1
-                st.rerun()
-        else:
-            if st.button("סיים בחינה"):
-                st.success("הבחינה הסתיימה בהצלחה!")
+        ans = st.radio("בחר תשובה:", q['options'], key=f"r_{curr}", index=None)
+        if ans:
+            st.session_state.answers[curr] = ans
+            
+        if st.button("הבא", disabled=curr not in st.session_state.answers or curr == exam.total_questions-1):
+            st.session_state.current_idx += 1
+            st.rerun()
+    else:
+        st.error("הזמן נגמר!")
