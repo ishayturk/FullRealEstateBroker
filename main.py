@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1218
+# Project: מתווך בקליק | Version: 1218-G3
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -8,34 +8,52 @@ import json, re, time
 st.set_page_config(page_title="מתווך בקליק", layout="wide")
 st.markdown('<div id="top"></div>', unsafe_allow_html=True)
 
+# עיצוב CSS בשורות קצרות
 st.markdown("""
 <style>
     * { direction: rtl; text-align: right; }
-    .stButton>button { width: 100%; border-radius: 8px; font-weight: bold; height: 3em; }
+    .stButton>button { 
+        width: 100%; border-radius: 8px; 
+        font-weight: bold; height: 3em; 
+    }
     .top-link { 
         display: inline-block; width: 100%; text-align: center; 
-        border-radius: 8px; text-decoration: none; border: 1px solid #d1d5db;
-        font-weight: bold; height: 2.8em; line-height: 2.8em;
-        background-color: transparent; color: inherit;
-    }
-    .v-footer {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.1);
-        font-size: 0.7em;
-        margin-top: 50px;
-        width: 100%;
+        border-radius: 8px; text-decoration: none; 
+        border: 1px solid #d1d5db; font-weight: bold; 
+        height: 2.8em; line-height: 2.8em;
     }
 </style>
 """, unsafe_allow_html=True)
 
+# סילבוס במבנה אנכי למניעת שורות ארוכות
 SYLLABUS = {
-    "חוק המתווכים": ["רישוי והגבלות", "הגינות וזהירות", "הזמנה ובלעדיות", "פעולות שאינן תיווך"],
-    "תקנות המתווכים": ["פרטי הזמנה 1997", "פעולות שיווק 2004", "דמי תיווך"],
-    "חוק המקרקעין": ["בעלות וזכויות", "בתים משותפים", "עסקאות נוגדות", "הערות אזהרה", "שכירות וזיקה"],
-    "חוק המכר (דירות)": ["מפרט וגילוי", "בדק ואחריות", "איחור במסירה", "הבטחת השקעות"],
-    "חוק החוזים": ["כריתת חוזה", "פגמים בחוזה", "תרופות והפרה", "ביטול והשבה"],
-    "חוק התכנון והבנייה": ["היתרים ושימוש חורג", "היטל השבחה", "תוכניות מתאר", "מוסדות התכנון"],
-    "חוק מיסוי מקרקעין": ["מס שבח (חישוב ופטורים)", "מס רכישה", "הקלות לדירת מגורים", "שווי שוק"],
+    "חוק המתווכים": [
+        "רישוי והגבלות", "הגינות וזהירות", 
+        "הזמנה ובלעדיות", "פעולות שאינן תיווך"
+    ],
+    "תקנות המתווכים": [
+        "פרטי הזמנה 1997", "פעולות שיווק 2004", "דמי תיווך"
+    ],
+    "חוק המקרקעין": [
+        "בעלות וזכויות", "בתים משותפים", "עסקאות נוגדות", 
+        "הערות אזהרה", "שכירות וזיקה"
+    ],
+    "חוק המכר (דירות)": [
+        "מפרט וגילוי", "בדק ואחריות", 
+        "איחור במסירה", "הבטחת השקעות"
+    ],
+    "חוק החוזים": [
+        "כריתת חוזה", "פגמים בחוזה", 
+        "תרופות והפרה", "ביטול והשבה"
+    ],
+    "חוק התכנון והבנייה": [
+        "היתרים ושימוש חורג", "היטל השבחה", 
+        "תוכניות מתאר", "מוסדות התכנון"
+    ],
+    "חוק מיסוי מקרקעין": [
+        "מס שבח (חישוב ופטורים)", "מס רכישה", 
+        "הקלות לדירת מגורים", "שווי שוק"
+    ],
     "חוק הגנת הצרכן": ["ביטול עסקה", "הטעיה בפרסום"],
     "דיני ירושה": ["סדר הירושה", "צוואות"],
     "חוק העונשין": ["עבירות מרמה וזיוף"]
@@ -45,19 +63,17 @@ def fetch_q_ai(topic):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        p = f"צור שאלה אמריקאית קשה על {topic} למבחן המתווכים. החזר JSON: {{'q':'','options':['','','',''],'correct':'','explain':''}}"
+        p = f"צור שאלה אמריקאית קשה על {topic}. החזר JSON תקני בלבד."
         res = m.generate_content(p).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match: return json.loads(match.group())
     except: return None
-    return None
 
 def stream_ai_lesson(p):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        full_p = p + " כתוב שיעור הכנה למבחן המתווכים. פרט סעיפי חוק ודוגמאות."
-        response = m.generate_content(full_p, stream=True)
+        response = m.generate_content(p, stream=True)
         placeholder = st.empty()
         full_text = ""
         for chunk in response:
@@ -67,10 +83,12 @@ def stream_ai_lesson(p):
         return full_text
     except: return "⚠️ תקלה."
 
+# אתחול במבנה קריא
 if "step" not in st.session_state:
     st.session_state.update({
-        "user": None, "step": "login", "q_count": 0, "quiz_active": False, 
-        "show_ans": False, "lesson_txt": "", "q_data": None, 
+        "user": None, "step": "login", "q_count": 0, 
+        "quiz_active": False, "show_ans": False, 
+        "lesson_txt": "", "q_data": None, 
         "correct_answers": 0, "quiz_finished": False
     })
 
@@ -95,8 +113,9 @@ elif st.session_state.step == "study":
     sel = st.selectbox("בחר נושא:", ["בחר..."] + list(SYLLABUS.keys()))
     if sel != "בחר..." and st.button("טען נושא"):
         st.session_state.update({
-            "selected_topic": sel, "step": "lesson_run", "quiz_active": False, 
-            "lesson_txt": "", "q_data": None, "q_count": 0, 
+            "selected_topic": sel, "step": "lesson_run", 
+            "quiz_active": False, "lesson_txt": "", 
+            "q_data": None, "q_count": 0, 
             "correct_answers": 0, "quiz_finished": False
         })
         st.rerun()
@@ -112,50 +131,8 @@ elif st.session_state.step == "lesson_run":
     for i, s in enumerate(subs):
         if sub_cols[i].button(s, key=f"sub_{i}"):
             st.session_state.update({
-                "current_sub": s, "lesson_txt": "LOADING", "quiz_active": False, 
-                "q_data": None, "quiz_finished": False, "q_count": 0, "correct_answers": 0
+                "current_sub": s, "lesson_txt": "LOADING", 
+                "quiz_active": False, "q_data": None, 
+                "quiz_finished": False, "q_count": 0, "correct_answers": 0
             })
             st.rerun()
-    
-    st.write("")
-    if st.button(f"📝 התחל שאלון בחינה עצמית על {topic}", type="primary"):
-        with st.spinner("מכין שאלות..."):
-            res = fetch_q_ai(topic)
-            if res:
-                st.session_state.update({
-                    "current_sub": f"שאלון: {topic}", "lesson_txt": "QUIZ_ONLY",
-                    "q_data": res, "q_count": 1, "quiz_active": True, 
-                    "show_ans": False, "correct_answers": 0, "quiz_finished": False
-                })
-                st.rerun()
-
-    st.markdown("---")
-    if st.session_state.get("lesson_txt") == "LOADING":
-        st.session_state.lesson_txt = stream_ai_lesson(f"שיעור על {st.session_state.current_sub} בחוק {topic}")
-        st.rerun()
-    elif st.session_state.get("lesson_txt") and st.session_state.lesson_txt != "QUIZ_ONLY":
-        st.subheader(st.session_state.current_sub)
-        st.markdown(st.session_state.lesson_txt)
-
-    if st.session_state.quiz_finished:
-        st.header("🏆 סיכום")
-        st.subheader(f"ענית נכון על {st.session_state.correct_answers} מתוך 10.")
-        if st.button("📝 נסה שוב"):
-            st.session_state.update({"quiz_active": False, "quiz_finished": False, "q_count": 0, "correct_answers": 0})
-            st.rerun()
-
-    elif st.session_state.quiz_active and st.session_state.q_data:
-        q = st.session_state.q_data
-        st.subheader(f"📝 שאלה {st.session_state.q_count} מתוך 10")
-        ans = st.radio(q['q'], q['options'], index=None, key=f"q_{st.session_state.q_count}")
-        if st.session_state.show_ans:
-            if ans == q['correct']: st.success("נכון!")
-            else: st.error(f"טעות. הנכון: {q['correct']}")
-            st.info(f"הסבר: {q['explain']}")
-
-    f_cols = st.columns([2, 2, 2])
-    with f_cols[0]:
-        if st.session_state.quiz_active and not st.session_state.quiz_finished:
-            if not st.session_state.show_ans:
-                if st.button("✅ בדוק"):
-                    if st.session_state.get(f"q_{st.session_state.q_count}") == st.session_state
