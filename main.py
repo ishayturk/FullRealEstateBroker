@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1217
+# Project: מתווך בקליק | Version: 1218
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -45,7 +45,7 @@ def fetch_q_ai(topic):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        p = f"צור שאלה אמריקאית קשה על {topic} למבחן המתווכים בישראל. החזר אך ורק JSON תקני: {{'q':'','options':['','','',''],'correct':'','explain':''}}"
+        p = f"צור שאלה אמריקאית קשה על {topic} למבחן המתווכים. החזר JSON: {{'q':'','options':['','','',''],'correct':'','explain':''}}"
         res = m.generate_content(p).text
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match: return json.loads(match.group())
@@ -56,7 +56,7 @@ def stream_ai_lesson(p):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         m = genai.GenerativeModel('gemini-2.0-flash')
-        full_p = p + " כתוב שיעור הכנה מעמיק למבחן המתווכים. פרט סעיפי חוק, מספרים ודוגמאות. ללא כותרות."
+        full_p = p + " כתוב שיעור הכנה למבחן המתווכים. פרט סעיפי חוק ודוגמאות."
         response = m.generate_content(full_p, stream=True)
         placeholder = st.empty()
         full_text = ""
@@ -65,7 +65,7 @@ def stream_ai_lesson(p):
             placeholder.markdown(full_text + "▌")
         placeholder.markdown(full_text)
         return full_text
-    except: return "⚠️ תקלה בטעינה."
+    except: return "⚠️ תקלה."
 
 if "step" not in st.session_state:
     st.session_state.update({
@@ -85,13 +85,11 @@ if st.session_state.step == "login":
 elif st.session_state.step == "menu":
     st.subheader(f"👤 שלום, {st.session_state.user}")
     c1, c2 = st.columns(2)
-    with c1:
-        if st.button("📚 לימוד לפי נושאים"):
-            st.session_state.step = "study"
-            st.rerun()
-    with c2:
-        if st.button("⏱️ גש/י למבחן"):
-            st.info("בקרוב!")
+    if c1.button("📚 לימוד לפי נושאים"):
+        st.session_state.step = "study"
+        st.rerun()
+    if c2.button("⏱️ גש/י למבחן"):
+        st.info("בקרוב!")
 
 elif st.session_state.step == "study":
     sel = st.selectbox("בחר נושא:", ["בחר..."] + list(SYLLABUS.keys()))
@@ -109,7 +107,6 @@ elif st.session_state.step == "study":
 elif st.session_state.step == "lesson_run":
     topic = st.session_state.selected_topic
     st.header(f"📖 {topic}")
-    
     subs = SYLLABUS.get(topic, [])
     sub_cols = st.columns(len(subs))
     for i, s in enumerate(subs):
@@ -133,9 +130,7 @@ elif st.session_state.step == "lesson_run":
                 st.rerun()
 
     st.markdown("---")
-
     if st.session_state.get("lesson_txt") == "LOADING":
-        st.subheader(st.session_state.current_sub)
         st.session_state.lesson_txt = stream_ai_lesson(f"שיעור על {st.session_state.current_sub} בחוק {topic}")
         st.rerun()
     elif st.session_state.get("lesson_txt") and st.session_state.lesson_txt != "QUIZ_ONLY":
@@ -143,10 +138,9 @@ elif st.session_state.step == "lesson_run":
         st.markdown(st.session_state.lesson_txt)
 
     if st.session_state.quiz_finished:
-        st.balloons()
-        st.header("🏆 סיכום השאלון")
-        st.subheader(f"ענית נכון על {st.session_state.correct_answers} מתוך 10 שאלות.")
-        if st.button("📝 נסה שאלון חדש"):
+        st.header("🏆 סיכום")
+        st.subheader(f"ענית נכון על {st.session_state.correct_answers} מתוך 10.")
+        if st.button("📝 נסה שוב"):
             st.session_state.update({"quiz_active": False, "quiz_finished": False, "q_count": 0, "correct_answers": 0})
             st.rerun()
 
@@ -154,7 +148,14 @@ elif st.session_state.step == "lesson_run":
         q = st.session_state.q_data
         st.subheader(f"📝 שאלה {st.session_state.q_count} מתוך 10")
         ans = st.radio(q['q'], q['options'], index=None, key=f"q_{st.session_state.q_count}")
-        
         if st.session_state.show_ans:
             if ans == q['correct']: st.success("נכון!")
-            else: st.error(f"טעות. הת
+            else: st.error(f"טעות. הנכון: {q['correct']}")
+            st.info(f"הסבר: {q['explain']}")
+
+    f_cols = st.columns([2, 2, 2])
+    with f_cols[0]:
+        if st.session_state.quiz_active and not st.session_state.quiz_finished:
+            if not st.session_state.show_ans:
+                if st.button("✅ בדוק"):
+                    if st.session_state.get(f"q_{st.session_state.q_count}") == st.session_state
