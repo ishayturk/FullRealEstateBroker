@@ -1,9 +1,9 @@
-# ui_utils.py | Version: C-02
+# ui_utils.py | Version: C-03
 import streamlit as st
 
 def apply_design():
-    # כותרת ולוגו קבועים שמופיעים בכל דף
-    st.markdown("<h1 style='text-align: center;'>🏠 מתווך בקליק</h1>", unsafe_allow_html=True)
+    # יישור לימין של הכותרת הראשית
+    st.markdown("<h1 style='text-align: right;'>🏠 מתווך בקליק</h1>", unsafe_allow_html=True)
     
     st.markdown("""
     <style>
@@ -20,7 +20,6 @@ def apply_design():
 def navigation_footer():
     st.write("---")
     if st.button("🏠 חזרה לתפריט ראשי"):
-        # ניקוי זיכרון זמני של שיעור
         st.session_state.lesson_txt = ""
         st.session_state.step = "menu"
         st.rerun()
