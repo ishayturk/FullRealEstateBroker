@@ -9,7 +9,7 @@ class ExamManager:
         self.questions = self._get_real_broker_questions()
 
     def _get_real_broker_questions(self):
-        # שאלות אמיתיות ממאגר רשם המתווכים (עוגן 1213)
+        """שאלות אמיתיות מעוגן 1213"""
         return [
             {"question": "מהו התנאי לקבלת רישיון תיווך לפי חוק המתווכים?", "options": ["אזרח ישראל", "מלאו לו 18 שנים", "לא הוכרז כפושט רגל", "כל התשובות נכונות"], "correct": "כל התשובות נכונות"},
             {"question": "האם מתווך רשאי לסייע בעריכת מסמך בעל אופי משפטי?", "options": ["כן, אם זה זיכרון דברים", "רק אם הוא מוסמך כעורך דין", "לא, חל איסור מוחלט בחוק", "כן, במידה והלקוח ביקש"], "correct": "לא, חל איסור מוחלט בחוק"},
@@ -25,7 +25,8 @@ class ExamManager:
 
     def get_remaining_time(self, start_time):
         if start_time is None: return self.limit_seconds
-        return max(0, self.limit_seconds - (time.time() - start_time))
+        elapsed = time.time() - start_time
+        return max(0, self.limit_seconds - elapsed)
 
     def process_results(self, user_answers):
         score = 0
