@@ -1,57 +1,49 @@
 # ==========================================
 # Project Identification: C-01
 # File: main.py
-# Version: 1218-G10 (Stable RTL & Sidebar)
+# Version: 1218-G11 (Zero-CSS Version)
 # Anchor: 1213
 # ==========================================
 
 import streamlit as st
 import time
-import logic  # מוודא שקובץ logic.py המעודכן נמצא באותה תיקייה
+import logic 
 
-# הגדרת פריסה רחבה כדי שה-Sidebar ייראה טוב במחשב
-st.set_page_config(layout="wide", page_title="Ludo Exam System")
-
-# הזרקת RTL בשורה אחת למניעת TypeError ב-Python 3.13
-st.markdown('<style>html,body,[data-testid="stAppViewContainer"]{direction:rtl;text-align:right!important;}[data-testid="stSidebar"]{direction:rtl;text-align:right!important;}.stMarkdown,p,label,h1,h2,h3,h4{text-align:right!important;direction:rtl!important;}</style>', unsafe_content_html=True)
+# הגדרה רגילה לחלוטין - בלי CSS, בלי Markdown בעייתי
+st.set_page_config(layout="wide")
 
 def main():
-    # משיכת שם משתמש מה-URL (ירושה מהאפליקציה הראשית)
+    # משיכת שם משתמש בצורה בטוחה
     user_name = st.query_params.get("user", "אורח")
 
     if 'page_state' not in st.session_state:
         st.session_state.page_state = 'intro'
 
-    # --- ניהול מצבי דפים ---
-    
-    if st.session_state.page_state == 'intro':
-        st.header(f"שלום {user_name}")
-        st.subheader("ברוכים הבאים לבחינה (C-01)")
-        st.write("בחינה זו כוללת 10 שאלות. זמן מוקצב: דקה אחת.")
-        
-        st.divider()
-        if st.checkbox("קראתי ואני מאשר/ת את תנאי הבחינה"):
-            if st.button("התחל בחינה עכשיו", type="primary"):
-                logic.init_exam()
-                st.session_state.start_time = time.time()
-                st.session_state.page_state = 'exam'
-                st.rerun()
+    # --- שימוש בעמודות כדי לדחוף טקסט לימין באופן טבעי ---
+    col_empty, col_content = st.columns([1, 4]) 
 
-    elif st.session_state.page_state == 'exam':
-        # קריאה למנוע הבחינה מ-logic.py (כולל ה-Sidebar)
-        logic.run_exam()
+    with col_content:
+        if st.session_state.page_state == 'intro':
+            st.header(f"שלום {user_name}")
+            st.write("בחינה: 10 שאלות | דקה אחת")
+            
+            if st.checkbox("אני מאשר/ת את התנאים"):
+                if st.button("התחל בחינה"):
+                    logic.init_exam()
+                    st.session_state.start_time = time.time()
+                    st.session_state.page_state = 'exam'
+                    st.rerun()
 
-    elif st.session_state.page_state == 'results':
-        # דף סיכום ותוצאות
-        logic.calculate_results()
-        if st.button("חזרה לדף הבית"):
-            st.session_state.page_state = 'intro'
-            st.rerun()
+        elif st.session_state.page_state == 'exam':
+            logic.run_exam()
 
-    # כפתור יציאה קבוע בתחתית ה-Sidebar (יופיע בכל השלבים)
+        elif st.session_state.page_state == 'results':
+            logic.calculate_results()
+
+    # Sidebar פשוט ללא עיצוב
     with st.sidebar:
-        st.divider()
-        if st.button("🔙 יציאה/סגירה"):
+        st.title("Ludo Exam")
+        if st.button("יציאה"):
             st.session_state.page_state = 'intro'
             st.rerun()
 
