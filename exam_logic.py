@@ -1,24 +1,18 @@
-# ID: C-01
+# Version: C-02
 # Based on Anchor: 1218-G2
+# Description: Logic for unique exam selection and sequential question loading.
 
-import streamlit as st
-import time
+import pandas as pd
+import random
 
-def show_instructions():
-    """מסך פתיחה עם המלל המדויק שביקשת"""
-    st.title("📄 הוראות לבחינה")
-    st.markdown("""
-    ### הנחיות:
-    * **מספר שאלות:** 25.
-    * **זמן בחינה:** 3 דקות (לצורך הבדיקה).
-    * **ניווט:** ניתן לעבור בין שאלות ולשנות תשובות.
-    
-    ---
-    **שימו לב: המבחן יתחיל ברגע שתלחץ/י על כפתור התחל בחינה**
-    """)
-    
-    # שינוי שם הכפתור לפי בקשתך
-    if st.button("התחל בחינה"):
-        st.session_state.start_time = time.time()
-        st.session_state.step = 'exam'
-        st.rerun()
+def get_unique_exam(df, finished_exams):
+    """מגריל מועד בחינה שטרם בוצע בסשן הנוכחי"""
+    all_exams = [col for col in df.columns if col not in ['שאלה', 'תשובה_נכונה']]
+    available = [e for e in all_exams if e not in finished_exams]
+    return random.choice(available) if available else None
+
+def prepare_question_data(df, exam_col, start_idx, end_idx):
+    """מושך טווח שאלות ספציפי מתוך ה-Dataframe"""
+    actual_end = min(end_idx, 25)
+    batch = df.iloc[start_idx:actual_end][['שאלה', exam_col, 'תשובה_נכונה']]
+    return batch.to_dict('records')
