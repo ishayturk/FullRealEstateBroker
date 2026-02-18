@@ -1,4 +1,4 @@
-# main.py | Version: C-04
+# main.py | Version: C-05
 import streamlit as st
 from app_data import TOPICS_DATA
 from ai_logic import stream_ai_lesson
@@ -41,13 +41,16 @@ elif st.session_state.step == "study":
     selected_main = st.selectbox("בחר נושא:", ["בחר נושא"] + list(TOPICS_DATA.keys()))
     
     if selected_main != "בחר נושא":
-        # כפתורים בשורות מלאות (אחד מתחת לשני)
-        for sub in TOPICS_DATA[selected_main]:
-            if st.button(sub, key=f"btn_{sub}"):
-                st.session_state.current_sub = sub
-                st.session_state.step = "lesson_run"
-                st.session_state.lesson_txt = "LOADING"
-                st.rerun()
+        subs = TOPICS_DATA[selected_main]
+        # יצירת שורה של עמודות עבור תתי הנושאים (עד 4)
+        cols = st.columns(len(subs))
+        for i, sub in enumerate(subs):
+            with cols[i]:
+                if st.button(sub, key=f"btn_{sub}"):
+                    st.session_state.current_sub = sub
+                    st.session_state.step = "lesson_run"
+                    st.session_state.lesson_txt = "LOADING"
+                    st.rerun()
     navigation_footer()
 
 elif st.session_state.step == "lesson_run":
