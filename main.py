@@ -1,103 +1,73 @@
 # ==========================================
 # Project Identification: C-01
-# Version: 1218-G4 (Stable Production)
+# File: main.py
+# Version: 1218-G9 (Clean Frame for Integration)
 # Anchor: 1213
 # ==========================================
 
 import streamlit as st
 import time
-import random
 
-# הגדרות דף בסיסיות
-st.set_page_config(page_title="Ludo - 1213", layout="centered")
+# הגדרות דף - ללא כותרת (Title) בדפדפן כדי לא להתנגש
+st.set_page_config(layout="centered")
 
-# פונקציה ליישור לימין (CSS פשוט ויציב)
+# הסתרת רכיבי Streamlit מובנים (תפריט, Footer מקורי, Header) כדי שייראה כחלק מהאפליקציה הראשית
 st.markdown("""
     <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     .stApp { direction: RTL; text-align: right; }
+    
+    /* תפריט תחתון נקי */
+    .footer-nav {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        z-index: 100;
+    }
     </style>
     """, unsafe_content_html=True)
 
 def main():
-    # אתחול משתני סשן
+    # --- משיכת שם המשתמש מה-URL (ירושה מהאפליקציה הראשית) ---
+    query_params = st.query_params
+    user_name = query_params.get("user", "אורח")
+
+    # ניהול מצבי דפים
     if 'page_state' not in st.session_state:
-        st.session_state.page_state = 'home'
-    if 'data_loaded' not in st.session_state:
-        st.session_state.data_loaded = False
+        st.session_state.page_state = 'intro'
 
-    # כותרת לודו קבועה
-    st.title("Ludo - 1213")
-    st.divider()
-
-    # --- תצוגת דף הבית (מסך כניסה) ---
-    if st.session_state.page_state == 'home':
-        col1, col2 = st.columns(2)
+    # גוף האפליקציה (בלי כותרת גדולה, רק התוכן הרלוונטי)
+    
+    if st.session_state.page_state == 'intro':
+        st.write(f"שלום **{user_name}**, אנא קרא/י את ההנחיות:")
+        st.info("בחינה זו כוללת 25 שאלות. זמן מוקצב: 3 דקות. בסיום הזמן המערכת תינעל.")
         
-        with col1:
-            if st.button("📚 כניסה ללימודים", use_container_width=True):
-                st.session_state.page_state = 'study'
-                st.rerun()
-        
-        with col2:
-            if st.button("📝 כניסה לבחינה", use_container_width=True):
-                st.session_state.page_state = 'exam_intro'
-                st.rerun()
-
-    # --- דף פתיח לבחינה (C-01) ---
-    elif st.session_state.page_state == 'exam_intro':
-        st.header("הנחיות לבחינה")
-        st.write("בזמן קריאת ההנחיות, המערכת מכינה את השאלות בזיכרון (עד 10 שניות).")
-        st.info("זמן בחינה: 3 דקות (גרסת בדיקה).")
-
-        # טעינה שקטה ברקע
-        if not st.session_state.data_loaded:
-            with st.spinner("טוען נתונים מהמאגר..."):
-                time.sleep(4) # הדמיית משיכה והגרלה מ-1213
-                st.session_state.data_loaded = True
-                st.rerun()
-
-        # הצ'ק-בוקס
-        agreed = st.checkbox("קראתי ואישרתי את ההנחיות")
-
-        # כפתור מעבר - מופיע ופעיל רק לפי התנאים
-        if agreed:
-            if st.button("עבור/י לבחינה", disabled=not st.session_state.data_ready if 'data_ready' in st.session_state else not st.session_state.data_loaded):
-                st.session_state.page_state = 'exam_active'
+        # צ'ק-בוקס חובה
+        if st.checkbox("קראתי ואני מאשר/ת"):
+            if st.button("התחל בחינה"):
+                st.session_state.page_state = 'exam'
                 st.session_state.start_time = time.time()
                 st.rerun()
-        
-        if st.button("חזרה"):
-            st.session_state.page_state = 'home'
-            st.rerun()
 
-    # --- מצב לימודים (חלק לימודי מקורי) ---
-    elif st.session_state.page_state == 'study':
-        st.header("מצב לימודים")
-        st.write("כאן מופיע התוכן הלימודי המקורי של 1213.")
-        if st.button("חזרה לתפריט"):
-            st.session_state.page_state = 'home'
-            st.rerun()
+    elif st.session_state.page_state == 'exam':
+        # כאן תבוא הפריסה של ה-5 שאלות (logic.py)
+        st.write("---") 
+        st.write("כאן רצות השאלות...")
 
-    # --- מצב בחינה פעיל ---
-    elif st.session_state.page_state == 'exam_active':
-        elapsed = time.time() - st.session_state.start_time
-        remaining = max(0, 180 - int(elapsed)) # 3 דקות = 180 שניות
-        
-        st.subheader(f"זמן נותר: {remaining} שניות")
-        
-        if remaining > 0:
-            st.write("הבחינה בשימוש. מציג 5 שאלות ראשונות...")
-            # כאן תרוץ לוגיקת השאלות
-            if st.button("סיום בחינה"):
-                st.session_state.page_state = 'home'
-                st.session_state.data_loaded = False
-                st.rerun()
-        else:
-            st.error("הזמן הסתיים. הבחינה נעולה.")
-            if st.button("חזרה לתפריט"):
-                st.session_state.page_state = 'home'
-                st.session_state.data_loaded = False
-                st.rerun()
+    # --- תפריט ניווט תחתון קבוע ---
+    st.markdown("---") # רווח ויזואלי מהתוכן
+    col_back = st.columns([1, 1, 1])
+    with col_back[1]: # כפתור ממורכז למטה
+        if st.button("🔙 חזרה לתפריט"):
+            st.session_state.page_state = 'intro'
+            st.rerun()
 
 if __name__ == "__main__":
     main()
