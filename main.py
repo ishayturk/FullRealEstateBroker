@@ -1,5 +1,5 @@
 # ==========================================
-# Project: מתווך בקליק | Version: 1216
+# Project: מתווך בקליק | Version: 1217
 # ==========================================
 import streamlit as st
 import google.generativeai as genai
@@ -157,9 +157,4 @@ elif st.session_state.step == "lesson_run":
         
         if st.session_state.show_ans:
             if ans == q['correct']: st.success("נכון!")
-            else: st.error(f"טעות. התשובה הנכונה היא: {q['correct']}")
-            st.info(f"הסבר: {q['explain']}")
-
-    st.write("")
-    f_cols = st.columns([2.5, 2, 1.5, 3])
-    with f
+            else: st.error(f"טעות. הת
