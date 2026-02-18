@@ -4,41 +4,60 @@ from logic import ExamManager
 
 # ID: C-01 | Anchor: 1213 | Version: 1218-G2
 
-def apply_ui_fix():
-    st.markdown("""
+def apply_ui_fix(remaining_seconds):
+    # הזרקת CSS ו-JS לטיימר שרץ עצמאית בדפדפן
+    st.markdown(f"""
         <style>
-            [data-testid="stSidebar"], [data-testid="stSidebarNav"], header {display: none !important;}
+            [data-testid="stSidebar"], [data-testid="stSidebarNav"], header {{display: none !important;}}
             
-            .main .block-container {
+            .main .block-container {{
                 max-width: 800px !important;
                 margin: 0 auto !important;
                 padding-top: 80px !important;
                 direction: rtl !important;
                 text-align: right !important;
-            }
+            }}
 
-            .stMarkdown p, .stRadio label {
+            .stMarkdown p, .stRadio label {{
                 font-size: 1.1rem !important;
                 line-height: 1.6 !important;
-            }
+            }}
 
-            [data-testid="stWidgetLabel"] { text-align: right !important; width: 100%; }
-            [data-testid="stRadio"] { direction: rtl !important; }
+            [data-testid="stWidgetLabel"] {{ text-align: right !important; width: 100%; }}
+            [data-testid="stRadio"] {{ direction: rtl !important; }}
 
-            .custom-timer {
+            .custom-timer {{
                 position: fixed; top: 0; left: 0; width: 100%; background: white;
                 color: #ff4b4b; text-align: center; padding: 15px;
                 font-size: 24px; font-weight: bold; border-bottom: 2px solid #ff4b4b;
                 z-index: 9999; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
+            }}
         </style>
+        
+        <div class="custom-timer" id="timer-display">טוען זמן...</div>
+        
+        <script>
+            var seconds = {remaining_seconds};
+            function updateTimer() {{
+                var m = Math.floor(seconds / 60);
+                var s = seconds % 60;
+                document.getElementById('timer-display').innerHTML = 
+                    'זמן נותר: ' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                if (seconds > 0) {{
+                    seconds--;
+                    setTimeout(updateTimer, 1000);
+                }} else {{
+                    document.getElementById('timer-display').innerHTML = 'הזמן תם!';
+                }}
+            }}
+            updateTimer();
+        </script>
     """, unsafe_allow_html=True)
 
 def main():
-    apply_ui_fix()
     manager = ExamManager()
-    
     exam_data = manager.load_exam()
+    
     if not exam_data:
         st.error("מחפש מבחן... וודא שיש קבצי JSON בתיקייה.")
         return
@@ -47,10 +66,11 @@ def main():
     if 'answers' not in st.session_state: st.session_state.answers = {}
     if 'start_time' not in st.session_state: st.session_state.start_time = time.time()
 
+    # חישוב זמן נותר להזרקה ל-JS
     elapsed = time.time() - st.session_state.start_time
-    remaining = max(0, (90 * 60) - elapsed)
-    mins, secs = divmod(int(remaining), 60)
-    st.markdown(f'<div class="custom-timer">זמן נותר: {mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+    remaining = int(max(0, (90 * 60) - elapsed))
+    
+    apply_ui_fix(remaining)
 
     if st.session_state.current_step == 'exam':
         render_exam_flow(exam_data)
@@ -105,20 +125,13 @@ def render_feedback(exam_data):
         
         if is_correct:
             correct_count += 1
-            color = "green"
-            icon = "✅"
+            st.markdown(f"**שאלה {q['id']}: ✅**")
         else:
-            color = "red"
-            icon = "❌"
-            
-        with st.container():
             st.markdown("---")
-            st.markdown(f"#### שאלה {q['id']} {icon}")
-            st.write(f"**השאלה:** {q['q']}")
-            st.markdown(f"<p style='color:{color}; text-align:right;'><b>מה שענית:</b> {user_ans}</p>", unsafe_allow_html=True)
-            if not is_correct:
-                correct_text = next((opt for opt in q['o'] if opt.strip().startswith(q['a'].strip())), q['a'])
-                st.markdown(f"<p style='color:green; text-align:right;'><b>התשובה הנכונה:</b> {correct_text}</p>", unsafe_allow_html=True)
+            st.markdown(f"**שאלה {q['id']}: ❌**")
+            st.markdown(f"<p style='color:red; text-align:right;'><b>מה שענית:</b> {user_ans}</p>", unsafe_allow_html=True)
+            correct_text = next((opt for opt in q['o'] if opt.strip().startswith(q['a'].strip())), q['a'])
+            st.markdown(f"<p style='color:green; text-align:right;'><b>התשובה הנכונה:</b> {correct_text}</p>", unsafe_allow_html=True)
 
     score = int((correct_count/len(exam_data['questions']))*100)
     st.subheader(f"הציון הסופי שלך: {score}")
