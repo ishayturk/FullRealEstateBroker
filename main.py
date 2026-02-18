@@ -1,4 +1,4 @@
-# main.py | Version: C-02
+# main.py | Version: C-03
 import streamlit as st
 from app_data import TOPICS_DATA
 from ai_logic import stream_ai_lesson
@@ -6,6 +6,9 @@ from ui_utils import apply_design, navigation_footer
 from exam_logic import run_exam
 
 st.set_page_config(page_title="מתווך בקליק", layout="centered")
+
+# הפעלת העיצוב והכותרת הקבועה
+apply_design()
 
 if "step" not in st.session_state:
     st.session_state.update({
@@ -15,10 +18,7 @@ if "step" not in st.session_state:
         "current_sub": None
     })
 
-apply_design()
-
 if st.session_state.step == "login":
-    st.title("🏠 מתווך בקליק")
     user_input = st.text_input("שם מלא:")
     if st.button("כניסה") and user_input:
         st.session_state.user = user_input
@@ -28,25 +28,32 @@ if st.session_state.step == "login":
 elif st.session_state.step == "menu":
     st.header(f"שלום, {st.session_state.user}")
     
-    if st.button("📚 לימוד לפי נושאים"):
-        st.session_state.step = "study"
-        st.rerun()
-        
-    if st.button("📝 מבחן תרגול מקיף"):
-        st.session_state.step = "exam"
-        st.rerun()
+    # סידור כפתורים ב-2 עמודות כמו ב-1213
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📚 לימוד לפי נושאים"):
+            st.session_state.step = "study"
+            st.rerun()
+    with col2:
+        if st.button("📝 מבחן תרגול מקיף"):
+            st.session_state.step = "exam"
+            st.rerun()
 
 elif st.session_state.step == "study":
     st.subheader("בחר נושא לימוד")
     selected_main = st.selectbox("בחר נושא:", ["בחר נושא"] + list(TOPICS_DATA.keys()))
     
     if selected_main != "בחר נושא":
-        for sub in TOPICS_DATA[selected_main]:
-            if st.button(sub, key=f"btn_{sub}"):
-                st.session_state.current_sub = sub
-                st.session_state.step = "lesson_run"
-                st.session_state.lesson_txt = "LOADING"
-                st.rerun()
+        # תצוגת תתי-נושאים ב-2 עמודות
+        subs = TOPICS_DATA[selected_main]
+        cols = st.columns(2)
+        for i, sub in enumerate(subs):
+            with cols[i % 2]:
+                if st.button(sub, key=f"btn_{sub}"):
+                    st.session_state.current_sub = sub
+                    st.session_state.step = "lesson_run"
+                    st.session_state.lesson_txt = "LOADING"
+                    st.rerun()
     navigation_footer()
 
 elif st.session_state.step == "lesson_run":
