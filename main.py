@@ -4,9 +4,16 @@ import logic
 
 # גרסה: D-3000
 def main():
-    st.set_page_config(page_title="מערכת בחינות - D-3000", layout="wide")
+    # הגדרת יישור לימין (RTL) ותיקוני תצוגה
+    st.markdown("""
+        <style>
+            .stApp { direction: rtl; text-align: right; }
+            div[role="radiogroup"] { direction: rtl; text-align: right; }
+            div.stButton > button { width: 100%; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # אתחול סשן
+    # וידוא קיום משתמש ושאלות בסשן
     if 'user' not in st.session_state:
         st.session_state.user = "חיים חיים"
         st.session_state.current_q = 0
@@ -15,13 +22,9 @@ def main():
         st.session_state.exam_finished = False
         st.session_state.questions = logic.get_real_exam_data()
 
-    st.header(f"בוחן: {st.session_state.user} | גרסה: D-3000")
-
-    # מסך פתיחה
+    # מסך פתיחה (Lobby)
     if st.session_state.start_time is None:
-        st.subheader("הנחיות לבדיקה")
-        st.write("- 10 שאלות")
-        st.write("- 2 דקות")
+        st.subheader("מבחן תיווך - בדיקת מערכת")
         if st.button("התחל בחינה"):
             st.session_state.start_time = time.time()
             st.rerun()
@@ -29,12 +32,14 @@ def main():
 
     # ניהול זמן
     remaining = logic.manage_exam_timer(st.session_state.start_time)
-    st.sidebar.metric("זמן נותר", f"{int(remaining // 60):02d}:{int(remaining % 60):02d}")
+    mins, secs = divmod(int(remaining), 60)
+    st.sidebar.metric("זמן נותר", f"{mins:02d}:{secs:02d}")
 
-    if remaining <= 0:
+    if remaining <= 0 and not st.session_state.exam_finished:
         st.session_state.exam_finished = True
+        st.rerun()
 
-    # תצוגת בחינה
+    # גוף הבחינה
     if not st.session_state.exam_finished:
         q_idx = st.session_state.current_q
         q = st.session_state.questions[q_idx]
@@ -42,19 +47,20 @@ def main():
         st.subheader(f"שאלה {q_idx + 1}")
         st.write(q["question"])
         
-        choice = st.radio("בחר תשובה:", q["options"], index=None, key=f"q_{q_idx}")
+        choice = st.radio("בחר תשובה:", q["options"], 
+                          index=q["options"].index(st.session_state.answers[q_idx]) if q_idx in st.session_state.answers else None,
+                          key=f"q_{q_idx}")
+        
         if choice:
             st.session_state.answers[q_idx] = choice
 
-        # ניווט
         col1, col2 = st.columns(2)
-        with col1:
+        with col2:
             if q_idx > 0:
                 if st.button("הקודם"):
                     st.session_state.current_q -= 1
                     st.rerun()
-        with col2:
-            # אכיפת לוגיקת ניווט C-01
+        with col1:
             can_next = logic.can_move_next(q_idx, st.session_state.answers)
             if q_idx < len(st.session_state.questions) - 1:
                 if st.button("הבא", disabled=not can_next):
@@ -65,13 +71,16 @@ def main():
                     st.session_state.exam_finished = True
                     st.rerun()
     
-    # משוב
+    # משוב (Feedback) - כאן מופיע השם האמיתי בכותרת
     else:
         score, feedback = logic.process_results(st.session_state.questions, st.session_state.answers)
-        st.success(f"הבחינה הסתיימה! ציון: {score} מתוך 10")
+        
+        # כותרת לפי הדרישה: שם משתמש :: תוצאות בחינה רשם המתווכים
+        st.header(f"{st.session_state.user} :: תוצאות בחינה רשם המתווכים")
+        st.success(f"הציון שלך: {score} מתוך {len(st.session_state.questions)}")
         
         for item in feedback:
-            with st.expander(f"שאלה {item['id']} - {item['status']}"):
+            with st.expander(f"שאלה {item['id']} - {item['status']}", expanded=(item['status'] == "X")):
                 if item['status'] == "V":
                     st.write("V")
                 else:
