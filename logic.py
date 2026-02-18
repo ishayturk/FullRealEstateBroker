@@ -1,55 +1,65 @@
 # ==========================================
 # Project Identification: C-01
 # File: logic.py
-# Version: 1218-L1 (Core Exam Engine)
-# Anchor: 1213
+# Version: 1218-L2 (Quick Simulation: 10Q, 1M)
 # ==========================================
 
 import streamlit as st
 import time
-import random
 
 def init_exam():
-    """שלב 2+3: בחירת מועד וטעינה לזיכרון (25 שאלות)"""
+    """שלב 2+3: טעינת 10 שאלות לזיכרון"""
     if 'exam_data' not in st.session_state:
-        # כאן תבוא בעתיד המשיכה מה-URL. כרגע יוצר מבנה דמה ל-25 שאלות.
         questions = []
-        for i in range(1, 26):
+        for i in range(1, 11): # מקוצר ל-10 שאלות
             questions.append({
                 "id": i,
-                "question": f"שאלה מספר {i}: מה התשובה הנכונה לדעתך?",
-                "options": ["אפשרות א'", "אפשרות ב'", "אפשרות ג'", "אפשרות ד'"],
-                "correct": "אפשרות א'",
-                "explanation": f"הסבר מלא לשאלה {i}: זו התשובה כי ככה קבענו בעוגן 1213."
+                "question": f"שאלה מספר {i}: האם המערכת מיושרת לימין?",
+                "options": ["כן, הכל בסדר", "לא, עדיין יש בעיה", "חלקית", "לא יודע"],
+                "correct": "כן, הכל בסדר",
+                "explanation": f"הסבר לשאלה {i}: בעוגן 1213 הגדרנו יישור לימין (RTL) כחובה."
             })
         st.session_state.exam_data = questions
         st.session_state.answers = {}
-        st.session_state.current_step = 0  # אינדקס השאלה הנוכחית (0-24)
+        st.session_state.current_step = 0 
 
 def run_exam():
-    """ניהול שלבים 4-7: חוקי התקדמות, ניווט ונעילה"""
+    """ניהול שלבים 4-7: טיימר לדקה אחת וניווט סליידר"""
     
-    # שלב 7: בדיקת זמן (נעילה מוחלטת)
+    # שלב 7: בדיקת זמן (60 שניות)
     elapsed = time.time() - st.session_state.start_time
-    remaining = max(0, 180 - int(elapsed))
+    remaining = max(0, 60 - int(elapsed)) # שונה לדקה אחת
     
     if remaining <= 0:
-        st.error("⚠️ זמן הבחינה הסתיים! המערכת ננעלה למענה וניווט.")
-        st.warning("נא ללחוץ על כפתור 'סיים בחינה' בתחתית כדי לראות תוצאות.")
+        st.error("⚠️ הזמן נגמר! נא ללחוץ על 'סיים בחינה' למטה.")
         show_finish_button()
-        return # עוצר את הצגת השאלות
+        return
 
-    # תצוגת שעון רץ
-    st.write(f"⏱️ **זמן נותר: {remaining // 60}:{remaining % 60:02d}**")
+    # תצוגת שעון
+    st.metric("זמן נותר (שניות)", remaining)
     
-    # שלב 3: הצגת השאלה הנוכחית (מתוך ה-Chunk של ה-25)
+    # שלב 5: סליידר ניווט (מופיע רק לשאלות שנענו)
+    answered_indices = sorted(list(st.session_state.answers.keys()))
+    if answered_indices:
+        st.write("---")
+        st.write("**ניווט מהיר לשאלות שנענו:**")
+        nav_idx = st.select_slider(
+            "בחר שאלה:",
+            options=range(1, 11),
+            value=st.session_state.current_step + 1
+        )
+        if nav_idx - 1 != st.session_state.current_step:
+            st.session_state.current_step = nav_idx - 1
+            st.rerun()
+
+    # הצגת השאלה
     idx = st.session_state.current_step
     q_item = st.session_state.exam_data[idx]
     
-    st.subheader(f"שאלה {idx + 1} מתוך 25")
+    st.subheader(f"שאלה {idx + 1} מתוך 10")
     st.write(q_item["question"])
     
-    # שלב 4: מענה על שאלה
+    # שלב 4: מענה
     current_answer = st.radio(
         "בחר/י תשובה:", 
         q_item["options"], 
@@ -60,35 +70,32 @@ def run_exam():
     if current_answer:
         st.session_state.answers[idx] = current_answer
 
-    # שלב 5: ניווט (הבא/קודם)
+    # כפתורי ניווט
     col1, col2 = st.columns(2)
-    
-    with col2: # כפתור הבא - מופיע רק אם ענית
-        if current_answer and idx < 24:
+    with col2:
+        if current_answer and idx < 9: # עד שאלה 10
             if st.button("שאלה הבאה ⬅️"):
                 st.session_state.current_step += 1
                 st.rerun()
-                
-    with col1: # כפתור הקודם - תמיד מאפשר לחזור למה שכבר ענית
+    with col1:
         if idx > 0:
             if st.button("➡️ שאלה קודמת"):
                 st.session_state.current_step -= 1
                 st.rerun()
 
-    # שלב 6: כפתור סיים (מופיע בשאלה 25 או אם ענה על הכל)
-    if idx == 24 or len(st.session_state.answers) >= 25:
+    if idx == 9 or len(st.session_state.answers) >= 10:
         show_finish_button()
 
 def show_finish_button():
     st.divider()
-    if st.button("🏁 סיים בחינה וקבל משוב", type="primary", use_container_width=True):
+    if st.button("🏁 סיים בחינה", type="primary", use_container_width=True):
         st.session_state.page_state = 'results'
         st.rerun()
 
 def calculate_results():
-    """שלב 8: דף משוב וציון"""
+    """שלב 8: דף משוב (RTL מלא)"""
+    st.header("📋 תוצאות הבחינה")
     correct_count = 0
-    st.header("📋 סיכום תוצאות")
     
     for i, q in enumerate(st.session_state.exam_data):
         user_ans = st.session_state.answers.get(i, "לא נענתה")
@@ -96,10 +103,8 @@ def calculate_results():
         if is_correct: correct_count += 1
         
         with st.expander(f"שאלה {i+1}: {'✅' if is_correct else '❌'}"):
-            st.write(f"**השאלה:** {q['question']}")
             st.write(f"**התשובה שלך:** {user_ans}")
             st.write(f"**התשובה הנכונה:** {q['correct']}")
             st.info(f"**הסבר:** {q['explanation']}")
             
-    score = int((correct_count / 25) * 100)
-    st.success(f"הציון הסופי שלך: {score}")
+    st.success(f"ציון סופי: {int((correct_count/10)*100)}")
