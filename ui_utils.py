@@ -1,11 +1,12 @@
-# Version: C-03
-# Based on Anchor: 1218-G2
-# Filename: ui_utils.py
+# Version: C-04
+# ID: C-01
+# Description: UI components for instructions, navigation, and results.
 
 import streamlit as st
 import time
 
 def show_instructions():
+    """מסך פתיחה עם הוראות ברורות ותחילת טיימר מותנית"""
     st.title("📄 הוראות לבחינה")
     st.markdown("""
     ### הנחיות:
@@ -22,6 +23,7 @@ def show_instructions():
         st.rerun()
 
 def render_navigation(total_loaded, is_mobile):
+    """תפריט ניווט צידי לגישה מהירה לשאלות שנטענו"""
     if is_mobile:
         with st.sidebar.expander("🔍 ניווט שאלות", expanded=False):
             return st.radio("בחר שאלה:", range(1, total_loaded + 1), horizontal=True)
@@ -29,6 +31,7 @@ def render_navigation(total_loaded, is_mobile):
     return st.sidebar.radio("דלג לשאלה:", range(1, total_loaded + 1))
 
 def show_results_summary(user_answers, exam_data):
+    """סיכום תוצאות והשוואה דינמית מול מפתח התשובות שנוצר"""
     st.title("📊 סיכום תוצאות")
     score = 0
     for i, q in enumerate(exam_data):
