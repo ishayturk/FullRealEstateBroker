@@ -1,25 +1,20 @@
-# Version: C-06.1 | ID: C-01
+# Version: C-01 (Clean UI)
 import streamlit as st
 import time
 
-def show_instructions():
-    st.write("בחינה: 25 שאלות | זמן: 3 דקות")
-    if st.button("התחל"):
-        st.session_state.start_time = time.time()
-        st.session_state.step = 'exam'
-        st.rerun()
+def render_rtl():
+    """הזרקת CSS ליישור לימין"""
+    st.markdown("""<style>
+        .stApp, div[role="radiogroup"], section[data-testid="stSidebar"] > div { direction: rtl; text-align: right; }
+        p, span, h1, h2, h3, h4, label { text-align: right; direction: rtl; }
+    </style>""", unsafe_allow_html=True)
 
-def render_navigation(total_loaded, is_mobile):
-    return st.sidebar.radio("שאלה:", range(1, total_loaded + 1), horizontal=is_mobile)
-
-def show_results_summary(user_answers, exam_data):
+def show_results(user_answers, exam_data):
+    """הצגת תוצאות פשוטה"""
     score = 0
     for i, q in enumerate(exam_data):
-        user_ans = user_answers.get(i, "")
+        ans = user_answers.get(i, "")
         correct = str(q['תשובה_נכונה']).strip()
-        if str(user_ans).strip() == correct:
+        if str(ans).strip() == correct:
             score += 1
-            st.success(f"{i+1}: נכון")
-        else:
-            st.error(f"{i+1}: טעות (נכון: {correct})")
-    st.metric("ציון", f"{int((score/len(exam_data))*100)}/100")
+    st.metric("ציון סופי", f"{int((score/25)*100)}/100")
