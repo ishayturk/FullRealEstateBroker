@@ -1,1 +1,33 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבחן - שאלה {{ index }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 50px; line-height: 1.6; }
+        .question-box { border: 1px solid #ccc; padding: 20px; border-radius: 10px; max-width: 600px; }
+        .options { margin: 20px 0; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="question-box">
+        <h2>שאלה {{ index }} מתוך {{ total }}</h2>
+        <p><strong>{{ question.question_text }}</strong></p>
 
+        <form action="/next" method="GET">
+            <div class="options">
+                {% for option in question.options %}
+                    <label>
+                        <input type="radio" name="answer" value="{{ loop.index0 }}">
+                        {{ option }}
+                    </label<br>
+                {% endfor %}
+            </div>
+            <button type="submit">המשך לשאלה הבאה</button>
+        </form>
+    </div>
+</body>
+</html>
