@@ -1,24 +1,37 @@
 import streamlit as st
 import json
 import os
+import random
 
-# הגדרות עמוד ויישור לימין באמצעות CSS
-st.set_page_config(page_title="מבחן רשם המתווכים", layout="wide", initial_sidebar_state="collapsed")
+# הגדרות עמוד בסיסיות
+st.set_page_config(page_title="מבחן מתווכים", layout="wide", initial_sidebar_state="collapsed")
 
+# הזרקת CSS ליישור לימין (RTL) ועיצוב נקי
 st.markdown("""
     <style>
+    /* הגדרת כיווניות כללית */
     .stApp {
         direction: RTL;
         text-align: right;
     }
-    div[role="radiogroup"] {
-        direction: RTL;
-        text-align: right;
+    /* יישור טקסט וכותרות */
+    h1, h2, h3, p, label, div {
+        text-align: right !important;
+        direction: RTL !important;
     }
+    /* עיצוב הצ'קבוקס עם הפרדה מהתיאור */
+    .stCheckbox {
+        margin-top: 30px;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+    /* כפתור מעבר לבחינה */
     div.stButton > button {
-        width: 100%;
+        width: 220px;
+        height: 50px;
+        font-weight: bold;
     }
-    /* יישור ה-Sidebar */
+    /* הסתרת רכיבי Sidebar כשהוא סגור */
     [data-testid="stSidebar"] {
         direction: RTL;
         text-align: right;
@@ -26,105 +39,41 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-def load_exam(file_path):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+def get_random_exam():
+    """בוחר קובץ מבחן אקראי שלא נעשה בסשן הנוכחי"""
+    all_files = [f for f in os.listdir('.') if f.endswith('.json')]
+    
+    # סינון מבחנים שכבר נעשו בסשן הזה
+    if 'completed_exams' not in st.session_state:
+        st.session_state.completed_exams = []
+        
+    available_files = [f for f in all_files if f not in st.session_state.completed_exams]
+    
+    # אם עברנו על הכל, נאפס את הרשימה (כדי לא להיתקע)
+    if not available_files:
+        available_files = all_files
+        st.session_state.completed_exams = []
+        
+    return random.choice(available_files) if available_files else None
+
+def load_batch(start_idx, count=5):
+    """טוענת מנה של שאלות לתוך הזיכרון המצטבר"""
+    if 'full_exam_data' in st.session_state:
+        questions = st.session_state.full_exam_data
+        end_idx = min(start_idx + count, len(questions))
+        new_questions = questions[start_idx:end_idx]
+        
+        # הוספה לזיכרון המצטבר
+        st.session_state.loaded_questions.extend(new_questions)
 
 def main():
-    if 'page' not in st.session_state:
+    # אתחול משתני מערכת (מבוצע פעם אחת בטעינה ראשונה של הפריים)
+    if 'initialized' not in st.session_state:
         st.session_state.page = 'explanation'
         st.session_state.current_q_idx = 0
         st.session_state.user_answers = {}
+        st.session_state.loaded_questions = []
         st.session_state.submitted = False
-
-    # --- עמוד הסבר ---
-    if st.session_state.page == 'explanation':
-        st.title("🎓 הוראות לבחינה")
-        st.write("ברוכים הבאים למערכת התרגול. קראו את ההוראות בעיון:")
-        st.info("""
-        * המעבר בין השאלות הוא ליניארי בלבד.
-        * לא ניתן לדלג על שאלה מבלי לענות עליה.
-        * לאחר לחיצה על 'לשאלה הבאה', השאלה תסומן בביצוע בתפריט הצד.
-        * התוצאות והתשובות הנכונות יוצגו רק בסוף הבחינה.
-        """)
         
-        exam_files = [f for f in os.listdir('.') if f.endswith('.json')]
-        if not exam_files:
-            st.warning("מכין קבצי בחינה... אנא המתן שניה ורענן.")
-            return
-
-        selected_file = st.selectbox("בחר מועד בחינה:", exam_files)
-        
-        if st.button("התחל בחינה"):
-            st.session_state.exam_data = load_exam(selected_file)
-            st.session_state.page = 'exam'
-            st.rerun()
-
-    # --- עמוד הבחינה ---
-    elif st.session_state.page == 'exam':
-        exam = st.session_state.exam_data
-        questions = exam['questions']
-        curr_idx = st.session_state.current_q_idx
-        
-        # Sidebar - מפת התקדמות (לא פעילה ללחיצה)
-        st.sidebar.title("מפת שאלות")
-        for i in range(len(questions)):
-            if i < curr_idx:
-                status = "✅" # ענה כבר
-            elif i == curr_idx:
-                status = "📍" # נוכחי
-            else:
-                status = "⚪" # טרם הגיע
-            st.sidebar.text(f"{status} שאלה {i+1}")
-
-        if not st.session_state.submitted:
-            q = questions[curr_idx]
-            st.header(f"שאלה {curr_idx + 1} מתוך {len(questions)}")
-            st.markdown(f"### {q['question']}")
-            
-            # רדיו לבחירת תשובה
-            choice = st.radio("בחר את התשובה הנכונה:", q['options'], key=f"q_{curr_idx}", index=None)
-            
-            st.divider()
-            
-            # כפתור התקדמות
-            if curr_idx < len(questions) - 1:
-                if st.button("שמור ולשאלה הבאה ⬅️"):
-                    if choice:
-                        st.session_state.user_answers[curr_idx] = choice
-                        st.session_state.current_q_idx += 1
-                        st.rerun()
-                    else:
-                        st.error("חובה לענות על השאלה לפני שעוברים הלאה.")
-            else:
-                # שאלה אחרונה
-                if st.button("סיים והגש בחינה 🏁"):
-                    if choice:
-                        st.session_state.user_answers[curr_idx] = choice
-                        st.session_state.submitted = True
-                        st.rerun()
-                    else:
-                        st.error("חובה לענות על השאלה האחרונה לפני ההגשה.")
-
-        # --- עמוד תוצאות ---
-        else:
-            st.title("סיכום ותוצאות")
-            correct_count = sum(1 for i, q in enumerate(questions) if st.session_state.user_answers.get(i) == q['answer'])
-            score = (correct_count / len(questions)) * 100
-            
-            st.metric("ציון סופי", f"{score:.0f}")
-            
-            for i, q in enumerate(questions):
-                user_ans = st.session_state.user_answers.get(i)
-                is_correct = user_ans == q['answer']
-                with st.expander(f"שאלה {i+1}: {'✅' if is_correct else '❌'}"):
-                    st.write(f"**השאלה:** {q['question']}")
-                    st.write(f"**תשובתך:** {user_ans}")
-                    st.write(f"**תשובה נכונה:** {q['answer']}")
-
-            if st.button("חזרה לתפריט ראשי"):
-                for key in list(st.session_state.keys()): del st.session_state[key]
-                st.rerun()
-
-if __name__ == "__main__":
-    main()
+        # טריגר מיידי: בחירת מבחן וטעינת 5 שאלות ראשונות "באוויר"
+        selected_file = get_
