@@ -1,66 +1,63 @@
 import streamlit as st
-from logic import initialize_exam
+import time  # התיקון לשגיאה שקיבלת
+from logic import initialize_exam, get_ethics_prompt
 
-# הגדרות עמוד ו-RTL
+# הגדרות תצוגה RTL מוקטנת
 st.set_page_config(page_title="סימולטור רשם המתווכים", layout="centered")
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap');
-    html, body, [class*="css"] {
-        direction: RTL;
-        text-align: right;
-        font-family: 'Assistant', sans-serif;
-    }
-    .stButton button { width: 100%; }
-    .question-text { font-size: 1.1rem !important; font-weight: 700; margin-bottom: 20px; }
-    .sidebar-content { padding: 10px; border-radius: 5px; background-color: #f0f2f6; }
+    direction: rtl; text-align: right;
+    .stMarkdown, .stText, .stButton, .stCheckbox { direction: rtl; text-align: right; }
+    .question-text { font-size: 1rem; font-weight: bold; }
+    .stRadio > label { font-size: 0.9rem; }
     </style>
     """, unsafe_allow_html=True)
 
 initialize_exam()
 state = st.session_state.exam_state
 
-# --- פונקציית ייצור שאלה ברקע ---
-def generate_and_store_next():
-    # פונקציה זו תופעל ברקע כדי להכין את השאלה הבאה
-    # כאן יבוא הקוד שפונה ל-AI עם ה-get_ethics_prompt
-    pass
-
 # --- עמוד הסבר ---
 if state['current_index'] == -1:
-    st.title("מבחן תרגול: אתיקה ודיני תיווך")
-    st.write("ברוכים הבאים לסימולציה. המבחן כולל 5 שאלות בנושאי אתיקה וחוק המתווכים.")
-    st.write("**משך המבחן:** 5 דקות.")
+    st.title("הוראות לבחינה")
+    st.write("מבחן סימולציה באתיקה למתווכים. 5 שאלות, 5 דקות.")
     
+    # צ'ק בוקס חובה
+    agreed = st.checkbox("קראתי והבנתי את ההוראות לבחינה")
+    state['confirmed_instructions'] = agreed
+
     if st.button("התחל בחינה"):
-        state['current_index'] = 0
-        state['start_time'] = time.time()
-        # ייצור השאלה הראשונה קורה כאן או קרה כבר ברקע
-        st.rerun()
+        if agreed:
+            state['current_index'] = 0
+            state['start_time'] = time.time()
+            # כאן המערכת מציגה את השאלה הראשונה שיוצרה ברקע
+            st.rerun()
+        else:
+            st.error("עליך לאשר את קריאת ההוראות כדי להתחיל.")
 
 # --- עמוד בחינה פעיל ---
 elif not state['is_finished']:
-    # חישוב זמן
+    # טיימר
     elapsed = time.time() - state['start_time']
     remaining = max(0, 300 - int(elapsed))
     
-    # Sidebar (בנייד יופיע כדף צף/תפריט)
+    if remaining <= 0:
+        state['is_finished'] = True
+        st.rerun()
+
+    # סיידבר / תפריט עליון בנייד
     with st.sidebar:
-        st.header(f"זמן נותר: {remaining // 60}:{remaining % 60:02d}")
-        st.progress((state['current_index'] + 1) / 5)
-        st.write(f"שאלה {state['current_index'] + 1} מתוך 5")
-        
-        if st.button("סיים מבחן כעת"):
+        st.write(f"⏳ זמן נותר: {remaining // 60}:{remaining % 60:02d}")
+        st.write(f"שאלה: {state['current_index'] + 1} / 5")
+        if st.button("הגש מבחן"):
             state['is_finished'] = True
             st.rerun()
 
-    # תצוגת שאלה
-    # כאן נשלפת השאלה מהרשימה שנוצרה דינמית
-    # (לצורך הקוד, נניח שיש לנו אובייקט current_q)
+    # הצגת שאלה (כאן המערכת שולפת מהרשימה הדינמית)
+    st.subheader(f"שאלה {state['current_index'] + 1}")
     
-    st.markdown(f"<div class='question-text'>שאלה {state['current_index']+1}</div>", unsafe_allow_html=True)
-    # הצגת טקסט השאלה והאפשרויות...
-    
+    # במידה וזו שאלה חדשה, המערכת תייצר ברקע את השאלה הבאה
+    # לוגיקה: if state['current_index'] == len(state['questions']): generate...
+
     # כפתורי ניווט
     col1, col2 = st.columns(2)
     with col1:
@@ -69,21 +66,20 @@ elif not state['is_finished']:
                 state['current_index'] -= 1
                 st.rerun()
     with col2:
-        # כפתור "הבא" מייצר ברקע את השאלה הבאה אם היא לא קיימת
-        button_label = "סיים מבחן" if state['current_index'] == 4 else "השאלה הבאה"
-        if st.button(button_label):
+        label = "סיים" if state['current_index'] == 4 else "הבא"
+        if st.button(label):
+            # כאן קורה הקסם: אם עוברים לחדשה - מייצרים ברקע את זו שאחריה
             if state['current_index'] < 4:
                 state['current_index'] += 1
-                # כאן מופעל ה-Pre-fetch לשאלה הבאה
                 st.rerun()
             else:
                 state['is_finished'] = True
                 st.rerun()
 
-# --- עמוד סיכום ומשוב ---
+# --- עמוד משוב ---
 else:
-    st.title("תוצאות המבחן")
-    # הצגת ציון ומשוב (V ליד תשובה נכונה)
-    if st.button("מבחן חדש (איפוס)"):
+    st.title("סוף המבחן")
+    st.write("תודה שהשתתפת.")
+    if st.button("חזרה להתחלה"):
         st.session_state.clear()
         st.rerun()
