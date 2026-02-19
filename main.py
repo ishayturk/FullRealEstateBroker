@@ -1,76 +1,119 @@
 import os
 import json
+import random
 import streamlit as st
 
-# הגדרות פרוטוקול C-01
+# הגדרות ליבה (נאמנות לעוגן 1218-G2 ופרוטוקול C-01)
 EXAMS_DIR = "exams_data"
 FILE_PREFIX = "test_"
 FILE_EXTENSION = ".json"
+VERSION = "1218-G2"
 
-def read_first_questions(file_path):
-    """קריאת שתי השאלות הראשונות מקובץ JSON"""
+def load_exam_data(filename):
+    """טעינת קובץ JSON מהמאגר"""
+    path = os.path.join(EXAMS_DIR, filename)
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            # הנחה שהשאלות נמצאות תחת מפתח בשם 'questions' לפי פרוטוקול C-01
-            questions = data.get('questions', [])
-            return questions[:2], None
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
     except Exception as e:
-        return None, str(e)
+        st.error(f"שגיאה טכנית בטעינה: {e}")
+        return None
 
 def main():
-    st.set_page_config(page_title="מערכת בחינות - בדיקה", layout="centered")
+    # הגדרות תצוגה (RTL)
+    st.set_page_config(page_title=f"מערכת בחינות {VERSION}", layout="centered")
     
-    st.title("📖 דף הסבר למבחן")
-    
-    st.write("""
-    ברוכים הבאים למבחן המתווך. 
-    לפני שתתחילו, אנא קראו את ההוראות:
-    * יש לענות על כל השאלות לפי הסדר.
-    * אין אפשרות לחזור אחורה לאחר מעבר שאלה.
-    * המבחן מוגבל בזמן.
-    """)
+    # CSS ליישור לימין
+    st.markdown("""
+        <style>
+        .main { direction: rtl; text-align: right; }
+        div[role="radiogroup"] { direction: rtl; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # שלב האישור
-    confirmed = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
-    
-    if st.button("מעבר לבחינה"):
-        if not confirmed:
-            st.warning("יש לסמן את התיקייה שקראת את ההוראות לפני המעבר.")
-        else:
-            st.divider()
-            st.subheader("🔍 הרצת בדיקת סנכרון (דיאגנוסטיקה)")
+    # ניהול מצב סשן בחינה
+    if 'exam_started' not in st.session_state:
+        st.session_state.exam_started = False
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = 0
+    if 'questions' not in st.session_state:
+        st.session_state.questions = []
+    if 'selected_exam' not in st.session_state:
+        st.session_state.selected_exam = None
 
-            # 1. סריקת התיקייה
-            if not os.path.exists(EXAMS_DIR):
-                st.error(f"❌ תקלה: התיקייה `{EXAMS_DIR}` חסרה.")
-                return
-
-            all_files = os.listdir(EXAMS_DIR)
-            exam_files = sorted([f for f in all_files if f.startswith(FILE_PREFIX) and f.endswith(FILE_EXTENSION)])
-
-            if not exam_files:
-                st.error("❌ לא נמצאו קבצי בחינה תקינים.")
-            else:
-                st.success(f"✅ נמצאו {len(exam_files)} קבצים. בודק תוכן של הקובץ הראשון...")
+    # --- שלב דף ההסבר ---
+    if not st.session_state.exam_started:
+        st.title("📖 בחינת רישום מתווכים")
+        st.subheader("הוראות לנבחן")
+        
+        st.write("""
+        1. המבחן כולל 25 שאלות שנבחרו באקראי מהמועד שנבחר.
+        2. לא ניתן לחזור אחורה לשאלות קודמות.
+        3. יש לסמן תשובה אחת וללחוץ על 'שאלה הבאה'.
+        """)
+        
+        st.divider()
+        confirmed = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
+        
+        if st.button("מעבר לבחינה"):
+            if confirmed:
+                # איתור קבצים בתיקייה
+                if not os.path.exists(EXAMS_DIR):
+                    st.error(f"שגיאה: התיקייה {EXAMS_DIR} לא נמצאה.")
+                    return
                 
-                # 2. בדיקת קריאה מהקובץ הראשון ברשימה
-                target_file = os.path.join(EXAMS_DIR, exam_files[0])
-                questions, err = read_first_questions(target_file)
+                files = sorted([f for f in os.listdir(EXAMS_DIR) if f.startswith(FILE_PREFIX) and f.endswith(FILE_EXTENSION)])
+                
+                if not files:
+                    st.error("לא נמצאו קבצי בחינה תקינים במאגר.")
+                    return
+                
+                # בחירת בחינה (רנדומלית מהמאגר הקיים)
+                selected_file = random.choice(files)
+                data = load_exam_data(selected_file)
+                
+                if data and 'questions' in data:
+                    all_qs = data['questions']
+                    # הגבלה ל-25 שאלות לפי הגדרות המערכת
+                    st.session_state.questions = random.sample(all_qs, min(len(all_qs), 25))
+                    st.session_state.selected_exam = selected_file
+                    st.session_state.exam_started = True
+                    st.rerun()
+            else:
+                st.warning("חובה לאשר את ההוראות לפני תחילת המבחן.")
 
-                if err:
-                    st.error(f"❌ שגיאה בקריאת הקובץ `{exam_files[0]}`: {err}")
-                elif questions:
-                    st.write(f"📂 **נבדק קובץ:** `{exam_files[0]}`")
-                    for i, q in enumerate(questions, 1):
-                        st.markdown(f"**שאלה {i}:**")
-                        # שליפת השאלה (תלוי במבנה ה-JSON הספציפי שלך)
-                        question_text = q.get('question_text') or q.get('text') or str(q)
-                        st.info(question_text)
-                    
-                    st.success("🏁 בדיקת ה-JSON עברה בהצלחה. הקוד מוכן להרצה.")
-                else:
-                    st.warning("הקובץ נמצא אך נראה שהוא ריק משאלות.")
+    # --- שלב הבחינה הפעילה ---
+    else:
+        idx = st.session_state.current_question
+        total = len(st.session_state.questions)
+
+        if idx < total:
+            q = st.session_state.questions[idx]
+            
+            st.write(f"**מבחן:** {st.session_state.selected_exam}")
+            st.progress((idx) / total)
+            st.subheader(f"שאלה {idx + 1} מתוך {total}")
+            
+            # הצגת תוכן השאלה (מפתח question_text לפי C-01)
+            st.info(q.get('question_text', 'שגיאה בטעינת תוכן השאלה'))
+
+            # הצגת אפשרויות
+            options = q.get('options', [])
+            st.radio("בחר תשובה:", options, key=f"q_{idx}")
+
+            if st.button("שאלה הבאה"):
+                st.session_state.current_question += 1
+                st.rerun()
+        else:
+            # סיום בחינה
+            st.balloons()
+            st.success("הבחינה הסתיימה בהצלחה!")
+            if st.button("חזרה לדף הסבר"):
+                # איפוס מלא של הסשן להתחלה מחדש
+                st.session_state.exam_started = False
+                st.session_state.current_question = 0
+                st.session_state.questions = []
+                st.rerun()
 
 if __name__ == "__main__":
     main()
