@@ -1,61 +1,89 @@
 import streamlit as st
-import json
-import os
+from logic import initialize_exam
 
-st.set_page_config(page_title="מערכת בחינות")
+# הגדרות עמוד ו-RTL
+st.set_page_config(page_title="סימולטור רשם המתווכים", layout="centered")
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap');
+    html, body, [class*="css"] {
+        direction: RTL;
+        text-align: right;
+        font-family: 'Assistant', sans-serif;
+    }
+    .stButton button { width: 100%; }
+    .question-text { font-size: 1.1rem !important; font-weight: 700; margin-bottom: 20px; }
+    .sidebar-content { padding: 10px; border-radius: 5px; background-color: #f0f2f6; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# CSS לסידור עברית
-st.markdown("""<style>.stApp {direction: RTL; text-align: right;}</style>""", unsafe_allow_html=True)
+initialize_exam()
+state = st.session_state.exam_state
 
-@st.cache_data
-def load_exam_data(path):
-    if os.path.exists(path):
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # אם ה-JSON עטוף במפתח 'questions', נשלוף רק את הרשימה
-                if isinstance(data, dict) and "questions" in data:
-                    return data["questions"]
-                return data
-        except Exception as e:
-            return str(e)
-    return None
+# --- פונקציית ייצור שאלה ברקע ---
+def generate_and_store_next():
+    # פונקציה זו תופעל ברקע כדי להכין את השאלה הבאה
+    # כאן יבוא הקוד שפונה ל-AI עם ה-get_ethics_prompt
+    pass
 
-FILE_PATH = "exams_data/test_may1_v1_2025.json"
-questions = load_exam_data(FILE_PATH)
+# --- עמוד הסבר ---
+if state['current_index'] == -1:
+    st.title("מבחן תרגול: אתיקה ודיני תיווך")
+    st.write("ברוכים הבאים לסימולציה. המבחן כולל 5 שאלות בנושאי אתיקה וחוק המתווכים.")
+    st.write("**משך המבחן:** 5 דקות.")
+    
+    if st.button("התחל בחינה"):
+        state['current_index'] = 0
+        state['start_time'] = time.time()
+        # ייצור השאלה הראשונה קורה כאן או קרה כבר ברקע
+        st.rerun()
 
-if questions is None:
-    st.error(f"לא נמצא קובץ בנתיב: {FILE_PATH}")
-elif isinstance(questions, str):
-    st.error(f"שגיאה בטעינת ה-JSON: {questions}")
-elif not isinstance(questions, list):
-    st.error("מבנה הקובץ לא תקין. מצפה לרשימה של שאלות.")
-else:
-    if 'current_idx' not in st.session_state:
-        st.session_state.current_idx = 0
-
-    idx = st.session_state.current_idx
-
-    # בדיקת בטיחות לאינדקס
-    if idx < len(questions):
-        current_q = questions[idx]
+# --- עמוד בחינה פעיל ---
+elif not state['is_finished']:
+    # חישוב זמן
+    elapsed = time.time() - state['start_time']
+    remaining = max(0, 300 - int(elapsed))
+    
+    # Sidebar (בנייד יופיע כדף צף/תפריט)
+    with st.sidebar:
+        st.header(f"זמן נותר: {remaining // 60}:{remaining % 60:02d}")
+        st.progress((state['current_index'] + 1) / 5)
+        st.write(f"שאלה {state['current_index'] + 1} מתוך 5")
         
-        st.title(f"שאלה {idx + 1} מתוך {len(questions)}")
-        
-        # תמיכה בכמה פורמטים של מפתחות
-        text = current_q.get('question_text', current_q.get('text', 'שאלה ללא תוכן'))
-        st.subheader(text)
-        
-        options = current_q.get('options', [])
-        if options:
-            st.radio("בחר תשובה:", options, key=f"q_{idx}")
-            if st.button("המשך לשאלה הבאה"):
-                st.session_state.current_idx += 1
-                st.rerun()
-        else:
-            st.error("לא נמצאו אפשרויות (options) לשאלה זו.")
-    else:
-        st.success("הבחינה הסתיימה!")
-        if st.button("התחל מחדש"):
-            st.session_state.current_idx = 0
+        if st.button("סיים מבחן כעת"):
+            state['is_finished'] = True
             st.rerun()
+
+    # תצוגת שאלה
+    # כאן נשלפת השאלה מהרשימה שנוצרה דינמית
+    # (לצורך הקוד, נניח שיש לנו אובייקט current_q)
+    
+    st.markdown(f"<div class='question-text'>שאלה {state['current_index']+1}</div>", unsafe_allow_html=True)
+    # הצגת טקסט השאלה והאפשרויות...
+    
+    # כפתורי ניווט
+    col1, col2 = st.columns(2)
+    with col1:
+        if state['current_index'] > 0:
+            if st.button("הקודם"):
+                state['current_index'] -= 1
+                st.rerun()
+    with col2:
+        # כפתור "הבא" מייצר ברקע את השאלה הבאה אם היא לא קיימת
+        button_label = "סיים מבחן" if state['current_index'] == 4 else "השאלה הבאה"
+        if st.button(button_label):
+            if state['current_index'] < 4:
+                state['current_index'] += 1
+                # כאן מופעל ה-Pre-fetch לשאלה הבאה
+                st.rerun()
+            else:
+                state['is_finished'] = True
+                st.rerun()
+
+# --- עמוד סיכום ומשוב ---
+else:
+    st.title("תוצאות המבחן")
+    # הצגת ציון ומשוב (V ליד תשובה נכונה)
+    if st.button("מבחן חדש (איפוס)"):
+        st.session_state.clear()
+        st.rerun()
