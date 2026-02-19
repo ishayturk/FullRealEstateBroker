@@ -4,10 +4,10 @@
 import streamlit as st
 import time
 
-# הגדרת דף - חובה כפקודה ראשונה
-st.set_page_config(page_title='מבחן נדל"ן - C-01', layout="wide")
+# הגדרת דף - חייב להיות ראשון בקוד
+st.set_page_config(page_title='מערכת בחינות C-01', layout="wide")
 
-# ניהול מצב האפליקציה (Session State)
+# אתחול נתונים (Session State) כדי שלא יאבדו ברענון
 if 'start_time' not in st.session_state:
     st.session_state.start_time = None
 if 'current_q' not in st.session_state:
@@ -19,20 +19,19 @@ def start_timer():
     if st.session_state.start_time is None:
         st.session_state.start_time = time.time()
 
-# כותרת
+# כותרת - שימוש בגרש בודד למניעת שגיאת סינטקס
 st.title('מערכת בחינות נדל"ן - C-01')
 
-# סיידבר - ניווט שאלות עם אינדיקציית מענה
+# --- סיידבר ניווט שאלות ---
 st.sidebar.header("ניווט שאלות")
 for i in range(1, 11):
-    answered = i in st.session_state.user_answers
-    status_icon = "✅" if answered else "❌"
-    if st.sidebar.button(f"שאלה {i} {status_icon}", key=f"sq_{i}"):
+    status = "✅" if i in st.session_state.user_answers else "❌"
+    if st.sidebar.button(f"שאלה {i} {status}", key=f"side_{i}"):
         start_timer()
         st.session_state.current_q = i
         st.rerun()
 
-# תצוגת טיימר (קפוא עד לחיצה ראשונה)
+# --- תצוגת טיימר (קפוא עד לחיצה) ---
 timer_placeholder = st.empty()
 if st.session_state.start_time:
     elapsed = int(time.time() - st.session_state.start_time)
@@ -43,11 +42,12 @@ if st.session_state.start_time:
 else:
     timer_placeholder.metric("זמן נותר", "02:00:00 (קפוא)")
 
-# אזור השאלה
-st.subheader(f"שאלה {st.session_state.current_q}")
-st.write("---")
+# --- גוף השאלה ---
+st.subheader(f"שאלה מספר {st.session_state.current_q}")
+st.write("כאן יוצג התוכן מקובץ logic.py")
 
-# כפתורי ניווט: [הקודם] משמאל, [הבא] מימין
+# --- כפתורי ניווט (הבא מימין, הקודם משמאל) ---
+st.write("---")
 col_prev, col_spacer, col_next = st.columns([1, 2, 1])
 
 with col_prev:
@@ -64,7 +64,7 @@ with col_next:
             st.session_state.current_q += 1
             st.rerun()
 
-# רענון אוטומטי לטיימר פעיל
+# רענון אוטומטי של הטיימר רק אם הופעל
 if st.session_state.start_time:
     time.sleep(1)
     st.rerun()
