@@ -2,73 +2,96 @@ import streamlit as st
 import json
 import os
 
-st.set_page_config(page_title="מערכת תרגול למתווכים", layout="wide", initial_sidebar_state="expanded")
+# הגדרות עמוד
+st.set_page_config(page_title="מבחן רשם המתווכים", layout="wide", initial_sidebar_state="collapsed")
 
 def load_exam(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def main():
-    st.title("🎓 תרגול מבחני רשם המתווכים")
-    
-    # סריקת קבצי JSON בתיקייה
-    exam_files = [f for f in os.listdir('.') if f.endswith('.json')]
-    
-    if not exam_files:
-        st.error("שגיאה: לא נמצאו קבצי JSON בתיקייה.")
-        return
-
-    selected_file = st.sidebar.selectbox("בחר מועד:", exam_files)
-    
-    # אתחול המבחן
-    if 'exam_id' not in st.session_state or st.session_state.exam_id != selected_file:
-        st.session_state.exam_data = load_exam(selected_file)
-        st.session_state.exam_id = selected_file
+    # אתחול מצבים
+    if 'page' not in st.session_state:
+        st.session_state.page = 'explanation'
+        st.session_state.current_q_idx = 0
         st.session_state.user_answers = {}
         st.session_state.submitted = False
 
-    exam = st.session_state.exam_data
-    st.header(exam.get('display_title', 'בחינה'))
+    # --- עמוד הסבר ---
+    if st.session_state.page == 'explanation':
+        st.title("🎓 הוראות לבחינה")
+        st.write("קרא את ההוראות בעיון. לאחר שתלחץ על התחל, לא תוכל לדלג על שאלות.")
+        
+        exam_files = [f for f in os.listdir('.') if f.endswith('.json')]
+        selected_file = st.selectbox("בחר מועד בחינה:", exam_files)
+        
+        if st.button("התחל בחינה"):
+            st.session_state.exam_data = load_exam(selected_file)
+            st.session_state.page = 'exam'
+            st.rerun()
 
-    # הצגת שאלות
-    for q in exam['questions']:
-        st.subheader(f"שאלה {q['id']}")
-        st.write(q['question'])
+    # --- עמוד הבחינה ---
+    elif st.session_state.page == 'exam':
+        exam = st.session_state.exam_data
+        questions = exam['questions']
+        curr_idx = st.session_state.current_q_idx
         
-        q_key = f"q_{q['id']}_{selected_file}" # מפתח ייחודי
-        
+        # עדכון Sidebar - מספרי שאלות לא פעילים
+        st.sidebar.title("רשימת שאלות")
+        for i in range(len(questions)):
+            status = "✅" if i in st.session_state.user_answers else "⚪"
+            if i == curr_idx:
+                st.sidebar.markdown(f"**📍 שאלה {i+1}**")
+            else:
+                st.sidebar.text(f"{status} שאלה {i+1}")
+
+        # הצגת השאלה הנוכחית
         if not st.session_state.submitted:
-            st.session_state.user_answers[q['id']] = st.radio(
-                "בחר תשובה:", q['options'], key=q_key, index=None
-            )
-        else:
-            user_ans = st.session_state.user_answers.get(q['id'])
-            correct_ans = q['answer']
-            for opt in q['options']:
-                if opt == correct_ans:
-                    st.success(f"✅ {opt}")
-                elif opt == user_ans:
-                    st.error(f"❌ {opt} (התשובה שלך)")
-                else:
-                    st.write(f"⚪ {opt}")
-        st.divider()
+            q = questions[curr_idx]
+            st.header(f"שאלה {curr_idx + 1} מתוך {len(questions)}")
+            st.subheader(q['question'])
+            
+            # בחירת תשובה
+            choice = st.radio("בחר תשובה:", q['options'], key=f"q_{curr_idx}", index=None)
+            
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                if st.button("לשאלה הבאה"):
+                    if choice:
+                        st.session_state.user_answers[curr_idx] = choice
+                        if curr_idx < len(questions) - 1:
+                            st.session_state.current_q_idx += 1
+                            st.rerun()
+                        else:
+                            st.warning("זו השאלה האחרונה. ניתן להגיש את המבחן.")
+                    else:
+                        st.error("חובה לבחור תשובה כדי להתקדם.")
+            
+            with col2:
+                if curr_idx == len(questions) - 1 and len(st.session_state.user_answers) == len(questions):
+                    if st.button("הגש מבחן"):
+                        st.session_state.submitted = True
+                        st.rerun()
 
-    # כפתור הגשה וסיכום
-    if not st.session_state.submitted:
-        if st.button("בדוק תוצאות"):
-            st.session_state.submitted = True
-            st.rerun()
-    else:
-        correct_count = sum(1 for q in exam['questions'] if st.session_state.user_answers.get(q['id']) == q['answer'])
-        score = (correct_count / len(exam['questions'])) * 100
-        st.sidebar.metric("ציון סופי", f"{score:.0f}")
-        # השורה שתיקנו:
-        st.success(f"המבחן הושלם! ציון: {score:.0f}. תשובות נכונות: {correct_count}/{len(exam['questions'])}")
-        
-        if st.button("תרגול מחדש"):
-            st.session_state.submitted = False
-            st.session_state.user_answers = {}
-            st.rerun()
+        # --- עמוד תוצאות (רק אחרי הגשה) ---
+        else:
+            st.title("תוצאות המבחן")
+            correct_count = 0
+            for i, q in enumerate(questions):
+                user_ans = st.session_state.user_answers.get(i)
+                is_correct = user_ans == q['answer']
+                if is_correct: correct_count += 1
+                
+                with st.expander(f"שאלה {i+1}: {'✅' if is_correct else '❌'}"):
+                    st.write(q['question'])
+                    st.write(f"התשובה שלך: {user_ans}")
+                    st.write(f"התשובה הנכונה: {q['answer']}")
+            
+            score = (correct_count / len(questions)) * 100
+            st.metric("ציון סופי", f"{score:.0f}")
+            if st.button("חזרה לתפריט ראשי"):
+                for key in list(st.session_state.keys()): del st.session_state[key]
+                st.rerun()
 
 if __name__ == "__main__":
     main()
