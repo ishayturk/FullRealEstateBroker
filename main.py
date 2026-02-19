@@ -1,40 +1,63 @@
 import streamlit as st
-from logic import ExamLogic
+import json
 import os
 
-# הגדרת כיוון כתיבה לימין (עבור עברית)
-st.set_page_config(page_title="מערכת בחינות", dir="rtl")
+# הגדרת עמוד בסיסית (בלי הפרמטר שגרם לשגיאה)
+st.set_page_config(page_title="מערכת בחינות")
 
-# נתיב לקובץ לפי הפרוטוקול
+# הזרקת CSS כדי לתמוך ב-RTL (ימין לשמאל) בלי להפיל את האפליקציה
+st.markdown("""
+    <style>
+    .stApp {
+        direction: RTL;
+        text-align: right;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+@st.cache_data
+def load_exam_data(path):
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return None
+    return None
+
+# נתיב הקובץ לפי הפרוטוקול
 FILE_PATH = "exams_data/test_may1_v1_2025.json"
+questions = load_exam_data(FILE_PATH)
 
-# בדיקה שהקובץ קיים בתיקייה הנכונה
-if not os.path.exists(FILE_PATH):
-    st.error(f"שגיאה: הקובץ לא נמצא בנתיב {FILE_PATH}")
+if not questions:
+    st.error(f"לא נמצא קובץ נתונים בנתיב: {FILE_PATH}")
+    st.info("וודא שהקובץ נמצא בתיקיית exams_data והשם שלו מדויק.")
 else:
-    # ניהול מצב השאלות ב-Session State
-    if 'exam' not in st.session_state:
-        st.session_state.exam = ExamLogic(FILE_PATH)
+    if 'current_idx' not in st.session_state:
+        st.session_state.current_idx = 0
 
-    exam = st.session_state.exam
-    current_q = exam.get_current_question()
+    idx = st.session_state.current_idx
 
-    if current_q:
-        st.title(f"שאלה {exam.current_index + 1} מתוך {len(exam.questions)}")
+    if idx < len(questions):
+        current_q = questions[idx]
         
-        # הצגת השאלה
-        st.markdown(f"### {current_q.get('question_text', 'טקסט חסר')}")
+        st.title(f"שאלה {idx + 1} מתוך {len(questions)}")
         
-        # בחירת תשובה
+        # שימוש ב-get למניעת שגיאות אם מפתח חסר ב-JSON
+        q_text = current_q.get('question_text', current_q.get('text', 'טקסט חסר'))
+        st.subheader(q_text)
+        
         options = current_q.get('options', [])
-        st.radio("בחר תשובה:", options, key=f"q_radio_{exam.current_index}")
+        if options:
+            choice = st.radio("בחר תשובה:", options, key=f"q_{idx}")
 
-        # כפתור מעבר
-        if st.button("המשך לשאלה הבאה"):
-            exam.next_question()
-            st.rerun()
+            if st.button("המשך לשאלה הבאה"):
+                st.session_state.current_idx += 1
+                st.rerun()
+        else:
+            st.warning("לא נמצאו אפשרויות לשאלה זו.")
     else:
         st.success("סיימת את המבחן!")
         if st.button("התחל מחדש"):
-            st.session_state.exam.current_index = 0
+            st.session_state.current_idx = 0
             st.rerun()
