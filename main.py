@@ -2,18 +2,19 @@ import streamlit as st
 from logic import ExamLogic
 import os
 
-# הגדרות דף
-st.set_page_config(page_title="מערכת בחינות - פרוטוקול C-01", dir="rtl")
+# הגדרת כיוון כתיבה לימין (עבור עברית)
+st.set_page_config(page_title="מערכת בחינות", dir="rtl")
 
-# וידוא שהקובץ קיים לפני טעינה
-file_path = "exams_data/test_may1_v1_2025.json"
+# נתיב לקובץ לפי הפרוטוקול
+FILE_PATH = "exams_data/test_may1_v1_2025.json"
 
-if not os.path.exists(file_path):
-    st.error(f"קובץ המבחן לא נמצא בנתיב: {file_path}")
+# בדיקה שהקובץ קיים בתיקייה הנכונה
+if not os.path.exists(FILE_PATH):
+    st.error(f"שגיאה: הקובץ לא נמצא בנתיב {FILE_PATH}")
 else:
-    # אתחול הלוגיקה בזיכרון של הסשן
+    # ניהול מצב השאלות ב-Session State
     if 'exam' not in st.session_state:
-        st.session_state.exam = ExamLogic(file_path)
+        st.session_state.exam = ExamLogic(FILE_PATH)
 
     exam = st.session_state.exam
     current_q = exam.get_current_question()
@@ -21,19 +22,19 @@ else:
     if current_q:
         st.title(f"שאלה {exam.current_index + 1} מתוך {len(exam.questions)}")
         
-        # תצוגת השאלה (שימוש במפתח question_text מהפרוטוקול)
-        st.subheader(current_q.get('question_text', 'שאלה ללא תוכן'))
+        # הצגת השאלה
+        st.markdown(f"### {current_q.get('question_text', 'טקסט חסר')}")
         
-        # הצגת האפשרויות
+        # בחירת תשובה
         options = current_q.get('options', [])
-        choice = st.radio("בחר את התשובה הנכונה:", options, key=f"q_{exam.current_index}")
+        st.radio("בחר תשובה:", options, key=f"q_radio_{exam.current_index}")
 
         # כפתור מעבר
         if st.button("המשך לשאלה הבאה"):
             exam.next_question()
             st.rerun()
     else:
-        st.success("הבחינה הסתיימה!")
+        st.success("סיימת את המבחן!")
         if st.button("התחל מחדש"):
             st.session_state.exam.current_index = 0
             st.rerun()
