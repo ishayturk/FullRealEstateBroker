@@ -1,15 +1,30 @@
 import streamlit as st
-import time  # התיקון לשגיאה שקיבלת
-from logic import initialize_exam, get_ethics_prompt
+import time
+from logic import initialize_exam, generate_question_sync
 
-# הגדרות תצוגה RTL מוקטנת
+# הגדרות עיצוב RTL קשיחות
 st.set_page_config(page_title="סימולטור רשם המתווכים", layout="centered")
+
 st.markdown("""
     <style>
-    direction: rtl; text-align: right;
-    .stMarkdown, .stText, .stButton, .stCheckbox { direction: rtl; text-align: right; }
-    .question-text { font-size: 1rem; font-weight: bold; }
-    .stRadio > label { font-size: 0.9rem; }
+    /* יישור כללי לימין */
+    .main .block-container, .stMarkdown, .stRadio, .stButton, .stCheckbox, [data-testid="stSidebar"] {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    /* תיקון כפתורי רדיו - עיגול מימין לטקסט */
+    .stRadio div[role="radiogroup"] {
+        flex-direction: column;
+    }
+    .stRadio label {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    /* הקטנת גופנים */
+    .question-text { font-size: 1rem !important; font-weight: bold; }
+    p, label { font-size: 0.9rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -19,67 +34,94 @@ state = st.session_state.exam_state
 # --- עמוד הסבר ---
 if state['current_index'] == -1:
     st.title("הוראות לבחינה")
-    st.write("מבחן סימולציה באתיקה למתווכים. 5 שאלות, 5 דקות.")
+    st.markdown("### ברוכים הבאים למבחן האתיקה")
+    st.write("מבחן זה מדמה את שאלות רשם המתווכים. לרשותך 5 שאלות ו-5 דקות.")
     
-    # צ'ק בוקס חובה
-    agreed = st.checkbox("קראתי והבנתי את ההוראות לבחינה")
+    agreed = st.checkbox("קראתי והבנתי את ההוראות לבחינה", value=state['confirmed_instructions'])
     state['confirmed_instructions'] = agreed
 
     if st.button("התחל בחינה"):
         if agreed:
+            # ייצור שאלה ראשונה במידה והרשימה ריקה
+            if not state['questions']:
+                state['questions'].append(generate_question_sync(0))
             state['current_index'] = 0
             state['start_time'] = time.time()
-            # כאן המערכת מציגה את השאלה הראשונה שיוצרה ברקע
             st.rerun()
         else:
-            st.error("עליך לאשר את קריאת ההוראות כדי להתחיל.")
+            st.warning("חובה לאשר את ההוראות.")
 
 # --- עמוד בחינה פעיל ---
 elif not state['is_finished']:
-    # טיימר
-    elapsed = time.time() - state['start_time']
-    remaining = max(0, 300 - int(elapsed))
-    
-    if remaining <= 0:
-        state['is_finished'] = True
-        st.rerun()
-
-    # סיידבר / תפריט עליון בנייד
+    # טיימר בסידבר - שימוש ב-empty כדי שיתרפרש
     with st.sidebar:
-        st.write(f"⏳ זמן נותר: {remaining // 60}:{remaining % 60:02d}")
-        st.write(f"שאלה: {state['current_index'] + 1} / 5")
-        if st.button("הגש מבחן"):
+        timer_placeholder = st.empty()
+        elapsed = time.time() - state['start_time']
+        remaining = max(0, 300 - int(elapsed))
+        timer_placeholder.markdown(f"### ⏳ זמן נותר: {remaining // 60}:{remaining % 60:02d}")
+        
+        st.divider()
+        st.write("### ניווט שאלות")
+        # לוגיקת ניווט: כפתור לכל שאלה
+        cols = st.columns(3)
+        for i in range(5):
+            btn_label = f"שאלה {i+1}"
+            # הדגשת השאלה הנוכחית
+            if i == state['current_index']:
+                btn_label = f"📍 {i+1}"
+            
+            if cols[i % 3].button(btn_label, key=f"nav_{i}"):
+                # אם עוברים לשאלה שעוד לא נוצרה - מייצרים אותה
+                while len(state['questions']) <= i:
+                    state['questions'].append(generate_question_sync(len(state['questions'])))
+                state['current_index'] = i
+                st.rerun()
+
+    # גוף השאלה
+    q_data = state['questions'][state['current_index']]
+    st.markdown(f"<div class='question-text'>שאלה {state['current_index'] + 1} מתוך 5</div>", unsafe_allow_html=True)
+    st.write(q_data['question_text'])
+    
+    # בחירת תשובה - אינדקס None כדי שלא תהיה בחורה מראש
+    current_ans = state['answers'].get(state['current_index'], None)
+    choice = st.radio("בחר את התשובה הנכונה:", q_data['options'], index=current_ans, key=f"q_{state['current_index']}")
+    
+    if choice:
+        state['answers'][state['current_index']] = q_data['options'].index(choice)
+
+    # כפתורי ניווט תחתונים
+    st.divider()
+    col_prev, col_finish, col_next = st.columns([1,1,1])
+    
+    with col_prev:
+        if state['current_index'] > 0:
+            if st.button("⬅️ הקודם"):
+                state['current_index'] -= 1
+                st.rerun()
+    
+    with col_finish:
+        if st.button("🏁 הגש מבחן"):
             state['is_finished'] = True
             st.rerun()
 
-    # הצגת שאלה (כאן המערכת שולפת מהרשימה הדינמית)
-    st.subheader(f"שאלה {state['current_index'] + 1}")
-    
-    # במידה וזו שאלה חדשה, המערכת תייצר ברקע את השאלה הבאה
-    # לוגיקה: if state['current_index'] == len(state['questions']): generate...
-
-    # כפתורי ניווט
-    col1, col2 = st.columns(2)
-    with col1:
-        if state['current_index'] > 0:
-            if st.button("הקודם"):
-                state['current_index'] -= 1
-                st.rerun()
-    with col2:
-        label = "סיים" if state['current_index'] == 4 else "הבא"
-        if st.button(label):
-            # כאן קורה הקסם: אם עוברים לחדשה - מייצרים ברקע את זו שאחריה
-            if state['current_index'] < 4:
+    with col_next:
+        if state['current_index'] < 4:
+            if st.button("הבא ➡️"):
                 state['current_index'] += 1
-                st.rerun()
-            else:
-                state['is_finished'] = True
+                # טעינה מראש של השאלה הבאה אם צריך
+                if len(state['questions']) <= state['current_index']:
+                    state['questions'].append(generate_question_sync(state['current_index']))
                 st.rerun()
 
-# --- עמוד משוב ---
+    # ריפרש אוטומטי קל לטיימר
+    if remaining > 0:
+        time.sleep(1)
+        st.rerun()
+
+# --- עמוד סיום ---
 else:
-    st.title("סוף המבחן")
-    st.write("תודה שהשתתפת.")
-    if st.button("חזרה להתחלה"):
+    st.title("סיכום מבחן")
+    st.write(f"ענית על {len(state['answers'])} שאלות מתוך 5.")
+    if st.button("התחל מבחן חדש"):
         st.session_state.clear()
         st.rerun()
