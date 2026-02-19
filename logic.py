@@ -1,24 +1,5 @@
 import streamlit as st
-import json
-
-def get_ethics_prompt():
-    return """
-    פעל ככותב בחינות בכיר של רשם המתווכים. צור שאלה אחת חדשה בפורמט "סיפור מקרה".
-    נושאים: אתיקה, חוק המתווכים, הגורם היעיל, וניגוד עניינים בלבד.
-    מבנה: שאלה ו-4 אפשרויות עם נימוק משפטי לכל אחת.
-    החזר JSON בלבד: {"question_text": "...", "options": ["...", "...", "...", "..."], "correct_index": 0}
-    וודא שהתוכן חדש ולא חוזר על עצמו.
-    """
-
-def generate_question():
-    # כאן המערכת קוראת ל-Gemini (בפועל יש להשתמש ב-model.generate_content)
-    # לצורך הדגמה, הפונקציה מחזירה מבנה ריק שה-AI ימלא בזמן אמת
-    try:
-        # כאן תבוא הפקודה: response = model.generate_content(get_ethics_prompt())
-        # ופענוח ה-JSON מהתשובה
-        pass
-    except:
-        return None
+import random
 
 def initialize_exam():
     if 'exam_state' not in st.session_state:
@@ -28,6 +9,26 @@ def initialize_exam():
             'answers': {},
             'start_time': None,
             'is_finished': False,
-            'prefetched_next': None,
             'confirmed_instructions': False
         }
+
+def get_ethics_prompt():
+    return "צור שאלה באתיקה למתווכים בסגנון רשם המתווכים (סיפור מקרה + 4 אפשרויות). החזר JSON."
+
+def generate_question_sync(index):
+    """פונקציה לייצור שאלה. במציאות כאן תהיה קריאת ה-AI"""
+    # דוגמה לשאלה שתעלה כדי שלא יהיה ריק
+    questions_pool = [
+        {
+            "question_text": "מתווך גבה דמי תיווך מלקוח מבלי שהחתים אותו על טופס הזמנה בכתב, אך העסקה הושלמה והוא היה הגורם היעיל. האם הוא זכאי לשכר?",
+            "options": [
+                "א. כן, כי הוא היה הגורם היעיל.",
+                "ב. לא, חובה להחתים על הזמנה בכתב לפי חוק המתווכים.",
+                "ג. כן, אם הלקוח הודה שקיבל שירות.",
+                "ד. רק אם מדובר בעסקת שכירות."
+            ],
+            "correct_index": 1
+        }
+    ]
+    # מחזיר שאלה רנדומלית או מהפול למטרת הבדיקה
+    return random.choice(questions_pool)
