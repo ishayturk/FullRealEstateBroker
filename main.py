@@ -2,13 +2,10 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-# הסרת תפריטים וסידור מרווחים
 st.markdown("""
     <style>
-    /* הסרת התפריט העליון והלוגו של Streamlit */
     header {visibility: hidden;}
     footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
     
     .block-container { 
         direction: rtl; 
@@ -19,15 +16,19 @@ st.markdown("""
     
     .stMarkdown, p, h1, h3, label { 
         text-align: right !important; 
-        margin-bottom: 0px !important;
-        line-height: 1.2 !important;
+        direction: rtl !important;
     }
 
+    /* יישור הצ'קבוקס לימין המוחלט */
     div[data-testid="stCheckbox"] > label {
         flex-direction: row-reverse !important;
         justify-content: flex-end !important;
-        gap: 10px;
-        margin-top: 10px !important;
+        width: 100% !important;
+    }
+
+    /* הזזת הריבוע עצמו לימין הטקסט */
+    div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
+        margin-right: 10px !important;
     }
 
     .stButton { text-align: right !important; }
