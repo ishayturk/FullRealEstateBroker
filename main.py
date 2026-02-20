@@ -10,16 +10,15 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # קליטת שם המשתמש מהכתובת
 user_name = st.query_params.get("user", "אורח")
 
-# CSS לעיצוב הסטריפ העליון והוראות המבחן
+# CSS לעיצוב הסטריפ העליון והוראות המבחן (סוגריים כפולים למניעת שגיאת f-string)
 st.markdown(f"""
     <style>
     header {{visibility: hidden;}}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
     
-    /* הסטריפ העליון - שורה אחת מתחת לקצה */
     .top-strip {{
-        position: relative; /* כרגע לא קפוא (לא Freeze) לפי בקשתך */
+        position: relative;
         top: 15px; 
         width: 100%;
         height: 55px;
@@ -46,25 +45,24 @@ st.markdown(f"""
     }}
     
     .strip-user {{ 
-        font-weight: 900 !important; /* Bold מודגש */
+        font-weight: 900 !important;
         font-size: 1.1rem; 
         display: flex;
         align-items: center;
         gap: 8px;
         color: #31333f;
-    }
+    }}
     
     .back-btn-placeholder {{
         border: 1px solid #d1d5db;
         padding: 6px 18px;
         border-radius: 8px;
         font-weight: bold;
-        color: #9ca3af; /* אפור - לא פעיל */
+        color: #9ca3af;
         background-color: transparent;
         cursor: not-allowed;
     }}
 
-    /* עיצוב התוכן של הוראות המבחן */
     .block-container {{
         direction: rtl;
         max-width: 800px;
