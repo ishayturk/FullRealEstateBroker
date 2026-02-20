@@ -26,21 +26,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. בניית הסטריפ כקומפוננטה אחת כדי שהכפתור יעבוד באותו דף
-# כאן אני מצמצם את הרווחים בין הלוגו, השם והכפתור
+# 3. הסטריפ עם JavaScript שיעבוד בתוך ה-iframe
 header_html = f"""
     <div style="display: flex; align-items: center; justify-content: flex-start; 
-                gap: 30px; direction: rtl; font-family: sans-serif; 
+                gap: 20px; direction: rtl; font-family: sans-serif; 
                 border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">
-        <div style="font-size: 1.3rem; font-weight: bold;">🏠 מתווך בקליק</div>
-        <div style="font-size: 1.1rem; font-weight: 900;">👤 {user_name}</div>
-        <a href="{back_url}" target="_self" 
-           style="text-decoration: none; color: #31333f; border: 1px solid #d1d5db; 
-                  padding: 5px 15px; border-radius: 8px; font-weight: bold; 
-                  font-size: 0.9rem; background: white;">
-           לתפריט הראשי
-        </a>
+        <div style="font-size: 1.3rem; font-weight: bold; white-space: nowrap;">🏠 מתווך בקליק</div>
+        <div style="font-size: 1.1rem; font-weight: 900; white-space: nowrap;">👤 {user_name}</div>
+        <button onclick="window.parent.location.href='{back_url}'" 
+                style="cursor: pointer; background: white; border: 1px solid #d1d5db; 
+                       padding: 5px 15px; border-radius: 8px; font-weight: bold; 
+                       font-size: 0.9rem; color: #31333f; transition: 0.2s;">
+            לתפריט הראשי
+        </button>
     </div>
+    <script>
+        // הוספת אפקט הובר לכפתור דרך JS
+        const btn = document.querySelector('button');
+        btn.onmouseover = () => {{ btn.style.borderColor = '#ff4b4b'; btn.style.color = '#ff4b4b'; }};
+        btn.onmouseout = () => {{ btn.style.borderColor = '#d1d5db'; btn.style.color = '#31333f'; }};
+    </script>
 """
 
 components.html(header_html, height=60)
@@ -48,7 +53,7 @@ components.html(header_html, height=60)
 # אתחול לוגיקה
 initialize_exam()
 
-# 4. דף ההסבר
+# 4. דף ההסבר (ללא שינוי)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.title("הוראות למבחן רישויי מקרקעין")
     
