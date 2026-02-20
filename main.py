@@ -3,7 +3,6 @@
 # Version: 1218-G2 | Anchor: 1218-G2
 # ==========================================
 import streamlit as st
-import streamlit.components.v1 as components
 from logic import initialize_exam
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
@@ -11,43 +10,62 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # 1. קליטת שם
 user_name = st.query_params.get("user", "אורח")
 
-# 2. כתובת החזרה
+# 2. הלינק לחזרה (באותו עמוד)
 base_url = "https://ishayturk-realtor-app-app-kk1gme.streamlit.app/"
 back_url = f"{base_url}?user={user_name.replace(' ', '%20')}"
 
-# CSS לצמצום תוכן העמוד
-st.markdown("""
+# CSS - צמצום הסטריפ ועיצוב הכפתור
+st.markdown(f"""
     <style>
-    * { direction: rtl; text-align: right; }
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .block-container { max-width: 800px; margin: auto; padding-top: 5px !important; }
+    * {{ direction: rtl; text-align: right; }}
+    header {{visibility: hidden;}}
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+
+    /* סטריפ מצומצם וצפוף */
+    .header-box {{
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 20px;
+    }}
+
+    .logo-text {{ font-size: 1.3rem; font-weight: bold; }}
+    .user-text {{ font-size: 1.1rem; font-weight: 900; }}
+
+    /* כפתור שעובד בתוך אותו דף */
+    .home-link {{
+        text-decoration: none !important;
+        color: #31333f !important;
+        border: 1px solid #d1d5db !important;
+        padding: 5px 15px !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        font-size: 0.9rem !important;
+        background-color: white !important;
+        transition: 0.2s;
+    }}
+    .home-link:hover {{
+        border-color: #ff4b4b !important;
+        color: #ff4b4b !important;
+    }}
+    
+    .block-container {{ max-width: 800px; margin: auto; }}
     </style>
-""", unsafe_allow_html=True)
 
-# 3. סטריפ צפוף עם JavaScript לניווט באותו דף
-header_html = f"""
-    <div style="display: flex; align-items: center; justify-content: flex-start; 
-                gap: 25px; direction: rtl; font-family: sans-serif; 
-                border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;">
-        <div style="font-size: 1.2rem; font-weight: bold; white-space: nowrap;">🏠 מתווך בקליק</div>
-        <div style="font-size: 1.1rem; font-weight: 900; white-space: nowrap;">👤 {user_name}</div>
-        <button onclick="window.parent.location.href='{back_url}'" 
-                style="cursor: pointer; background: white; border: 1px solid #d1d5db; 
-                       padding: 5px 15px; border-radius: 8px; font-weight: bold; 
-                       font-size: 0.85rem; color: #31333f;">
-            לתפריט הראשי
-        </button>
+    <div class="header-box">
+        <div class="logo-text">🏠 מתווך בקליק</div>
+        <div class="user-text">👤 {user_name}</div>
+        <a href="{back_url}" target="_top" class="home-link">לתפריט הראשי</a>
     </div>
-"""
-
-components.html(header_html, height=60)
+""", unsafe_allow_html=True)
 
 # אתחול לוגיקה
 initialize_exam()
 
-# 4. דף ההסבר
+# 3. דף ההסבר
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.title("הוראות למבחן רישויי מקרקעין")
     st.write("1. המבחן כולל 25 שאלות.")
