@@ -7,10 +7,15 @@ from logic import initialize_exam, fetch_next_question
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-# קליטת שם המשתמש מהכתובת
+# 1. קליטת שם המשתמש מהכתובת
 user_name = st.query_params.get("user", "אורח")
 
-# CSS מעודכן: מירכוז כותרת וצמצום רווחים
+# 2. הלינק המדויק לאפליקציית הלימוד שסיפקת
+study_app_url = "https://ishayturk-realtor-app-app-kk1gme.streamlit.app/"
+# יצירת הכתובת המלאה לחזרה עם הפרמטר
+back_url = f"{study_app_url}?user={user_name.replace(' ', '%20')}"
+
+# CSS לעיצוב הסטריפ והוראות המבחן
 st.markdown(f"""
     <style>
     header {{visibility: hidden;}}
@@ -53,14 +58,22 @@ st.markdown(f"""
         color: #31333f;
     }}
     
-    .back-btn-placeholder {{
-        border: 1px solid #d1d5db;
-        padding: 6px 18px;
-        border-radius: 8px;
-        font-weight: bold;
-        color: #9ca3af;
-        background-color: transparent;
-        cursor: not-allowed;
+    .back-btn-active {{
+        text-decoration: none !important;
+        color: #31333f !important;
+        border: 1px solid #d1d5db !important;
+        padding: 6px 18px !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        transition: 0.2s;
+        display: inline-block;
+        font-size: 0.9rem;
+    }}
+    
+    .back-btn-active:hover {{
+        border-color: #ff4b4b !important;
+        color: #ff4b4b !important;
+        background-color: #fffafa !important;
     }}
 
     .block-container {{
@@ -70,66 +83,7 @@ st.markdown(f"""
         padding-top: 0px !important;
     }}
     
-    .instructions-box {{
-        text-align: right;
-        direction: rtl;
-        line-height: 1.4;
-    }}
-    
-    /* מירכוז כותרת והעלאתה למעלה */
     h1 {{ 
         font-size: 2rem !important; 
         margin-top: 0px !important; 
-        margin-bottom: 15px !important; 
-        padding-top: 0px !important;
-        text-align: center !important; /* מירכוז */
-        width: 100%;
-    }}
-    
-    .stDivider {{
-        margin-top: 5px !important;
-        margin-bottom: 5px !important;
-    }}
-
-    div[data-testid="stCheckbox"] {{
-        margin-top: -10px !important;
-    }}
-    </style>
-
-    <div class="top-strip">
-        <div class="strip-right">
-            <div class="strip-logo">🏠 מתווך בקליק</div>
-            <div class="strip-user">👤 <b>{user_name}</b></div>
-        </div>
-        <div class="strip-back">
-            <span class="back-btn-placeholder">חזרה לתפריט הראשי</span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-# אתחול לוגיקה
-initialize_exam()
-
-# מסך ההסבר
-if "step" not in st.session_state or st.session_state.step == "instructions":
-    # הכותרת מחוץ ל-instructions-box כדי שהמירכוז שלה יהיה נקי
-    st.title("הוראות למבחן רישויי מקרקעין")
-    
-    st.markdown('<div class="instructions-box">', unsafe_allow_html=True)
-    st.write("1. המבחן כולל 25 שאלות.")
-    st.write("2. זמן מוקצב: 90 דקות.")
-    st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
-    st.write("4. ניתן לחזור אחורה רק לשאלות שנענו.")
-    st.write("5. בסיום 90 דקות המבחן יינעל.")
-    st.write("6. ציון עובר: 60.")
-    st.write("7. חל איסור על שימוש בחומר עזר.")
-
-    st.divider()
-
-    msg = "קראתי את ההוראות ואני מוכן להתחיל"
-    agree = st.checkbox(msg)
-
-    if st.button("התחל בחינה", disabled=not agree):
-        st.session_state.step = "exam_run"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+        margin-bottom: 15px
