@@ -34,6 +34,7 @@ st.markdown("""
         margin-top: 10px;
     }
 
+    /* כפתור הלינק המדויק שעבד */
     .stLinkButton>a { 
         display: inline-flex !important;
         align-items: center;
@@ -58,21 +59,22 @@ st.markdown("""
 # 1. קליטת שם
 user_name = st.query_params.get("user", "אורח")
 
-# 2. סידור הסטריפ (החלפת סדר העמודות כדי שהלוגו יהיה בימין)
+# 2. כותרת וסטריפ (במבנה המקורי בדיוק)
 c1, c2, c3 = st.columns([1.5, 1.5, 3])
 
-with c3: # העמודה הימנית ביותר
-    st.markdown('<div class="header-title">🏠 מתווך בקליק</div>', 
-                unsafe_allow_html=True)
-
-with c2: # העמודה המרכזית
-    st.markdown(f'<div class="header-user">👤 <b>{user_name}</b></div>', 
-                unsafe_allow_html=True)
-
-with c1: # העמודה השמאלית ביותר
+with c1:
+    # הטקסט המעודכן בכפתור
     u_name = user_name.replace(" ", "%20")
     t_url = f"https://ishayturk-realtor-app-app-kk1gme.streamlit.app/?user={u_name}"
     st.link_button("לתפריט הראשי", t_url)
+
+with c2:
+    st.markdown(f'<div class="header-user">👤 <b>{user_name}</b></div>', 
+                unsafe_allow_html=True)
+
+with c3:
+    st.markdown('<div class="header-title">🏠 מתווך בקליק</div>', 
+                unsafe_allow_html=True)
 
 st.divider()
 
