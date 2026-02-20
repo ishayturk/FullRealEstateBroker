@@ -7,7 +7,6 @@ st.set_page_config(page_title="סימולטור רשם המתווכים", layout
 
 st.markdown("""
     <style>
-    /* יישור גלובלי לימין */
     .stApp { direction: rtl !important; text-align: right !important; }
     [data-testid="stSidebar"] { direction: rtl !important; }
     
@@ -19,8 +18,11 @@ st.markdown("""
         display: flex !important;
     }
     
-    /* הנמכת השעון למניעת חיתוך בתפריט העליון */
-    iframe { margin-top: 35px !important; }
+    /* הנמכת השעון למניעת חיתוך וייצוב המסגרת */
+    iframe { 
+        margin-top: 35px !important; 
+        border: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -51,9 +53,9 @@ elif not state['is_finished']:
         state['is_finished'] = True
         st.rerun()
 
-    # שעון HTML יציב עם רקע אפור בהיר
+    # שעון HTML יציב עם רקע לבן זהה לדף
     timer_html = f"""
-    <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; text-align: center;">
+    <div style="background-color: #ffffff; padding: 15px; text-align: center; overflow: hidden;">
         <span id="c" style="font-family: monospace; font-size: 40px; font-weight: bold; color: #1e1e1e;">00:00</span>
     </div>
     <script>
@@ -72,7 +74,7 @@ elif not state['is_finished']:
     with st.sidebar:
         st.write("### ניווט לשאלות עבר")
         for i in range(25):
-            # כפתור פעיל רק לשאלות שהן קטנות מהאינדקס הנוכחי (שאלות עבר)
+            # כפתור פעיל רק לשאלות עבר (שכבר עברת אותן)
             is_past = i < state['current_index']
             if st.button(f"שאלה {i+1}", key=f"n_{i}", disabled=not is_past):
                 state['current_index'] = i
@@ -108,8 +110,6 @@ elif not state['is_finished']:
                 if st.button("🏁 סיים בחינה"):
                     state['is_finished'] = True
                     st.rerun()
-    
-    time.sleep(1)
     st.rerun()
 
 else:
