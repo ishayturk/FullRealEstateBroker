@@ -14,55 +14,54 @@ user_name = st.query_params.get("user", "אורח")
 base_url = "https://ishayturk-realtor-app-app-kk1gme.streamlit.app/"
 back_url = f"{base_url}?user={user_name.replace(' ', '%20')}"
 
-# CSS שמרכז ומצמצם את הסטריפ
+# CSS - צמצום הסטריפ ומניעת פתיחת דף חדש
 st.markdown(f"""
     <style>
+    * {{ direction: rtl; text-align: right; }}
     header {{visibility: hidden;}}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    
-    .top-strip {{
+
+    /* צמצום רוחב הסטריפ וקירוב האלמנטים */
+    .custom-header {{
         display: flex;
         align-items: center;
-        justify-content: center; /* מרכז את כל הסטריפ */
-        gap: 30px; /* רווח קבוע בין האלמנטים */
-        padding: 10px;
-        background-color: white;
+        justify-content: flex-start;
+        gap: 40px; /* רווח קרוב בין הלוגו, השם והכפתור */
+        max-width: 800px; /* מצמצם את הפריסה לרוחב העמוד */
+        margin: 0 auto 20px auto;
+        padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
-        direction: rtl;
-        margin-bottom: 20px;
     }}
-    
-    .logo {{ font-weight: bold; font-size: 1.2rem; }}
-    .user {{ font-weight: 900; font-size: 1.1rem; }}
-    
-    /* כפתור שנפתח באותו עמוד */
-    .back-btn {{
+
+    .logo-text {{ font-size: 1.5rem; font-weight: bold; margin: 0; }}
+    .user-text {{ font-size: 1.1rem; font-weight: 900; margin-top: 5px; }}
+
+    /* עיצוב הקישור שייראה ככפתור ויפתח באותו דף */
+    .nav-button {{
         text-decoration: none !important;
         color: #31333f !important;
         border: 1px solid #d1d5db !important;
-        padding: 4px 12px !important;
+        padding: 6px 16px !important;
         border-radius: 8px !important;
         font-weight: bold !important;
-        font-size: 0.85rem !important;
+        font-size: 0.9rem !important;
         transition: 0.2s;
+        display: inline-block;
+        background: transparent;
     }}
-    .back-btn:hover {{
+    .nav-button:hover {{
         border-color: #ff4b4b !important;
         color: #ff4b4b !important;
     }}
     
-    .block-container {{ 
-        max-width: 800px; 
-        margin: auto; 
-        padding-top: 0px !important; 
-    }}
+    .block-container {{ max-width: 800px; margin: auto; }}
     </style>
 
-    <div class="top-strip">
-        <div class="logo">🏠 מתווך בקליק</div>
-        <div class="user">👤 {user_name}</div>
-        <a href="{back_url}" target="_self" class="back-btn">לתפריט הראשי</a>
+    <div class="custom-header">
+        <div class="logo-text">🏠 מתווך בקליק</div>
+        <div class="user-text">👤 {user_name}</div>
+        <a href="{back_url}" target="_self" class="nav-button">לתפריט הראשי</a>
     </div>
 """, unsafe_allow_html=True)
 
