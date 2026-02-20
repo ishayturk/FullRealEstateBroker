@@ -13,7 +13,8 @@ user_name = st.query_params.get("user", "אורח")
 # 2. הלינק המדויק לאפליקציית הלימוד שסיפקת
 study_app_url = "https://ishayturk-realtor-app-app-kk1gme.streamlit.app/"
 # יצירת הכתובת המלאה לחזרה עם הפרמטר
-back_url = f"{study_app_url}?user={user_name.replace(' ', '%20')}"
+encoded_name = user_name.replace(' ', '%20')
+back_url = f"{study_app_url}?user={encoded_name}"
 
 # CSS לעיצוב הסטריפ והוראות המבחן
 st.markdown(f"""
@@ -86,4 +87,51 @@ st.markdown(f"""
     h1 {{ 
         font-size: 2rem !important; 
         margin-top: 0px !important; 
-        margin-bottom: 15px
+        margin-bottom: 15px !important; 
+        text-align: center !important; 
+        width: 100%;
+    }}
+    
+    .instructions-box {{
+        text-align: right;
+        direction: rtl;
+        line-height: 1.4;
+    }}
+    </style>
+
+    <div class="top-strip">
+        <div class="strip-right">
+            <div class="strip-logo">🏠 מתווך בקליק</div>
+            <div class="strip-user">👤 <b>{user_name}</b></div>
+        </div>
+        <div class="strip-back">
+            <a href="{back_url}" target="_self" class="back-btn-active">חזרה לתפריט הראשי</a>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+# אתחול לוגיקה
+initialize_exam()
+
+# מסך ההסבר
+if "step" not in st.session_state or st.session_state.step == "instructions":
+    st.title("הוראות למבחן רישויי מקרקעין")
+    
+    st.markdown('<div class="instructions-box">', unsafe_allow_html=True)
+    st.write("1. המבחן כולל 25 שאלות.")
+    st.write("2. זמן מוקצב: 90 דקות.")
+    st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
+    st.write("4. ניתן לחזור אחורה רק לשאלות שנענו.")
+    st.write("5. בסיום 90 דקות המבחן יינעל.")
+    st.write("6. ציון עובר: 60.")
+    st.write("7. חל איסור על שימוש בחומר עזר.")
+
+    st.divider()
+
+    msg = "קראתי את ההוראות ואני מוכן להתחיל"
+    agree = st.checkbox(msg)
+
+    if st.button("התחל בחינה", disabled=not agree):
+        st.session_state.step = "exam_run"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
