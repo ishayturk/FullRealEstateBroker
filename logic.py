@@ -4,9 +4,7 @@ import json, re
 
 EXAM_PROMPT = """
 As an expert in the Israeli Real Estate Brokers License Exam, generate a "Scenario-Based" question.
-FOCUS ONLY on: Real Estate Brokers Law (1996), Ethics Regulations, and directly related professional topics.
-DO NOT include general law questions or non-brokerage legal topics.
-
+FOCUS ONLY on: Real Estate Brokers Law (1996), Ethics Regulations.
 Output ONLY a JSON:
 {
   "question_text": "תיאור המקרה המשפטי...",
@@ -27,7 +25,6 @@ def initialize_exam():
         }
 
 def fetch_question_to_queue():
-    """מייצר שאלה אחת קדימה לתוך הזיכרון (Prefetching)"""
     state = st.session_state.exam_state
     if len(state['questions']) < 25:
         try:
@@ -38,5 +35,5 @@ def fetch_question_to_queue():
             if match:
                 q_data = json.loads(match.group())
                 state['questions'].append(q_data)
-        except Exception:
+        except:
             pass
