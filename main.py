@@ -5,52 +5,53 @@ from logic import initialize_exam, generate_question_sync
 
 st.set_page_config(page_title="סימולטור רשם המתווכים", layout="wide", initial_sidebar_state="expanded")
 
-# CSS לפתרון בעיות ויזואליות: יישור, רדיו, צ'קבוקס ומניעת ריצוד
 st.markdown("""
     <style>
-    /* יישור RTL גלובלי */
     .stApp, [data-testid="stSidebar"], .stMarkdown, p, h1, h2, h3, label {
         direction: rtl !important;
         text-align: right !important;
     }
     
-    /* מניעת סגירת סידבר */
     [data-testid="sidebar-close"] { display: none !important; }
     
-    /* יישור בולטים - הצמדת המלל לנקודה */
     .instruction-box {
         direction: rtl;
         text-align: right;
         padding-right: 20px;
     }
 
-    /* רדיו באטן - נקודה מימין עם מרווח ומסגרת */
+    /* עיצוב הרדיו - הפרדה מהמלל והצמדה לימין */
     [data-testid="stRadio"] div[role="radiogroup"] label {
         flex-direction: row-reverse !important;
         justify-content: flex-end !important;
         display: flex !important;
-        gap: 15px !important;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 5px;
+        gap: 25px !important; /* מרווח מוגדל בין העיגול למלל */
+        padding: 10px 0;
     }
 
-    /* צ'קבוקס עם מסגרת בולטת */
+    /* צ'קבוקס עם מסגרת שחורה דקה */
     [data-testid="stCheckbox"] {
-        border: 2px solid #333;
-        padding: 15px;
-        border-radius: 10px;
+        border: 1px solid #000;
+        padding: 10px;
+        border-radius: 4px;
         width: fit-content;
-        margin: 20px 0;
     }
 
-    /* כפתורים שקופים ומקצועיים */
+    /* כפתורים שקופים */
     .stButton>button {
         background-color: transparent !important;
         border: 1px solid #333 !important;
         color: #333 !important;
+    }
+
+    /* שעון ללא רקע */
+    .timer-container {
+        text-align: center;
+        font-family: sans-serif;
+        font-size: 40px;
         font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -58,11 +59,8 @@ st.markdown("""
 initialize_exam()
 state = st.session_state.exam_state
 
-# --- עמוד הסבר לבחינה ---
 if state['current_index'] == -1:
     st.title("הסבר לבחינת רישיון למתווכים")
-    
-    # שימוש ב-HTML ליישור בולטים מושלם
     st.markdown("""
     <div class="instruction-box">
         <ul>
@@ -77,31 +75,22 @@ if state['current_index'] == -1:
     </div>
     """, unsafe_allow_html=True)
     
-    st.divider()
     agreed = st.checkbox("קראתי ומאשר")
-    
     if st.button("התחל בחינה", disabled=not agreed):
         state['questions'] = [generate_question_sync(0)]
         state['current_index'] = 0
         state['start_time'] = time.time()
         st.rerun()
 
-# --- עמוד בחינה פעיל ---
 elif not state['is_finished']:
-    # שעון JavaScript שקט - לא מרעיד את התפריט
-    total_seconds = 5400
-    elapsed = int(time.time() - state['start_time'])
-    remaining = max(0, total_seconds - elapsed)
-    
+    remaining = max(0, 5400 - int(time.time() - state['start_time']))
     if remaining <= 0:
         state['is_finished'] = True
         st.rerun()
 
-    # רכיב שעון "חי" שלא מצריך rerun של כל הדף
+    # רכיב שעון ללא רקע
     timer_html = f"""
-    <div style="text-align:center; font-family:sans-serif; font-size:40px; font-weight:bold; padding:10px; background:#f0f2f6; border-radius:10px; border:1px solid #ccc;">
-        <span id="timer"></span>
-    </div>
+    <div class="timer-container" id="timer"></div>
     <script>
         var seconds = {remaining};
         function updateTimer() {{
@@ -114,7 +103,7 @@ elif not state['is_finished']:
         updateTimer();
     </script>
     """
-    components.html(timer_html, height=100)
+    components.html(timer_html, height=70)
 
     with st.sidebar:
         st.write("### ניווט שאלות")
@@ -159,10 +148,12 @@ elif not state['is_finished']:
                     state['questions'].append(generate_question_sync(state['current_index']))
                 st.rerun()
 
-# --- עמוד סיום ---
+    time.sleep(1)
+    st.rerun()
+
 else:
     st.header("הבחינה הסתיימה")
-    st.write(f"ענית על {len(state['answers'])} שאלות מתוך 25.")
+    st.write(f"ענית על {len(state['answers'])} שאלות.")
     if st.button("חזרה להתחלה"):
         st.session_state.clear()
         st.rerun()
