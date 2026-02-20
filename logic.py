@@ -24,7 +24,6 @@ Output ONLY a JSON:
 """
 
 def initialize_exam():
-    """אתחול מצב הבחינה בזיכרון"""
     if "exam_state" not in st.session_state:
         st.session_state.exam_state = {
             "current_index": -1,
@@ -35,28 +34,15 @@ def initialize_exam():
         }
 
 def generate_question_sync(index):
-    """ייצור שאלה אחת בעזרת הפרומפט המקצועי"""
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
-        # קריאה למודל עם הפרומפט המקצועי
         res = model.generate_content(EXAM_PROMPT).text
-        
-        # חילוץ ה-JSON מתוך התשובה
         match = re.search(r'\{.*\}', res, re.DOTALL)
         if match:
             return json.loads(match.group())
         
-        # מקרה חירום אם ה-JSON נכשל
-        return {
-            "question_text": "שגיאה בטעינת שאלה. אנא נסה לעבור לשאלה הבאה.",
-            "options": ["תשובה א", "תשובה ב", "תשובה ג", "תשובה ד"],
-            "correct_idx": 0
-        }
+        return {"question_text": "שגיאה בייצור שאלה", "options": ["-","-","-","-"], "correct_idx": 0}
     except Exception as e:
-        return {
-            "question_text": f"שגיאת תקשורת: {str(e)}",
-            "options": ["-", "-", "-", "-"],
-            "correct_idx": 0
-        }
+        return {"question_text": f"שגיאת תקשורת: {str(e)}", "options": ["-","-","-","-"], "correct_idx": 0}
