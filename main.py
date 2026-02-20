@@ -1,8 +1,11 @@
 import streamlit as st
 
-st.set_page_config(page_title="סימולטור בחינה - דף כניסה", layout="wide")
+st.set_page_config(
+    page_title="סימולטור בחינה - דף כניסה",
+    layout="wide"
+)
 
-# עיצוב RTL והתאמה לפריים (Iframe)
+# עיצוב RTL והתאמה לפריים
 st.markdown("""
     <style>
     .block-container { 
@@ -12,45 +15,46 @@ st.markdown("""
         direction: rtl; 
     }
     
-    /* יישור טקסט וכותרות לימין */
     .stMarkdown, p, label, h1, h2, h3 { 
         text-align: right !important; 
         direction: rtl !important; 
     }
 
-    /* התאמת צ'קבוקס - סימון מימין למלל */
     div[data-testid="stCheckbox"] > label {
         flex-direction: row-reverse !important;
         justify-content: flex-end !important;
         gap: 10px;
     }
 
-    /* עיצוב כפתור רחב */
     .stButton > button {
         width: 100%;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# כותרת הדף
 st.title("בחינת רישיון למתווכים במקרקעין")
 
-# תוכן ההסבר
-st.markdown("""
-### הוראות לנבחן:
-* **מבנה המבחן:** 25 שאלות רב-ברירה (אמריקאיות).
-* **משך זמן:** 90 דקות (שעה וחצי).
-* **ציון עובר:** 60 ומעלה.
-* **ניווט:** ניתן לחזור אחורה לשאלות קודמות במהלך המבחן.
-* **חומר עזר:** חל איסור מוחלט על שימוש בחומר עזר מכל סוג שהוא.
-* **שמירה:** התשובות נשמרות באופן אוטומטי עם המעבר לשאלה הבאה.
+# שבירת שורות לטקסט קצר
+instr_1 = "* **מבנה המבחן:** 25 שאלות רב-ברירה."
+instr_2 = "* **משך זמן:** 90 דקות (שעה וחצי)."
+instr_3 = "* **ציון עובר:** 60 ומעלה."
+instr_4 = "* **ניווט:** ניתן לחזור אחורה לשאלות קודמות."
+instr_5 = "* **חומר עזר:** חל איסור על שימוש בחומר עזר."
+instr_6 = "* **שמירה:** התשובות נשמרות אוטומטית."
 
----
-""")
+st.markdown("### הוראות לנבחן:")
+st.markdown(instr_1)
+st.markdown(instr_2)
+st.markdown(instr_3)
+st.markdown(instr_4)
+st.markdown(instr_5)
+st.markdown(instr_6)
 
-# מנגנון אישור ותחילת בחינה
-agree = st.checkbox("אני מאשר שקראתי את ההוראות ואני מוכן להתחיל בבחינה")
+st.divider()
 
-# הכפתור פעיל רק אם הצ'קבוקס מסומן. כרגע הוא לא מוביל לשום מקום.
+# מנגנון אישור
+msg = "אני מאשר שקראתי את ההוראות ואני מוכן להתחיל"
+agree = st.checkbox(msg)
+
 if st.button("התחל בחינה", disabled=not agree):
-    st.info("הכפתור הופ
+    st.info("הכפתור הופעל. כאן תתחיל הלוגיקה.")
