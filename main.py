@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-# שימוש בשיטה מהמערכת השנייה ליישור ימין מוחלט
+# CSS ליישור ימין מוחלט והסרת תפריטים
 st.markdown("""
     <style>
     header {visibility: hidden;}
@@ -13,13 +13,12 @@ st.markdown("""
         padding-top: 2rem !important;
     }
     
-    /* יישור מלל */
     .stMarkdown, p, h1, h3, label { 
         text-align: right !important; 
         direction: rtl !important;
+        margin-bottom: 0px !important;
     }
 
-    /* תיקון צ'קבוקס לפי המערכת השנייה */
     div[data-testid="stCheckbox"] {
         direction: rtl !important;
     }
@@ -34,12 +33,13 @@ st.markdown("""
 
     .stButton { text-align: right !important; }
     hr { margin: 15px 0 !important; }
+    h1 { font-size: 2rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("בחינת רישיון למתווכים במקרקעין")
+# כותרת אחת בלבד כפי שביקשת
+st.title("הוראות למבחן רישויי מקרקעין")
 
-st.markdown("### הוראות לנבחן:")
 st.write("1. המבחן כולל 25 שאלות.")
 st.write("2. זמן מוקצב: 90 דקות.")
 st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
