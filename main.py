@@ -2,11 +2,10 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
+# שימוש בשיטה מהמערכת השנייה ליישור ימין מוחלט
 st.markdown("""
     <style>
     header {visibility: hidden;}
-    footer {visibility: hidden;}
-    
     .block-container { 
         direction: rtl; 
         max-width: 800px; 
@@ -14,21 +13,23 @@ st.markdown("""
         padding-top: 2rem !important;
     }
     
+    /* יישור מלל */
     .stMarkdown, p, h1, h3, label { 
         text-align: right !important; 
         direction: rtl !important;
     }
 
-    /* יישור הצ'קבוקס לימין המוחלט */
-    div[data-testid="stCheckbox"] > label {
-        flex-direction: row-reverse !important;
-        justify-content: flex-end !important;
-        width: 100% !important;
+    /* תיקון צ'קבוקס לפי המערכת השנייה */
+    div[data-testid="stCheckbox"] {
+        direction: rtl !important;
     }
-
-    /* הזזת הריבוע עצמו לימין הטקסט */
-    div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
-        margin-right: 10px !important;
+    
+    div[data-testid="stCheckbox"] > label {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
     }
 
     .stButton { text-align: right !important; }
