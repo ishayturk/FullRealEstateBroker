@@ -3,7 +3,6 @@ import streamlit as st
 import json
 import re
 
-# פרומפט בחינה "יבש" - ממוקד יצירת שאלה אחת בלבד
 EXAM_PROMPT = """
 As an expert in the Israeli Real Estate Brokers Exam, generate ONE multiple-choice question.
 Rules:
@@ -21,10 +20,9 @@ Output JSON only:
 """
 
 def initialize_exam():
-    """אתחול מבנה הנתונים בזיכרון הסשן"""
     if "exam_state" not in st.session_state:
         st.session_state.exam_state = {
-            "current_index": -1, # -1 אומר שאנחנו בדף ההסבר
+            "current_index": -1,
             "questions": [],
             "answers": {},
             "start_time": None,
@@ -33,26 +31,23 @@ def initialize_exam():
         }
 
 def fetch_next_question():
-    """מנגנון השרשרת: מייצר שאלה אחת בכל פעם ברקע עד להגעה ל-25"""
     state = st.session_state.exam_state
-    
-    # תנאי עצירה: אם הגענו ל-25 או שאנחנו כבר בתהליך טעינה
     if len(state['questions']) >= 25 or state.get('is_loading', False):
         return
 
     state['is_loading'] = True
     try:
-        # הגדרת ה-API
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-2.0-flash')
-        
-        # יצירת התוכן
         response = model.generate_content(EXAM_PROMPT)
         res_text = response.text
-        
-        # חילוץ ה-JSON מהתשובה
         match = re.search(r'\{.*\}', res_text, re.DOTALL)
         if match:
             q_data = json.loads(match.group())
-            
-            # בדיקה שהשאלה לא ק
+            existing_questions = [q['question_text'] for q in state['questions']]
+            if q_data['question_text'] not in existing_questions:
+                state['questions'].append(q_data)
+    except Exception as e:
+        pass
+    finally:
+        state['is_loading'] = False
