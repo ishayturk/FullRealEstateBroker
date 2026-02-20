@@ -10,13 +10,14 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # 1. קליטת שם המשתמש
 user_name = st.query_params.get("user", "אורח")
 
-# 2. הלינק המדויק לאפליקציית הלימוד
+# 2. הלינק לאפליקציית הלימוד
 study_app_url = "https://ishayturk-realtor-app-app-kk1gme.streamlit.app/"
-back_url = f"{study_app_url}?user={user_name.replace(' ', '%20')}"
+encoded_name = user_name.replace(' ', '%20')
+back_url = f"{study_app_url}?user={encoded_name}"
 
-# CSS לעיצוב הסטריפ והוראות המבחן
+# CSS שמעצב את הסטריפ ומיישר את כפתור ה-link_button
 st.markdown(f"""
-    <style>
+<style>
     header {{visibility: hidden;}}
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
@@ -25,7 +26,7 @@ st.markdown(f"""
         position: relative;
         top: 10px; 
         width: 100%;
-        height: 50px;
+        height: 60px;
         background-color: white;
         display: flex;
         align-items: center;
@@ -33,35 +34,56 @@ st.markdown(f"""
         padding: 0 25px;
         direction: rtl;
         border-bottom: 1px solid #f0f0f0;
-        margin-bottom: 15px;
+        margin-bottom: 25px;
     }}
     
     .strip-right {{ display: flex; align-items: center; gap: 20px; }}
     .strip-logo {{ font-weight: bold; font-size: 1.2rem; color: #31333f; }}
     .strip-user {{ font-weight: 900 !important; font-size: 1.1rem; color: #31333f; }}
 
+    /* עיצוב ה-Link Button שייראה כמו הכפתורים באפליקציה הראשונה */
+    .stLinkButton > a {{
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px !important; 
+        font-weight: bold !important; 
+        background-color: transparent !important;
+        color: #31333f !important;
+        border: 1px solid #d1d5db !important;
+        text-decoration: none !important;
+        transition: 0.2s;
+        padding: 0.5rem 1rem !important;
+    }}
+    .stLinkButton > a:hover {{
+        border-color: #ff4b4b !important;
+        color: #ff4b4b !important;
+    }}
+
     .block-container {{ direction: rtl; max-width: 800px; margin: auto; padding-top: 0px !important; }}
-    h1 {{ font-size: 2rem !important; margin-top: 0px !important; margin-bottom: 15px !important; text-align: center !important; width: 100%; }}
+    h1 {{ font-size: 2rem !important; margin: 0 0 15px 0 !important; text-align: center !important; width: 100%; }}
     .instructions-box {{ text-align: right; direction: rtl; line-height: 1.4; }}
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
-# 3. הזרקת הסטריפ עם רכיב HTML ייעודי לכפתור כדי להבטיח פעולה
-st.markdown(f"""
-    <div class="top-strip">
-        <div class="strip-right">
-            <div class="strip-logo">🏠 מתווך בקליק</div>
-            <div class="strip-user">👤 <b>{user_name}</b></div>
+# מבנה הסטריפ העליון באמצעות עמודות כדי לשלב את ה-link_button
+c_right, c_left = st.columns([3, 1])
+
+with c_right:
+    st.markdown(f"""
+        <div class="top-strip" style="border: none; margin: 0; padding: 0;">
+            <div class="strip-right">
+                <div class="strip-logo">🏠 מתווך בקליק</div>
+                <div class="strip-user">👤 <b>{user_name}</b></div>
+            </div>
         </div>
-        <div class="strip-back">
-            <button onclick="window.parent.location.href='{back_url}'" 
-                style="cursor: pointer; background: transparent; border: 1px solid #d1d5db; 
-                padding: 6px 18px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; color: #31333f;">
-                חזרה לתפריט הראשי
-            </button>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+with c_left:
+    # שימוש בשיטה שעבדה באפליקציה הראשונה
+    st.link_button("חזרה לתפריט הראשי", back_url)
+
+st.markdown('<hr style="margin-top: -10px; border: 0; border-top: 1px solid #f0f0f0; margin-bottom: 30px;">', unsafe_allow_html=True)
 
 # אתחול לוגיקה
 initialize_exam()
@@ -78,6 +100,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     st.write("6. ציון עובר: 60.")
     st.write("7. חל איסור על שימוש בחומר עזר.")
     st.divider()
+    
     msg = "קראתי את ההוראות ואני מוכן להתחיל"
     agree = st.checkbox(msg)
     if st.button("התחל בחינה", disabled=not agree):
