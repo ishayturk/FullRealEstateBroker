@@ -10,7 +10,7 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # קליטת שם המשתמש מהכתובת
 user_name = st.query_params.get("user", "אורח")
 
-# CSS לעיצוב הסטריפ העליון והוראות המבחן (סוגריים כפולים למניעת שגיאת f-string)
+# CSS מעודכן לצמצום רווחים והעלאת התוכן למעלה
 st.markdown(f"""
     <style>
     header {{visibility: hidden;}}
@@ -19,9 +19,9 @@ st.markdown(f"""
     
     .top-strip {{
         position: relative;
-        top: 15px; 
+        top: 10px; /* צמוד יותר למעלה */
         width: 100%;
-        height: 55px;
+        height: 50px;
         background-color: white;
         display: flex;
         align-items: center;
@@ -29,7 +29,7 @@ st.markdown(f"""
         padding: 0 25px;
         direction: rtl;
         border-bottom: 1px solid #f0f0f0;
-        margin-bottom: 40px;
+        margin-bottom: 15px; /* צמצום משמעותי של הרווח מתחת לסטריפ */
     }}
     
     .strip-right {{
@@ -73,10 +73,26 @@ st.markdown(f"""
     .instructions-box {{
         text-align: right;
         direction: rtl;
-        line-height: 1.8;
+        line-height: 1.4; /* צמצום מרווח בין שורות */
     }}
     
-    h1 {{ font-size: 2.2rem !important; margin-bottom: 20px !important; }}
+    /* העלאת הכותרת וצמצום רווחים */
+    h1 {{ 
+        font-size: 2rem !important; 
+        margin-top: 0px !important; 
+        margin-bottom: 10px !important; 
+        padding-top: 0px !important;
+    }}
+    
+    .stDivider {{
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+    }}
+
+    /* צמצום הרווח סביב ה-Checkbox */
+    div[data-testid="stCheckbox"] {{
+        margin-top: -10px !important;
+    }}
     </style>
 
     <div class="top-strip">
@@ -108,7 +124,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 
     st.divider()
 
-    msg = "קראתי את ההוראות ואני מוכן להתחיל בבחינה"
+    msg = "קראתי את ההוראות ואני מוכן להתחיל"
     agree = st.checkbox(msg)
 
     if st.button("התחל בחינה", disabled=not agree):
