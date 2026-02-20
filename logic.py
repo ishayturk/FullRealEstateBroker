@@ -2,15 +2,19 @@ import google.generativeai as genai
 import streamlit as st
 import json, re
 
+# פרומפט ממוקד בחינה בלבד - ללא הסברים לימודיים
 EXAM_PROMPT = """
-As an expert in the Israeli Real Estate Brokers License Exam, generate a "Scenario-Based" question.
-FOCUS ONLY on: Real Estate Brokers Law (1996), Ethics Regulations.
-Output ONLY a JSON:
+As an expert in the Israeli Real Estate Brokers License Exam, generate ONE "Scenario-Based" multiple-choice question.
+STRICT RULES:
+1. FOCUS ONLY on: Real Estate Brokers Law (1996), Ethics Regulations.
+2. Structure: Case description followed by 4 options (א, ב, ג, ד).
+3. NO pedagogical explanations or "learning mode" hints.
+4. Output ONLY a valid JSON:
 {
   "question_text": "תיאור המקרה המשפטי...",
   "options": ["א. ...", "ב. ...", "ג. ...", "ד. ..."],
   "correct_idx": int,
-  "legal_source": "סעיף החוק"
+  "legal_source": "סעיף החוק הרלוונטי"
 }
 """
 
@@ -26,6 +30,7 @@ def initialize_exam():
 
 def fetch_question_to_queue():
     state = st.session_state.exam_state
+    # מנגנון Prefetching - שומר תמיד 2 שאלות קדימה בתור
     if len(state['questions']) < 25:
         try:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -35,5 +40,5 @@ def fetch_question_to_queue():
             if match:
                 q_data = json.loads(match.group())
                 state['questions'].append(q_data)
-        except:
+        except Exception:
             pass
