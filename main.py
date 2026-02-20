@@ -5,37 +5,30 @@ from logic import initialize_exam, fetch_and_store_question
 
 st.set_page_config(page_title="סימולטור רשם המתווכים", layout="wide", initial_sidebar_state="expanded")
 
-# CSS לתיקון יישור, רדיו, צ'קבוקס וצמצום רווחים
+# CSS לתיקון יישור, רדיו וצמצום רווחים
 st.markdown("""
     <style>
-    /* יישור RTL גלובלי */
     .stApp, [data-testid="stSidebar"], .stMarkdown, p, h1, h2, h3, label {
         direction: rtl !important;
         text-align: right !important;
     }
-    
-    /* צמצום רווחים בראש הדף למניעת גלילה */
     .block-container { padding-top: 1rem !important; padding-bottom: 0 !important; }
     
-    /* יישור רדיו: נקודה מימין למלל ללא מסגרת חונקת */
+    /* רדיו מימין למלל ללא מסגרת */
     [data-testid="stRadio"] div[role="radiogroup"] label {
         flex-direction: row-reverse !important;
         justify-content: flex-end !important;
         display: flex !important;
-        gap: 15px !important;
-        padding: 5px 0 !important;
-        border: none !important;
+        gap: 20px !important;
+        padding: 8px 0 !important;
     }
 
-    /* צ'קבוקס בעמוד ההסבר */
     [data-testid="stCheckbox"] {
         border: 1px solid #000;
         padding: 10px;
-        margin: 10px 0;
         width: fit-content;
     }
 
-    /* שעון בולט עם רקע לבן */
     .timer-container {
         text-align: center;
         font-family: sans-serif;
@@ -44,21 +37,16 @@ st.markdown("""
         color: #333;
         background-color: white;
         padding: 5px;
-        border: 1px solid #eee;
         border-radius: 8px;
     }
-
-    /* צמצום המרווח לפני כפתורי הניווט */
-    .stDivider { margin: 0.5rem 0 !important; }
     </style>
     """, unsafe_allow_html=True)
 
 initialize_exam()
 state = st.session_state.exam_state
 
-# --- עמוד הסבר לבחינה ---
+# --- עמוד הסבר ---
 if state['current_index'] == -1:
-    # ייצור שאלה ראשונה ברקע בזמן הקריאה
     if not state['questions']:
         fetch_and_store_question()
         
@@ -68,8 +56,6 @@ if state['current_index'] == -1:
         <ul>
             <li>לבחינה 25 שאלות אמריקאיות</li>
             <li>זמן הבחינה הוא 90 דקות</li>
-            <li>ניתן לעבור לשאלה הבאה רק לאחר סימון תשובה</li>
-            <li>ניתן לנווט בין שאלות שכבר ענית עליהן</li>
             <li>בסיום הזמן המבחן ננעל אוטומטית</li>
         </ul>
     </div>
@@ -79,18 +65,16 @@ if state['current_index'] == -1:
     if st.button("התחל בחינה", disabled=not agreed):
         state['current_index'] = 0
         state['start_time'] = time.time()
-        # ייצור שאלה 2 מיד עם ההתחלה
-        fetch_and_store_question()
+        fetch_and_store_question() # הכנת שאלה 2
         st.rerun()
 
-# --- עמוד בחינה פעיל ---
+# --- עמוד בחינה ---
 elif not state['is_finished']:
     remaining = max(0, 5400 - int(time.time() - state['start_time']))
     if remaining <= 0:
         state['is_finished'] = True
         st.rerun()
 
-    # שעון שקט (ללא ריצוד התפריט)
     timer_html = f"""
     <div class="timer-container" id="timer"></div>
     <script>
@@ -107,7 +91,6 @@ elif not state['is_finished']:
     """
     components.html(timer_html, height=70)
 
-    # סידבר - 4 בשורה
     with st.sidebar:
         st.write("### ניווט")
         for i in range(0, 25, 4):
@@ -120,7 +103,6 @@ elif not state['is_finished']:
                         state['current_index'] = idx
                         st.rerun()
 
-    # הצגת שאלה (היא כבר בזיכרון בזכות ה-Prefetch)
     if state['current_index'] < len(state['questions']):
         q = state['questions'][state['current_index']]
         st.subheader(f"שאלה {state['current_index'] + 1}")
@@ -133,8 +115,6 @@ elif not state['is_finished']:
             state['answers'][state['current_index']] = q['options'].index(choice)
 
         st.divider()
-        
-        # כפתורי ניווט
         c_next, c_finish, c_prev = st.columns([1,1,1])
         with c_prev:
             if state['current_index'] > 0:
@@ -151,19 +131,16 @@ elif not state['is_finished']:
                 has_ans = state['current_index'] in state['answers']
                 if st.button("⬅️ שאלה הבאה", disabled=not has_ans):
                     state['current_index'] += 1
-                    # ייצור השאלה הבאה (Prefetch) רק אם היא עוד לא קיימת
                     if len(state['questions']) <= state['current_index'] + 1:
                         fetch_and_store_question()
                     st.rerun()
     else:
-        st.info("מייצר שאלה... (זה קורה רק אם הניווט היה מהיר מה-AI)")
+        st.info("טוען שאלה...")
         fetch_and_store_question()
         st.rerun()
 
-# --- עמוד סיום ---
 else:
     st.header("הבחינה הסתיימה")
-    st.write(f"ענית על {len(state['answers'])} שאלות.")
     if st.button("חזרה להתחלה"):
         st.session_state.clear()
         st.rerun()
