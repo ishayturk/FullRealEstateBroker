@@ -10,7 +10,7 @@ st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 # קליטת שם המשתמש מהכתובת
 user_name = st.query_params.get("user", "אורח")
 
-# CSS מעודכן לצמצום רווחים והעלאת התוכן למעלה
+# CSS מעודכן: מירכוז כותרת וצמצום רווחים
 st.markdown(f"""
     <style>
     header {{visibility: hidden;}}
@@ -19,7 +19,7 @@ st.markdown(f"""
     
     .top-strip {{
         position: relative;
-        top: 10px; /* צמוד יותר למעלה */
+        top: 10px; 
         width: 100%;
         height: 50px;
         background-color: white;
@@ -29,7 +29,7 @@ st.markdown(f"""
         padding: 0 25px;
         direction: rtl;
         border-bottom: 1px solid #f0f0f0;
-        margin-bottom: 15px; /* צמצום משמעותי של הרווח מתחת לסטריפ */
+        margin-bottom: 15px;
     }}
     
     .strip-right {{
@@ -73,15 +73,17 @@ st.markdown(f"""
     .instructions-box {{
         text-align: right;
         direction: rtl;
-        line-height: 1.4; /* צמצום מרווח בין שורות */
+        line-height: 1.4;
     }}
     
-    /* העלאת הכותרת וצמצום רווחים */
+    /* מירכוז כותרת והעלאתה למעלה */
     h1 {{ 
         font-size: 2rem !important; 
         margin-top: 0px !important; 
-        margin-bottom: 10px !important; 
+        margin-bottom: 15px !important; 
         padding-top: 0px !important;
+        text-align: center !important; /* מירכוז */
+        width: 100%;
     }}
     
     .stDivider {{
@@ -89,7 +91,6 @@ st.markdown(f"""
         margin-bottom: 5px !important;
     }}
 
-    /* צמצום הרווח סביב ה-Checkbox */
     div[data-testid="stCheckbox"] {{
         margin-top: -10px !important;
     }}
@@ -111,9 +112,10 @@ initialize_exam()
 
 # מסך ההסבר
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="instructions-box">', unsafe_allow_html=True)
+    # הכותרת מחוץ ל-instructions-box כדי שהמירכוז שלה יהיה נקי
     st.title("הוראות למבחן רישויי מקרקעין")
-
+    
+    st.markdown('<div class="instructions-box">', unsafe_allow_html=True)
     st.write("1. המבחן כולל 25 שאלות.")
     st.write("2. זמן מוקצב: 90 דקות.")
     st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
