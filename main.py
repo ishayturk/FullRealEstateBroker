@@ -2,33 +2,39 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
+# הסרת תפריטים וסידור מרווחים
 st.markdown("""
     <style>
+    /* הסרת התפריט העליון והלוגו של Streamlit */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    
     .block-container { 
         direction: rtl; 
         max-width: 800px; 
         margin: auto; 
-        padding-top: 0.5rem !important;
+        padding-top: 2rem !important;
     }
+    
     .stMarkdown, p, h1, h3, label { 
         text-align: right !important; 
         margin-bottom: 0px !important;
-        padding-bottom: 0px !important;
         line-height: 1.2 !important;
     }
+
     div[data-testid="stCheckbox"] > label {
         flex-direction: row-reverse !important;
         justify-content: flex-end !important;
         gap: 10px;
-        margin-top: 5px !important;
+        margin-top: 10px !important;
     }
+
     .stButton { text-align: right !important; }
-    hr { margin: 8px 0 !important; }
-    h1 { font-size: 1.8rem !important; }
+    hr { margin: 15px 0 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# כותרת בשורה אחת
 st.title("בחינת רישיון למתווכים במקרקעין")
 
 st.markdown("### הוראות לנבחן:")
