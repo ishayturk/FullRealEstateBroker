@@ -7,16 +7,25 @@ from logic import initialize_exam
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
-# CSS מהאפליקציה השנייה - שומר על העיצוב שעבד
+# ה-CSS המקורי מהאפליקציה השנייה
 st.markdown("""
 <style>
     * { direction: rtl; text-align: right; }
+    
+    .header-container {
+        display: flex;
+        align-items: center;
+        gap: 45px;
+        margin-bottom: 30px;
+    }
+    
     .header-title { 
         font-size: 2.5rem !important; 
         font-weight: bold !important; 
         margin: 0 !important;
         white-space: nowrap;
     }
+    
     .header-user { 
         font-size: 1.2rem !important; 
         font-weight: 900 !important;
@@ -24,7 +33,8 @@ st.markdown("""
         white-space: nowrap;
         margin-top: 10px;
     }
-    .stLinkButton>a { 
+
+    .stButton>button, .stLinkButton>a { 
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
@@ -38,21 +48,17 @@ st.markdown("""
         text-decoration: none !important;
         transition: 0.2s;
     }
-    .stLinkButton>a:hover {
+    .stButton>button:hover, .stLinkButton>a:hover {
         border-color: #ff4b4b !important;
         color: #ff4b4b !important;
-    }
-    .instructions-box {
-        margin-top: 20px;
-        line-height: 1.6;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 1. קליטת שם
+# 1. קליטת שם המשתמש
 user_name = st.query_params.get("user", "אורח")
 
-# 2. סטריפ עליון (המבנה המקורי שעבד)
+# 2. הסטריפ העליון במבנה המקורי
 c1, c2, c3 = st.columns([1.5, 1.5, 3])
 
 with c1:
@@ -73,11 +79,10 @@ st.divider()
 # אתחול לוגיקה
 initialize_exam()
 
-# 3. דף ההסבר המלא
+# 3. דף ההסבר
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.title("הוראות למבחן רישויי מקרקעין")
     
-    st.markdown('<div class="instructions-box">', unsafe_allow_html=True)
     st.write("1. המבחן כולל 25 שאלות.")
     st.write("2. זמן מוקצב: 90 דקות.")
     st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
@@ -85,7 +90,6 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     st.write("5. בסיום 90 דקות המבחן יינעל.")
     st.write("6. ציון עובר: 60.")
     st.write("7. חל איסור על שימוש בחומר עזר.")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
 
