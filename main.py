@@ -1,78 +1,105 @@
-# Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v01_foundation | Date: 22/02/2026 | 00:50
+# Project: מתווך בקליק - מערכת בחינות | File: main.py
+# Version: exam_v01 | Date: 21/02/2026 | 22:45
 import streamlit as st
-import time
+from logic import initialize_exam
 
-def initialize_exam():
-    """אתחול משתני המערכת בזיכרון (Session State)"""
-    if "exam_data" not in st.session_state:
-        # מאגר השאלות: מפתח הוא מספר השאלה, הערך הוא מילון נתונים
-        st.session_state.exam_data = {}
-        st.session_state.current_q = 1
-        st.session_state.start_time = None
-        st.session_state.answers_user = {} # שמירת תשובות המשתמש
-        
-        # טעינה מוקדמת של שאלה 1 כבר בכניסה לעמוד ההסבר
-        if 1 not in st.session_state.exam_data:
-            generate_question(1)
+st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide", initial_sidebar_state="collapsed")
 
-def generate_question(q_number):
-    """ייצור שאלה באמצעות הפרומפט המקצועי (מדמה קריאה ל-LLM)"""
-    # כאן יוטמע ה-Prompt המלא של רשם המתווכים
-    # המערכת מייצרת שאלה הכוללת: טקסט, 4 תשובות, ומפתח תשובה נכונה.
+# 1. קליטת שם משתמש מה-URL
+user_name = st.query_params.get("user", "אורח")
+
+# 2. עיצוב CSS - מרכוז תוכן וכותרת קבועה ללא לינקים
+st.markdown("""
+    <style>
+    * { direction: rtl; text-align: right; }
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     
-    # סימולציית ייצור (תועבר ל-API בשלב הבא)
-    prompt_context = """
-    אתה רשם המתווכים. עליך לייצר שאלה מורכבת וברמה גבוהה למבחן הרישוי.
-    השאלה חייבת להיות מבוססת על חוק המתווכים, חוק המקרקעין או תקנות רלוונטיות.
-    מבנה: שאלה, 4 אפשרויות, תשובה נכונה אחת בלבד.
-    """
-    
-    # לצורך הדגמה ראשונית של המבנה:
-    dummy_q = {
-        "question": f"שאלה מספר {q_number}: מהו הדין לגבי...",
-        "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
-        "correct": 0 # אינדקס התשובה הנכונה
+    /* מרכוז התוכן של האפליקציה למניעת מריחה */
+    .block-container { 
+        max-width: 900px !important; 
+        margin: auto !important; 
+        padding-top: 1rem !important;
     }
     
-    st.session_state.exam_data[q_number] = dummy_q
+    /* עיצוב הכותרת הקבועה - לוגו ושם משתמש בלבד */
+    .fixed-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 25px;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 40px;
+        border-radius: 8px;
+    }
+    .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .app-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #31333F;
+    }
+    .user-info {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #555;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-def handle_navigation(direction):
-    """ניהול לוגיקת המעברים והטעינה המוקדמת (n+2)"""
-    curr = st.session_state.current_q
-    
-    if direction == "next":
-        target = curr + 1
-        # לוגיקת n+2: אם עברנו ל-target, נכין את target + 1 (שהיא curr + 2)
-        next_to_load = target + 1
-        if next_to_load <= 25 and next_to_load not in st.session_state.exam_data:
-            generate_question(next_to_load)
-        
-        st.session_state.current_q = target
-        
-    elif direction == "prev":
-        if curr > 1:
-            st.session_state.current_q -= 1
+# 3. הכותרת המשותפת (מופיעה תמיד בראש כל עמוד במערכת הבחינות)
+st.markdown(f"""
+    <div class="fixed-header">
+        <div class="logo-section">
+            <span style="font-size: 1.8rem;">🏠</span>
+            <span class="app-title">מתווך בקליק - מערכת בחינות</span>
+        </div>
+        <div class="user-info">
+            👤 <b>{user_name}</b>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-def get_timer_display():
-    """חישוב הזמן הנותר לטיימר"""
-    if st.session_state.start_time is None:
-        return "90:00"
-    
-    elapsed = time.time() - st.session_state.start_time
-    remaining = max(0, (90 * 60) - elapsed)
-    
-    mins, secs = divmod(int(remaining), 60)
-    return f"{mins:02d}:{secs:02d}"
+# אתחול לוגיקה (session_state)
+initialize_exam()
 
-def check_exam_status():
-    """בדיקה אם הזמן הסתיים"""
-    if st.session_state.start_time is None:
-        return False
+# 4. ניתוב עמודים
+if "step" not in st.session_state:
+    st.session_state.step = "instructions"
+
+# דף הוראות
+if st.session_state.step == "instructions":
+    st.title("הוראות למבחן רישויי מקרקעין")
     
-    elapsed = time.time() - st.session_state.start_time
-    if elapsed >= (90 * 60):
-        return True
-    return False
+    st.info("""
+    המבחן מדמה את התנאים הרשמיים של רשם המתווכים. 
+    השאלות נוצרות בזמן אמת ומבוססות על מאגר בחינות האמת ודיני האתיקה המעודכנים.
+    """)
+    
+    st.markdown("""
+    * **מספר שאלות:** 25
+    * **זמן מוקצב:** 90 דקות
+    * **ניווט:** ניתן לעבור לשאלה הבאה רק לאחר סימון תשובה.
+    * **תיקון:** ניתן לחזור אחורה לשאלות שכבר נענו.
+    * **ציון עובר:** 60
+    """)
+    
+    st.divider()
+    
+    agree = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל בבחינה")
+    
+    if st.button("התחל בחינה", disabled=not agree):
+        st.session_state.step = "exam_run"
+        st.rerun()
+
+# עמוד הרצת הבחינה (יושלם בצעד הבא)
+elif st.session_state.step == "exam_run":
+    st.subheader("הבחינה החלה")
+    st.write("כאן תוצג מערכת השאלות והתשובות בזמן אמת.")
 
 # סוף קובץ
