@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v26 | Date: 22/02/2026 | 00:55
+# Version: logic_v28 | Date: 22/02/2026 | 00:50
 import streamlit as st
 import time
 
@@ -13,17 +13,11 @@ def initialize_exam():
         generate_question(1)
 
 def generate_question(q_number):
-    # שאלות דוגמה לבדיקת מבנה (Placeholder)
     bank = {
         1: {
             "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
             "options": ["רישיון בתוקף והיות המתווך גורם יעיל", "חתימה על בלעדיות", "פרסום", "כל התשובות"],
             "correct": 0
-        },
-        2: {
-            "question": "מהו תוקף הבלעדיות המקסימלי לדירת מגורים?",
-            "options": ["3 חודשים", "6 חודשים", "9 חודשים", "שנה"],
-            "correct": 1
         }
     }
     if q_number not in st.session_state.exam_data:
@@ -52,8 +46,8 @@ def get_remaining_seconds():
     return int(max(0, 5400 - elapsed))
 
 def get_results_data():
-    results = []
     score = 0
+    results = []
     for i in range(1, 26):
         q = st.session_state.exam_data.get(i)
         ans = st.session_state.answers_user.get(i)
