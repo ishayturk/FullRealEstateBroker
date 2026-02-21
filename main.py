@@ -1,97 +1,84 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: exam_v05_tight_layout | Date: 21/02/2026 | 23:55
+# Version: V02 | Date: 22/02/2026 | 01:10
 import streamlit as st
-from logic import initialize_exam
+import logic
 
-st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide", initial_sidebar_state="collapsed")
+# הגדרות עמוד
+st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide")
 
-# 1. קליטת שם משתמש מה-URL
-user_name = st.query_params.get("user", "אורח")
-
-# 2. עיצוב CSS - צמצום רווחים ויישור
+# CSS להצמדת הטיימר לראש הדף ועיצוב הרדיו-בטאן מימין לשמאל
 st.markdown("""
     <style>
-    * { direction: rtl; text-align: right; }
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* מרכוז התוכן */
-    .block-container { 
-        max-width: 800px !important; 
-        margin: auto !important; 
-        padding-top: 0.5rem !important;
+    [data-testid="stSidebar"] {
+        direction: rtl;
     }
-    
-    /* הסטריפ העליון */
-    .fixed-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0px;
+    .sticky-timer {
+        position: fixed;
+        top: 40px;
+        right: 0;
+        left: 0;
+        background-color: #f0f2f6;
+        text-align: center;
+        padding: 5px;
+        font-weight: bold;
+        z-index: 1000;
+        border-bottom: 1px solid #ddd;
     }
-
-    /* העלאת התוכן שורה אחת למעלה כלפי הכותרת */
-    .main-content {
-        margin-top: 1rem;
+    .stRadio [data-testid="stWidgetLabel"] {
+        text-align: right;
+        direction: rtl;
     }
-    
-    /* יישור אלמנטים בשורה של הצ'קבוקס והכפתור */
-    [data-testid="column"] {
-        display: flex;
-        align-items: center;
-    }
-    
-    h1 {
-        margin-bottom: 0.8rem !important;
+    div[role="radiogroup"] {
+        direction: rtl;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. הכותרת
-st.markdown(f"""
-    <div class="fixed-header">
-        <div>
-            <span style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק - מערכת בחינות</span>
-        </div>
-        <div>
-            👤 <b>{user_name}</b>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
 # אתחול לוגיקה
-initialize_exam()
+logic.initialize_exam()
 
-# 4. דף ההסבר
-if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
-    st.title("הוראות למבחן רישויי מקרקעין")
-    st.write("1. המבחן כולל 25 שאלות.")
-    st.write("2. זמן מוקצב: 90 דקות.")
-    st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
-    st.write("4. ניתן לחזור אחורה רק לשאלות שנענו.")
-    st.write("5. בסיום 90 דקות המבחן יינעל.")
-    st.write("6. ציון עובר: 60.")
-    st.write("7. חל איסור על שימוש בחומר עזר.")
-    
-    st.write("") # שורת רווח בודדת
-    
-    # שורה אחת לצ'קבוקס ולכפתור
-    col_checkbox, col_button = st.columns([2, 1])
-    
-    with col_checkbox:
-        agree = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
-    
-    with col_button:
-        if st.button("התחל בחינה", disabled=not agree):
-            st.session_state.step = "exam_run"
-            st.rerun()
-            
-    st.markdown('</div>', unsafe_allow_html=True)
+# --- סטריפ עליון קבוע (Header) ---
+col_logo, col_name, col_back = st.columns([1, 2, 1])
+with col_logo:
+    st.write("לוגו: מתווך בקליק")
+with col_name:
+    st.write(f"שם המשתמש: ישראל ישראלי")
+with col_back:
+    if st.button("חזרה לתפריט"):
+        st.write("מעבר לתפריט ראשי...")
 
-# עמוד המבחן
-elif st.session_state.step == "exam_run":
-    st.write("כאן תוצג מערכת השאלות...")
+st.divider()
 
-# סוף קובץ
+# בדיקה אם הזמן נגמר
+if logic.check_exam_status():
+    st.header("הזמן לבחינה הסתיים")
+    st.write("לסיום הבחינה לחץ:")
+    if st.button("סיים בחינה"):
+        st.session_state.page = "summary"
+        st.rerun()
+else:
+    # --- תצוגת בחינה (Sidebar) ---
+    with st.sidebar:
+        st.markdown(f'<div class="sticky-timer">זמן נותר: {logic.get_timer_display()}</div>', unsafe_allow_html=True)
+        st.write("---")
+        st.write("ניווט שאלות:")
+        
+        # יצירת גריד של 4 כפתורים בשורה, משמאל לימין
+        for row in range(0, 25, 4):
+            cols = st.columns(4)
+            for i, col in enumerate(cols):
+                q_idx = row + i + 1
+                if q_idx <= 25:
+                    # כפתור אקטיבי רק אם השאלה נענתה או שהיא הנוכחית
+                    is_disabled = q_idx not in st.session_state.answers_user and q_idx != st.session_state.current_q
+                    if col.button(f"{q_idx}", key=f"btn_{q_idx}", disabled=is_disabled):
+                        st.session_state.current_q = q_idx
+                        st.rerun()
+
+    # --- מרכז המסך (שאלה) ---
+    q_num = st.session_state.current_q
+    q_data = st.session_state.exam_data.get(q_num)
+
+    if q_data:
+        st.subheader(f"שאלה {q_num}")
+        st.write(q_data["question"])
