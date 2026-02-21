@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v24 | Date: 22/02/2026 | 00:30
+# Version: logic_v25 | Date: 22/02/2026 | 00:45
 import streamlit as st
 import time
 
