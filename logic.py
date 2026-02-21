@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v09 | Date: 21/02/2026 | 23:55
+# Version: logic_v10 | Date: 22/02/2026 | 00:05
 import streamlit as st
 import time
 
@@ -14,13 +14,13 @@ def initialize_exam():
 def generate_question(q_number):
     bank = {
         1: {
-            "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
-            "options": ["רישיון בתוקף והיות המתווך גורם יעיל", 
-                        "חתימה על בלעדיות בלבד", "פרסום הנכס", "כל התשובות"],
+            "question": "מהו התנאי המרכזי לזכאות מתווך לדמי תיווך?",
+            "options": ["רישיון בתוקף והיותו הגורם היעיל", "פרסום בעיתון", 
+                        "שיחה טלפונית", "הסכם בעל פה"],
             "correct": 0
         },
         2: {
-            "question": "מהו תוקף הבלעדיות המקסימלי לדירת מגורים?",
+            "question": "על פי חוק המתווכים, מהו תוקף בלעדיות מקסימלי?",
             "options": ["3 חודשים", "6 חודשים", "9 חודשים", "שנה"],
             "correct": 1
         }
@@ -29,8 +29,8 @@ def generate_question(q_number):
         st.session_state.exam_data[q_number] = bank[q_number]
     else:
         st.session_state.exam_data[q_number] = {
-            "question": f"שאלה מקצועית {q_number} בנושא דיני מקרקעין...",
-            "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
+            "question": f"שאלה מקצועית {q_number}...",
+            "options": ["אופציה 1", "אופציה 2", "אופציה 3", "אופציה 4"],
             "correct": 0
         }
 
@@ -44,10 +44,12 @@ def handle_navigation(direction):
     elif direction == "prev" and curr > 1:
         st.session_state.current_q -= 1
 
-def get_remaining_seconds():
-    if st.session_state.start_time is None: return 5400
+def get_timer_text():
+    if st.session_state.start_time is None: return "90:00"
     elapsed = time.time() - st.session_state.start_time
-    return int(max(0, 5400 - elapsed))
+    rem = max(0, 5400 - elapsed)
+    mins, secs = divmod(int(rem), 60)
+    return f"{mins:02d}:{secs:02d}"
 
 def get_results_data():
     results = []
