@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: exam_v04_layout_final | Date: 21/02/2026 | 23:45
+# Version: exam_v05_tight_layout | Date: 21/02/2026 | 23:55
 import streamlit as st
 from logic import initialize_exam
 
@@ -8,7 +8,7 @@ st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide
 # 1. קליטת שם משתמש מה-URL
 user_name = st.query_params.get("user", "אורח")
 
-# 2. עיצוב CSS - שליטה במיקום התוכן ואיחוד שורות
+# 2. עיצוב CSS - צמצום רווחים ויישור
 st.markdown("""
     <style>
     * { direction: rtl; text-align: right; }
@@ -31,21 +31,19 @@ st.markdown("""
         padding: 10px 0px;
     }
 
-    /* דחיפת התוכן שמתחת לכותרת שורה אחת למטה */
+    /* העלאת התוכן שורה אחת למעלה כלפי הכותרת */
     .main-content {
-        margin-top: 2rem;
+        margin-top: 1rem;
     }
     
-    /* יישור אלמנטים בתוך העמודות */
+    /* יישור אלמנטים בשורה של הצ'קבוקס והכפתור */
     [data-testid="column"] {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
     }
     
-    /* ביטול ריווח מוגזם מתחת לכותרת h1 */
     h1 {
-        margin-bottom: 1rem !important;
+        margin-bottom: 0.8rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -77,9 +75,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     st.write("6. ציון עובר: 60.")
     st.write("7. חל איסור על שימוש בחומר עזר.")
     
-    st.write("") # שורת רווח
+    st.write("") # שורת רווח בודדת
     
-    # הצבת הצ'קבוקס והכפתור בשורה אחת
+    # שורה אחת לצ'קבוקס ולכפתור
     col_checkbox, col_button = st.columns([2, 1])
     
     with col_checkbox:
