@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V11 | Date: 21/02/2026 | 23:35
+# Version: V12 | Date: 21/02/2026 | 23:45
 import streamlit as st
 import logic
 import time
@@ -103,11 +103,11 @@ elif st.session_state.step == "exam_run":
         with c1:
             if st.button("שאלה קודמת", disabled=(st.session_state.current_q == 1)):
                 logic.handle_navigation("prev"); st.rerun()
-        with n2 := c2:
+        with c2:
             no_next = (st.session_state.current_q not in 
                        st.session_state.answers_user or 
                        st.session_state.current_q == 25)
-            if n2.button("שאלה הבאה", disabled=no_next):
+            if st.button("שאלה הבאה", disabled=no_next):
                 logic.handle_navigation("next"); st.rerun()
         with c3:
             if 25 in st.session_state.answers_user:
