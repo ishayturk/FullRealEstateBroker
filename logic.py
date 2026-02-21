@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v16 | Date: 22/02/2026 | 00:08
+# Version: logic_v24 | Date: 22/02/2026 | 00:30
 import streamlit as st
 import time
 
@@ -32,7 +32,7 @@ def generate_question(q_number):
         else:
             st.session_state.exam_data[q_number] = {
                 "question": f"שאלה מקצועית {q_number} בנושא מקרקעין...",
-                "options": ["א'", "ב'", "ג'", "ד'"],
+                "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
                 "correct": 0
             }
 
