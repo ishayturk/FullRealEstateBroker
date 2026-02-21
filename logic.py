@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v08 | Date: 21/02/2026 | 23:50
+# Version: logic_v09 | Date: 21/02/2026 | 23:55
 import streamlit as st
 import time
 
@@ -12,7 +12,6 @@ def initialize_exam():
         generate_question(1)
 
 def generate_question(q_number):
-    # שאלות מקצועיות לדוגמה
     bank = {
         1: {
             "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
