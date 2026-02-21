@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: exam_v03_balanced | Date: 21/02/2026 | 23:25
+# Version: exam_v04_layout_final | Date: 21/02/2026 | 23:45
 import streamlit as st
 from logic import initialize_exam
 
@@ -8,7 +8,7 @@ st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide
 # 1. קליטת שם משתמש מה-URL
 user_name = st.query_params.get("user", "אורח")
 
-# 2. עיצוב CSS - צמצום רווחים ושימור גדלים
+# 2. עיצוב CSS - שליטה במיקום התוכן ואיחוד שורות
 st.markdown("""
     <style>
     * { direction: rtl; text-align: right; }
@@ -23,24 +23,34 @@ st.markdown("""
         padding-top: 0.5rem !important;
     }
     
-    /* הסטריפ העליון - מראה מקורי ללא קו */
+    /* הסטריפ העליון */
     .fixed-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 10px 0px;
-        margin-bottom: 0px;
     }
 
-    /* הצמדת הכותרת הראשית למעלה */
+    /* דחיפת התוכן שמתחת לכותרת שורה אחת למטה */
+    .main-content {
+        margin-top: 2rem;
+    }
+    
+    /* יישור אלמנטים בתוך העמודות */
+    [data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    
+    /* ביטול ריווח מוגזם מתחת לכותרת h1 */
     h1 {
-        margin-top: -15px !important;
-        padding-top: 0px !important;
+        margin-bottom: 1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. הכותרת (בגודל המקורי)
+# 3. הכותרת
 st.markdown(f"""
     <div class="fixed-header">
         <div>
@@ -57,6 +67,7 @@ initialize_exam()
 
 # 4. דף ההסבר
 if "step" not in st.session_state or st.session_state.step == "instructions":
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
     st.title("הוראות למבחן רישויי מקרקעין")
     st.write("1. המבחן כולל 25 שאלות.")
     st.write("2. זמן מוקצב: 90 דקות.")
@@ -66,15 +77,20 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     st.write("6. ציון עובר: 60.")
     st.write("7. חל איסור על שימוש בחומר עזר.")
     
-    # רווח לפני הצ'קבוקס כדי שלא יהיה צמוד מידי לטקסט
-    st.write("")
-    agree = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
+    st.write("") # שורת רווח
     
-    # רווח בודד בין הצ'קבוקס לכפתור
-    st.write("")
-    if st.button("התחל בחינה", disabled=not agree):
-        st.session_state.step = "exam_run"
-        st.rerun()
+    # הצבת הצ'קבוקס והכפתור בשורה אחת
+    col_checkbox, col_button = st.columns([2, 1])
+    
+    with col_checkbox:
+        agree = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
+    
+    with col_button:
+        if st.button("התחל בחינה", disabled=not agree):
+            st.session_state.step = "exam_run"
+            st.rerun()
+            
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # עמוד המבחן
 elif st.session_state.step == "exam_run":
