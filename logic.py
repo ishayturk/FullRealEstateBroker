@@ -1,5 +1,5 @@
-\# Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v03 | Date: 21/02/2026 | 23:30
+# Project: מתווך בקליק - מערכת בחינות | File: logic.py
+# Version: logic_v04 | Date: 21/02/2026 | 23:45
 import streamlit as st
 import time
 
@@ -14,27 +14,26 @@ def initialize_exam():
         generate_question(1)
 
 def generate_question(q_number):
-    """ייצור שאלה מקצועית (מדמה קריאת API עם פרומפט רשם המתווכים)"""
-    # כאן מוטמעת הלוגיקה המקצועית של רשם המתווכים
-    # לצורך הפרוטוקול, השאלות מיוצרות עם תוכן משפטי/מקצועי
+    """ייצור שאלה מקצועית"""
+    # סימולציה של שאלות מקצועיות
     bank = {
         1: {
-            "question": "מהו התנאי המהותי ביותר לזכאות מתווך לדמי תיווך?",
+            "question": "מי מהבאים רשאי לעסוק בתיווך מקרקעין על פי חוק?",
             "options": [
-                "היותו הגורם היעיל בעסקה בלבד",
-                "קיום רישיון בתוקף, הזמנה בכתב והיותו הגורם היעיל",
-                "חתימת הצדדים על הסכם מחייב בלבד",
-                "פרסום הנכס בלוחות נדל\"ן מובילים"
+                "מי שסיים לימודי משפטים",
+                "בעל רישיון תיווך בתוקף בלבד",
+                "כל אזרח מעל גיל 18",
+                "סוכן נדל\"ן הרשום באיגוד המתווכים"
             ],
             "correct": 1
         },
         2: {
-            "question": "על פי חוק המתווכים, מהו תוקף הבלעדיות המקסימלי בדירת מגורים?",
+            "question": "מהו הגורם היעיל בעסקת מקרקעין?",
             "options": [
-                "שלושה חודשים",
-                "שישה חודשים",
-                "שנה אחת",
-                "ללא הגבלת זמן אם הוסכם בכתב"
+                "מי שפרסם את המודעה ראשון",
+                "מי שהביא לחתימת הסכם מחייב בין הצדדים",
+                "מי שערך את סיור הנכס הראשון",
+                "מי שגבה את המקדמה"
             ],
             "correct": 1
         }
@@ -43,10 +42,9 @@ def generate_question(q_number):
     if q_number in bank:
         st.session_state.exam_data[q_number] = bank[q_number]
     else:
-        # פונקציית ייצור אוטומטית לשאר השאלות (25-3)
         st.session_state.exam_data[q_number] = {
-            "question": f"שאלה מקצועית {q_number}: עוסקת בדיני מקרקעין...",
-            "options": ["אופציה א'", "אופציה ב'", "אופציה ג'", "אופציה ד'"],
+            "question": f"שאלה מקצועית מספר {q_number} - בייצור...",
+            "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
             "correct": 0
         }
 
@@ -55,41 +53,34 @@ def handle_navigation(direction):
     curr = st.session_state.current_q
     if direction == "next":
         target = curr + 1
-        next_to_load = target + 1
-        if next_to_load <= 25 and next_to_load not in st.session_state.exam_data:
-            generate_question(next_to_load)
+        n_load = target + 1
+        if n_load <= 25 and n_load not in st.session_state.exam_data:
+            generate_question(n_load)
         st.session_state.current_q = target
     elif direction == "prev" and curr > 1:
         st.session_state.current_q -= 1
 
 def get_timer_display():
-    """חישוב והצגת הזמן שנותר"""
     if st.session_state.start_time is None: return "90:00"
-    elapsed = time.time() - st.session_state.start_time
-    rem = max(0, (90 * 60) - elapsed)
+    rem = max(0, (90 * 60) - (time.time() - st.session_state.start_time))
     mins, secs = divmod(int(rem), 60)
     return f"{mins:02d}:{secs:02d}"
 
 def check_exam_status():
-    """בדיקה אם הזמן הסתיים"""
     if st.session_state.start_time is None: return False
     return (time.time() - st.session_state.start_time) >= (90 * 60)
 
 def get_results_data():
-    """חישוב ציון ועיבוד נתונים לדף המשוב"""
     results = []
     score = 0
     for i in range(1, 26):
         q = st.session_state.exam_data.get(i)
-        ans_idx = st.session_state.answers_user.get(i)
-        is_correct = (q and ans_idx is not None and ans_idx == q["correct"])
-        if is_correct: score += 4
-        
+        ans = st.session_state.answers_user.get(i)
+        correct = (q and ans is not None and ans == q["correct"])
+        if correct: score += 4
         results.append({
-            "num": i,
-            "is_correct": is_correct,
-            "user_text": q["options"][ans_idx] if (q and ans_idx is not None) 
-                         else "תשובה לא נענתה",
+            "num": i, "is_correct": correct,
+            "user_text": q["options"][ans] if (q and ans is not None) else "לא נענתה",
             "correct_text": q["options"][q["correct"]] if q else "N/A"
         })
     return score, results
