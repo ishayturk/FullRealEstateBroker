@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v25 | Date: 22/02/2026 | 00:45
+# Version: logic_v26 | Date: 22/02/2026 | 00:55
 import streamlit as st
 import time
 
@@ -13,11 +13,11 @@ def initialize_exam():
         generate_question(1)
 
 def generate_question(q_number):
+    # שאלות דוגמה לבדיקת מבנה (Placeholder)
     bank = {
         1: {
             "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
-            "options": ["רישיון בתוקף והיות המתווך גורם יעיל", 
-                        "חתימה על בלעדיות בלבד", "פרסום הנכס", "כל התשובות"],
+            "options": ["רישיון בתוקף והיות המתווך גורם יעיל", "חתימה על בלעדיות", "פרסום", "כל התשובות"],
             "correct": 0
         },
         2: {
@@ -31,8 +31,8 @@ def generate_question(q_number):
             st.session_state.exam_data[q_number] = bank[q_number]
         else:
             st.session_state.exam_data[q_number] = {
-                "question": f"שאלה מקצועית {q_number} בנושא מקרקעין...",
-                "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
+                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה",
+                "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
                 "correct": 0
             }
 
@@ -59,11 +59,7 @@ def get_results_data():
         ans = st.session_state.answers_user.get(i)
         correct = (q and ans is not None and ans == q["correct"])
         if correct: score += 4
-        results.append({
-            "num": i, "is_correct": correct,
-            "user_text": q["options"][ans] if (q and ans is not None) else "חסר",
-            "correct_text": q["options"][q["correct"]] if q else "N/A"
-        })
+        results.append({"num": i, "is_correct": correct})
     return score, results
 
 # סוף קובץ
