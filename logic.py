@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v13 | Date: 21/02/2026 | 23:55
+# Version: logic_v16 | Date: 22/02/2026 | 00:08
 import streamlit as st
 import time
 
@@ -9,6 +9,7 @@ def initialize_exam():
         st.session_state.current_q = 1
         st.session_state.start_time = None
         st.session_state.answers_user = {}
+        st.session_state.max_reached = 1
         generate_question(1)
 
 def generate_question(q_number):
@@ -25,30 +26,30 @@ def generate_question(q_number):
             "correct": 1
         }
     }
-    if q_number in bank:
-        st.session_state.exam_data[q_number] = bank[q_number]
-    else:
-        st.session_state.exam_data[q_number] = {
-            "question": f"שאלה מקצועית {q_number} בנושא מקרקעין...",
-            "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
-            "correct": 0
-        }
+    if q_number not in st.session_state.exam_data:
+        if q_number in bank:
+            st.session_state.exam_data[q_number] = bank[q_number]
+        else:
+            st.session_state.exam_data[q_number] = {
+                "question": f"שאלה מקצועית {q_number} בנושא מקרקעין...",
+                "options": ["א'", "ב'", "ג'", "ד'"],
+                "correct": 0
+            }
 
 def handle_navigation(direction):
     curr = st.session_state.current_q
     if direction == "next":
         target = curr + 1
-        if target + 1 <= 25 and (target + 1) not in st.session_state.exam_data:
-            generate_question(target + 1)
+        st.session_state.max_reached = max(st.session_state.max_reached, target)
+        generate_question(target)
         st.session_state.current_q = target
     elif direction == "prev" and curr > 1:
         st.session_state.current_q -= 1
 
-def get_timer_display():
-    if st.session_state.start_time is None: return "90:00"
-    rem = max(0, 5400 - (time.time() - st.session_state.start_time))
-    mins, secs = divmod(int(rem), 60)
-    return f"{mins:02d}:{secs:02d}"
+def get_remaining_seconds():
+    if st.session_state.start_time is None: return 5400
+    elapsed = time.time() - st.session_state.start_time
+    return int(max(0, 5400 - elapsed))
 
 def get_results_data():
     results = []
