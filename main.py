@@ -1,139 +1,69 @@
-# Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V15 | Date: 21/02/2026 | 23:55
+# Project: מתווך בקליק - מערכת בחינות | File: logic.py
+# Version: logic_v10 | Date: 22/02/2026 | 00:05
 import streamlit as st
-import logic
 import time
 
-# מצב סיידבר: נסתר בנייד, פתוח במחשב
-st.set_page_config(page_title="מתווך בקליק", layout="wide", 
-                   initial_sidebar_state="expanded")
+def initialize_exam():
+    if "exam_data" not in st.session_state:
+        st.session_state.exam_data = {}
+        st.session_state.current_q = 1
+        st.session_state.start_time = None
+        st.session_state.answers_user = {}
+        generate_question(1)
 
-user_name = st.query_params.get("user", "אורח")
-
-st.markdown("""
-    <style>
-    * { direction: rtl; text-align: right; }
-    header, #MainMenu, footer { visibility: hidden; }
-    .block-container { max-width: 800px !important; margin: auto !important; padding-top: 0.5rem !important; }
-    
-    /* סטריפ עליון אדפטיבי */
-    .fixed-header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 0px; border-bottom: 1px solid #eee; flex-wrap: wrap;
+def generate_question(q_number):
+    bank = {
+        1: {
+            "question": "מהו התנאי המרכזי לזכאות מתווך לדמי תיווך?",
+            "options": ["רישיון בתוקף והיותו הגורם היעיל", "פרסום בעיתון", 
+                        "שיחה טלפונית", "הסכם בעל פה"],
+            "correct": 0
+        },
+        2: {
+            "question": "על פי חוק המתווכים, מהו תוקף בלעדיות מקסימלי?",
+            "options": ["3 חודשים", "6 חודשים", "9 חודשים", "שנה"],
+            "correct": 1
+        }
     }
-    
-    @media (max-width: 600px) {
-        .fixed-header { flex-direction: column; align-items: flex-start; }
-        [data-testid="stSidebar"] { display: none !important; }
-    }
-    
-    /* קיבוע סיידבר במחשב */
-    [data-testid="sidebar-close-button"] { display: none !important; }
-    
-    .timer-container {
-        text-align: center; background: #f8f9fa; border: 1px solid #ddd;
-        padding: 10px; border-radius: 5px; margin-bottom: 20px;
-    }
-    #timer-val { font-size: 1.4rem; font-weight: bold; color: #333; }
-    </style>
-""", unsafe_allow_html=True)
+    if q_number in bank:
+        st.session_state.exam_data[q_number] = bank[q_number]
+    else:
+        st.session_state.exam_data[q_number] = {
+            "question": f"שאלה מקצועית {q_number}...",
+            "options": ["אופציה 1", "אופציה 2", "אופציה 3", "אופציה 4"],
+            "correct": 0
+        }
 
-# הצגת הסטריפ העליון
-st.markdown(f"""
-    <div class="fixed-header">
-        <div>🏠 <b>מתווך בקליק - מערכת בחינות</b></div>
-        <div style="color: #666; font-size: 0.9rem;">👤 משתמש: {user_name}</div>
-    </div>
-""", unsafe_allow_html=True)
+def handle_navigation(direction):
+    curr = st.session_state.current_q
+    if direction == "next":
+        target = curr + 1
+        if target + 1 <= 25 and (target + 1) not in st.session_state.exam_data:
+            generate_question(target + 1)
+        st.session_state.current_q = target
+    elif direction == "prev" and curr > 1:
+        st.session_state.current_q -= 1
 
-logic.initialize_exam()
+def get_timer_text():
+    if st.session_state.start_time is None: return "90:00"
+    elapsed = time.time() - st.session_state.start_time
+    rem = max(0, 5400 - elapsed)
+    mins, secs = divmod(int(rem), 60)
+    return f"{mins:02d}:{secs:02d}"
 
-# דף הסבר - שחזור מלא
-if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.title("הוראות למבחן רישויי מקרקעין")
-    st.markdown("""
-    1. המבחן כולל 25 שאלות.
-    2. זמן מוקצב: 90 דקות.
-    3. מעבר לשאלה הבאה רק לאחר סימון תשובה.
-    4. ניתן לחזור אחורה רק לשאלות שנענו.
-    5. בסיום 90 דקות המבחן יינעל.
-    6. ציון עובר: 60.
-    7. חל איסור על שימוש בחומר עזר.
-    """)
-    st.write("")
-    if st.checkbox("קראתי את ההוראות ואני מוכן להתחיל"):
-        if st.button("התחל בחינה"):
-            st.session_state.start_time = time.time()
-            st.session_state.step = "exam_run"
-            logic.generate_question(2)
-            st.rerun()
-
-# דף בחינה
-elif st.session_state.step == "exam_run":
-    rem_sec = logic.get_remaining_seconds()
-    
-    with st.sidebar:
-        st.markdown(f"""
-            <div class="timer-container">
-                <div id="timer-val"></div>
-            </div>
-            <script>
-            var seconds = {rem_sec};
-            function updateTimer() {{
-                var mins = Math.floor(seconds / 60);
-                var secs = seconds % 60;
-                document.getElementById('timer-val').innerHTML = 
-                    (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
-                if (seconds > 0) {{ seconds--; }}
-            }}
-            setInterval(updateTimer, 1000);
-            updateTimer();
-            </script>
-        """, unsafe_allow_html=True)
-        
-        st.write("ניווט:")
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i, col in enumerate(cols):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.answers_user or idx == st.session_state.current_q
-                    if col.button(f"{idx}", key=f"nav_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx; st.rerun()
-
-    q_data = st.session_state.exam_data.get(st.session_state.current_q)
-    if q_data:
-        st.subheader(f"שאלה {st.session_state.current_q}")
-        st.write(q_data["question"])
-        ans = st.radio("בחר תשובה:", q_data["options"], 
-                       index=st.session_state.answers_user.get(st.session_state.current_q),
-                       key=f"q_{st.session_state.current_q}")
-        if ans:
-            st.session_state.answers_user[st.session_state.current_q] = q_data["options"].index(ans)
-
-        st.divider()
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            if st.button("הקודם", disabled=(st.session_state.current_q==1)):
-                logic.handle_navigation("prev"); st.rerun()
-        with c2:
-            no_next = (st.session_state.current_q not in st.session_state.answers_user or st.session_state.current_q==25)
-            if st.button("הבא", disabled=no_next):
-                logic.handle_navigation("next"); st.rerun()
-        with c3:
-            if 25 in st.session_state.answers_user:
-                if st.button("סיים בחינה"): st.session_state.step = "summary"; st.rerun()
-
-# דף סיכום
-elif st.session_state.step == "summary":
-    score, res = logic.get_results_data()
-    st.header(f"ציון סופי: {score}")
-    for r in res:
-        icon = "✅" if r['is_correct'] else "❌"
-        st.markdown(f"**{icon} שאלה {r['num']}**")
-        st.write(f"תשובתך: {r['user_text']}")
-        if not r['is_correct']:
-            st.markdown(f"*התשובה הנכונה:* {r['correct_text']}")
-        st.write("---")
+def get_results_data():
+    results = []
+    score = 0
+    for i in range(1, 26):
+        q = st.session_state.exam_data.get(i)
+        ans = st.session_state.answers_user.get(i)
+        is_correct = (q and ans is not None and ans == q["correct"])
+        if is_correct: score += 4
+        results.append({
+            "num": i, "is_correct": is_correct,
+            "user_text": q["options"][ans] if (q and ans is not None) else "חסר",
+            "correct_text": q["options"][q["correct"]] if q else "N/A"
+        })
+    return score, results
 
 # סוף קובץ
