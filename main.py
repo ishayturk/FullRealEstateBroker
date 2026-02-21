@@ -1,97 +1,78 @@
-# Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: exam_v05_tight_layout | Date: 21/02/2026 | 23:55
+# Project: מתווך בקליק - מערכת בחינות | File: logic.py
+# Version: logic_v01_foundation | Date: 22/02/2026 | 00:50
 import streamlit as st
-from logic import initialize_exam
+import time
 
-st.set_page_config(page_title="מתווך בקליק - בחינה", layout="wide", initial_sidebar_state="collapsed")
+def initialize_exam():
+    """אתחול משתני המערכת בזיכרון (Session State)"""
+    if "exam_data" not in st.session_state:
+        # מאגר השאלות: מפתח הוא מספר השאלה, הערך הוא מילון נתונים
+        st.session_state.exam_data = {}
+        st.session_state.current_q = 1
+        st.session_state.start_time = None
+        st.session_state.answers_user = {} # שמירת תשובות המשתמש
+        
+        # טעינה מוקדמת של שאלה 1 כבר בכניסה לעמוד ההסבר
+        if 1 not in st.session_state.exam_data:
+            generate_question(1)
 
-# 1. קליטת שם משתמש מה-URL
-user_name = st.query_params.get("user", "אורח")
-
-# 2. עיצוב CSS - צמצום רווחים ויישור
-st.markdown("""
-    <style>
-    * { direction: rtl; text-align: right; }
-    header {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+def generate_question(q_number):
+    """ייצור שאלה באמצעות הפרומפט המקצועי (מדמה קריאה ל-LLM)"""
+    # כאן יוטמע ה-Prompt המלא של רשם המתווכים
+    # המערכת מייצרת שאלה הכוללת: טקסט, 4 תשובות, ומפתח תשובה נכונה.
     
-    /* מרכוז התוכן */
-    .block-container { 
-        max-width: 800px !important; 
-        margin: auto !important; 
-        padding-top: 0.5rem !important;
+    # סימולציית ייצור (תועבר ל-API בשלב הבא)
+    prompt_context = """
+    אתה רשם המתווכים. עליך לייצר שאלה מורכבת וברמה גבוהה למבחן הרישוי.
+    השאלה חייבת להיות מבוססת על חוק המתווכים, חוק המקרקעין או תקנות רלוונטיות.
+    מבנה: שאלה, 4 אפשרויות, תשובה נכונה אחת בלבד.
+    """
+    
+    # לצורך הדגמה ראשונית של המבנה:
+    dummy_q = {
+        "question": f"שאלה מספר {q_number}: מהו הדין לגבי...",
+        "options": ["תשובה א'", "תשובה ב'", "תשובה ג'", "תשובה ד'"],
+        "correct": 0 # אינדקס התשובה הנכונה
     }
     
-    /* הסטריפ העליון */
-    .fixed-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0px;
-    }
+    st.session_state.exam_data[q_number] = dummy_q
 
-    /* העלאת התוכן שורה אחת למעלה כלפי הכותרת */
-    .main-content {
-        margin-top: 1rem;
-    }
+def handle_navigation(direction):
+    """ניהול לוגיקת המעברים והטעינה המוקדמת (n+2)"""
+    curr = st.session_state.current_q
     
-    /* יישור אלמנטים בשורה של הצ'קבוקס והכפתור */
-    [data-testid="column"] {
-        display: flex;
-        align-items: center;
-    }
-    
-    h1 {
-        margin-bottom: 0.8rem !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    if direction == "next":
+        target = curr + 1
+        # לוגיקת n+2: אם עברנו ל-target, נכין את target + 1 (שהיא curr + 2)
+        next_to_load = target + 1
+        if next_to_load <= 25 and next_to_load not in st.session_state.exam_data:
+            generate_question(next_to_load)
+        
+        st.session_state.current_q = target
+        
+    elif direction == "prev":
+        if curr > 1:
+            st.session_state.current_q -= 1
 
-# 3. הכותרת
-st.markdown(f"""
-    <div class="fixed-header">
-        <div>
-            <span style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק - מערכת בחינות</span>
-        </div>
-        <div>
-            👤 <b>{user_name}</b>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+def get_timer_display():
+    """חישוב הזמן הנותר לטיימר"""
+    if st.session_state.start_time is None:
+        return "90:00"
+    
+    elapsed = time.time() - st.session_state.start_time
+    remaining = max(0, (90 * 60) - elapsed)
+    
+    mins, secs = divmod(int(remaining), 60)
+    return f"{mins:02d}:{secs:02d}"
 
-# אתחול לוגיקה
-initialize_exam()
-
-# 4. דף ההסבר
-if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
-    st.title("הוראות למבחן רישויי מקרקעין")
-    st.write("1. המבחן כולל 25 שאלות.")
-    st.write("2. זמן מוקצב: 90 דקות.")
-    st.write("3. מעבר לשאלה הבאה רק לאחר סימון תשובה.")
-    st.write("4. ניתן לחזור אחורה רק לשאלות שנענו.")
-    st.write("5. בסיום 90 דקות המבחן יינעל.")
-    st.write("6. ציון עובר: 60.")
-    st.write("7. חל איסור על שימוש בחומר עזר.")
+def check_exam_status():
+    """בדיקה אם הזמן הסתיים"""
+    if st.session_state.start_time is None:
+        return False
     
-    st.write("") # שורת רווח בודדת
-    
-    # שורה אחת לצ'קבוקס ולכפתור
-    col_checkbox, col_button = st.columns([2, 1])
-    
-    with col_checkbox:
-        agree = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל")
-    
-    with col_button:
-        if st.button("התחל בחינה", disabled=not agree):
-            st.session_state.step = "exam_run"
-            st.rerun()
-            
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# עמוד המבחן
-elif st.session_state.step == "exam_run":
-    st.write("כאן תוצג מערכת השאלות...")
+    elapsed = time.time() - st.session_state.start_time
+    if elapsed >= (90 * 60):
+        return True
+    return False
 
 # סוף קובץ
