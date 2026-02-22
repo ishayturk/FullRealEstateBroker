@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V60 | Date: 22/02/2026 | 20:25
+# Version: V61 | Date: 22/02/2026 | 20:40
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,14 +14,24 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
     
-    /* אלמנט השעון בנייד - מוסתר בדסקטופ כברירת מחדל */
-    .mobile-only-timer { display: none; }
+    /* הסתרת אזור שעון המובייל לחלוטין בדסקטופ */
+    .mobile-only-timer { 
+        display: none; 
+        visibility: hidden; 
+        max-height: 0px; 
+        overflow: hidden; 
+    }
 
     @media (max-width: 768px) {
-        /* הסתרת פריים הניווט (והשעון הגדול שבתוכו) בנייד */
+        /* הסתרת פריים הניווט (והשעון הגדול) בנייד */
         [data-testid="column"]:nth-child(1) { display: none !important; }
-        /* הצגת השעון הקטן בנייד */
-        .mobile-only-timer { display: block !important; margin-bottom: 15px; }
+        /* הצגת השעון הקטן בנייד בלבד */
+        .mobile-only-timer { 
+            display: block !important; 
+            visibility: visible !important; 
+            max-height: 100px !important;
+            margin-bottom: 15px; 
+        }
     }
 
     @media (min-width: 769px) {
@@ -31,8 +41,6 @@ st.markdown("""
             border-radius: 15px;
             padding: 20px !important;
         }
-        /* וידוא שהשעון הנייד מוסתר לחלוטין בדסקטופ */
-        .mobile-only-timer { display: none !important; }
     }
 
     .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
@@ -78,8 +86,10 @@ elif st.session_state.step == "exam_run":
             var m = Math.floor(seconds / 60);
             var s = seconds % 60;
             var el = document.getElementById('{id_tag}');
-            if (seconds <= 600) {{ el.style.color = "red"; }}
-            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            if (el) {{
+                if (seconds <= 600) {{ el.style.color = "red"; }}
+                el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            }}
             if (seconds > 0) seconds--;
         }}
         update(); setInterval(update, 1000);
@@ -89,7 +99,7 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # שעון דסקטופ - ייעלם במובייל דרך ה-CSS של העמודה
+        # שעון דסקטופ
         components.html(get_timer_html("timer-desktop", "1.7rem", "10px"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -103,7 +113,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # שעון מובייל - יופיע רק במסכים קטנים
+        # אזור שעון מובייל - מוסתר פיזית בדסקטופ
         st.markdown('<div class="mobile-only-timer">', unsafe_allow_html=True)
         components.html(get_timer_html("timer-mobile", "1.1rem", "5px"), height=50)
         st.markdown('</div>', unsafe_allow_html=True)
