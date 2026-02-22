@@ -183,3 +183,7 @@ elif st.session_state.step == "exam_run":
                     st.rerun()
             
             with b_finish:
+                if 25 in st.session_state.answers_user:
+                    st.button("סיום בחינה", key="btn_finish_active")
+
+# סוף קובץ
