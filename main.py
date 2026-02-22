@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V46 | Date: 22/02/2026 | 16:00
+# Version: V48 | Date: 22/02/2026 | 16:30
 import streamlit as st
 import logic
 import time
@@ -39,9 +39,19 @@ st.markdown("""
         justify-content: center; margin-bottom: 5px;
     }
     .q-header-text {
-        color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 0px;
+        color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;
     }
-    /* מירכוז ספציפי לכותרת המבחן בלבד */
+    .q-text {
+        font-size: 1.25rem; /* גדול בערך ב-2 נקודות מהתשובות */
+        font-weight: bold;    /* מודגש */
+        line-height: 1.5; 
+        margin-bottom: 15px;
+        color: #000;
+    }
+    /* עיצוב התשובות ברדיו כדי לוודא גודל סטנדרטי */
+    div[data-testid="stMarkdownContainer"] p {
+        font-size: 1.1rem;
+    }
     .centered-title { text-align: center; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
@@ -98,11 +108,9 @@ elif st.session_state.step == "exam_run":
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
-            # יישור ימני מוחלט לכותרת השאלה
             st.markdown(f'<p class="q-header-text">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f"#### {q['question']}")
+            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             
-            # רדיו ללא label כדי למנוע דחיפת טקסט
             choice = st.radio("", q["options"], index=None, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             if choice:
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
