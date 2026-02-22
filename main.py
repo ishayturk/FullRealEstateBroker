@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V79 | Date: 23/02/2026 | 01:45
+# Version: V81 | Date: 22/02/2026 | 19:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,24 +13,25 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     
     .block-container { 
-        max-width: 1000px !important; 
+        max-width: 1100px !important; 
         margin: 0 auto !important; 
         padding-top: 0.5rem !important; 
     }
     
-    /* Header פשוט וממורכז לרוחב התוכן */
     .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        max-width: 1000px;
+        margin: 0 auto 10px auto;
         padding: 5px 0;
-        margin-bottom: 10px;
     }
 
+    /* כותרת מכווצת וממורכזת בתוך הפריים שלה */
     .exam-header-box {
         text-align: center;
-        margin: 10px auto 20px auto;
+        margin: 0 auto 20px auto;
         width: 100%;
     }
     
@@ -43,12 +44,6 @@ st.markdown("""
     }
     
     .q-id { color: #888; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
-
-    /* כפתורי ניווט - שמירה על שורה אחת */
-    div[data-testid="column"] button {
-        white-space: nowrap !important;
-        min-width: 42px !important;
-    }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -63,7 +58,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header מאוחד וממורכז לתוכן
+# Header
 st.markdown(f"""
     <div class="header-container">
         <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
@@ -74,17 +69,23 @@ st.markdown(f"""
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center; margin-top: 0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
-    _, center_col, _ = st.columns([0.5, 4, 0.5])
-    with center_col:
-        st.markdown('<div style="padding-right: 25px;">', unsafe_allow_html=True)
+    # שימוש במבנה עמודות זהה לבחינה כדי שהכותרת תתמרכז באותו מקום
+    col_nav_off, col_main_inst = st.columns([1, 2.5], gap="large")
+    
+    with col_main_inst:
+        st.markdown(f"""
+            <div class="exam-header-box">
+                <div class="exam-title">הוראות למבחן רישויי מקרקעין</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
             "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
             "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
         ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        
         st.write("")
         row_col1, row_col2 = st.columns([2, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
