@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v34 | Date: 22/02/2026 | 17:55
+# Version: logic_v35 | Date: 22/02/2026 | 18:10
 import streamlit as st
 import time
 
@@ -22,7 +22,7 @@ def generate_question(q_number):
             "correct": 0
         },
         2: {
-            "question": "שאלה מספר 2 - האם המתווך רשאי לבצע פעולות משפטיות?",
+            "question": "האם המתווך רשאי לבצע פעולות משפטיות?",
             "options": ["כן, ללא הגבלה", "לא, חל איסור מוחלט", "רק באישור הלקוח", "רק אם הוא עורך דין"],
             "correct": 1
         }
@@ -33,7 +33,7 @@ def generate_question(q_number):
             st.session_state.exam_data[q_number] = bank[q_number]
         else:
             st.session_state.exam_data[q_number] = {
-                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה המדמה אורך של כמה שורות.",
+                "question": f"תוכן מקצועי לשאלה {q_number} המדמה אורך של כמה שורות לצורך בחינת העיצוב והמרווחים.",
                 "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
                 "correct": 0
             }
