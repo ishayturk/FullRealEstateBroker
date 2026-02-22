@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V28 | Date: 22/02/2026 | 00:50
+# Version: V29 | Date: 22/02/2026 | 07:20
 import streamlit as st
 import logic
 import time
@@ -12,40 +12,52 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    .main-wrapper {
+    .app-container {
         max-width: 1000px;
         margin: 0 auto;
-        padding: 0 10px;
+        padding: 0 20px;
     }
     
     .fixed-header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 15px 0; border-bottom: 1px solid #eee;
-        margin-bottom: 30px; position: relative; z-index: 1000;
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        padding: 10px 0;
+        margin-bottom: 5px;
     }
     
-    .nav-panel { background-color: #f8f9fa; border: 1px solid #e1e4e8; padding: 20px; border-radius: 12px; }
+    .nav-panel { 
+        background-color: #f8f9fa; 
+        border: 1px solid #e1e4e8; 
+        padding: 20px; 
+        border-radius: 12px; 
+    }
     
     .timer-display {
-        text-align: center; background: #fff; border: 2px solid #333;
-        padding: 10px; border-radius: 8px; font-weight: bold;
-        font-size: 1.6rem; color: #333; margin-bottom: 20px; font-family: monospace;
+        text-align: center; background: #fff; border: 1px solid #333;
+        padding: 8px; border-radius: 8px; font-weight: bold;
+        font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
 
-    .centered-box { max-width: 700px; margin: 0 auto; }
-    .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin-top: 10px; }
-    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; margin-bottom: 20px; }
+    .centered-box { 
+        max-width: 700px; 
+        margin: 0 auto; 
+        padding-top: 10px; 
+    }
+    
+    .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 0; }
+    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    
+    .block-container { padding-top: 1rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# תחילת המעטפת הממורכזת
-st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
+st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
-# סטריפ עליון - תופס רק את רוחב המעטפת
 st.markdown(f"""
     <div class="fixed-header">
-        <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
-        <div style="font-size: 1.2rem;">👤 <b>{user_name}</b></div>
+        <div style="font-size: 1.2rem;">🏠 <b>מתווך בקליק</b></div>
+        <div style="font-size: 1.1rem;">👤 <b>{user_name}</b></div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -77,36 +89,34 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
-        # השעון מוזרק עם ערך הזמן הנוכחי מפייתון
         st.markdown(f"""
-            <div class="timer-display" id="js-timer">--:--</div>
+            <div class="timer-display" id="timer-v29">--:--</div>
             <script>
             (function() {{
-                var timeLeft = {rem};
-                var el = document.getElementById('js-timer');
-                function update() {{
-                    var m = Math.floor(timeLeft / 60);
-                    var s = timeLeft % 60;
-                    el.innerHTML = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-                    if (timeLeft > 0) timeLeft--;
+                var t = {rem};
+                var display = document.getElementById('timer-v29');
+                function run() {{
+                    var m = Math.floor(t / 60);
+                    var s = t % 60;
+                    display.innerHTML = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+                    if (t > 0) t--;
                 }}
-                update();
-                setInterval(update, 1000);
+                run(); setInterval(run, 1000);
             }})();
             </script>
         """, unsafe_allow_html=True)
         
-        st.write("<b>ניווט:</b>", unsafe_allow_html=True)
+        st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
                     if idx <= st.session_state.max_reached:
-                        if cols[i].button(str(idx), key=f"n_{idx}"):
+                        if cols[i].button(str(idx), key=f"btn_{idx}"):
                             st.session_state.current_q = idx; st.rerun()
                     else:
-                        cols[i].markdown(f"<div style='color:#ccc; text-align:center;'>{idx}</div>", unsafe_allow_html=True)
+                        cols[i].markdown(f"<div style='color:#ccc; text-align:center; padding-top:5px;'>{idx}</div>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
@@ -118,7 +128,7 @@ elif st.session_state.step == "exam_run":
             st.markdown(f"#### {q['question']}")
             ans = st.radio("בחר תשובה:", q["options"], 
                            index=st.session_state.answers_user.get(st.session_state.current_q),
-                           key=f"r_{st.session_state.current_q}")
+                           key=f"radio_{st.session_state.current_q}")
             if ans: 
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(ans)
             
@@ -128,13 +138,13 @@ elif st.session_state.step == "exam_run":
                 if st.button("הקודם", disabled=(st.session_state.current_q==1)):
                     logic.handle_navigation("prev"); st.rerun()
             with b2:
-                can = (st.session_state.current_q in st.session_state.answers_user and st.session_state.current_q < 25)
-                if st.button("הבא", disabled=not can):
+                can_next = (st.session_state.current_q in st.session_state.answers_user and st.session_state.current_q < 25)
+                if st.button("הבא", disabled=not can_next):
                     logic.handle_navigation("next"); st.rerun()
             with b3:
                 if 25 in st.session_state.answers_user:
-                    if st.button("סיום"): st.session_state.step = "summary"; st.rerun()
+                    if st.button("סיום בחינה"): st.session_state.step = "summary"; st.rerun()
 
-st.markdown('</div>', unsafe_allow_html=True) # סגירת wrapper
+st.markdown('</div>', unsafe_allow_html=True)
 
 # סוף קובץ
