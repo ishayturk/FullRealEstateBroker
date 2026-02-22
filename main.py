@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V84 | Date: 22/02/2026 | 21:25
+# Version: V85 | Date: 22/02/2026 | 21:25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -71,7 +71,10 @@ st.markdown(f"""
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center; margin-top: 0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    # כותרת ממורכזת
+    st.markdown('<div class="exam-header-box"><div class="exam-title">הוראות למבחן רישויי מקרקעין</div></div>', unsafe_allow_html=True)
+    
+    # הוראות מתחת לכותרת
     _, center_col, _ = st.columns([0.5, 4, 0.5])
     with center_col:
         st.markdown('<div style="padding-right: 25px;">', unsafe_allow_html=True)
@@ -83,7 +86,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
-        row_col1, row_col2 = st.columns([2, 1])
+        
+        # צמצום רווח בין צ'קבוקס לכפתור באמצעות עמודות צמודות יותר
+        row_col1, row_col2 = st.columns([1.5, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
             if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
