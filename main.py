@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V88 | Date: 22/02/2026 | 21:55
+# Version: V89 | Date: 22/02/2026 | 21:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,41 +18,37 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
-    /* Header Container - ללא Flex סותר */
+    /* סטריפ עליון (לוגו ושם) */
     .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
-        margin-bottom: 20px;
+        padding: 5px 0;
         border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
+        margin-bottom: 5px;
     }
 
-    /* הכותרת המכווצת - פתרון Margin Auto */
-    .centered-title-box {
-        display: table; /* גורם לתיבה להתכווץ בדיוק לרוחב הטקסט */
-        margin: 0 auto; /* ממרכז את התיבה המכווצת */
+    /* סטריפ כותרת עצמאי וממורכז */
+    .title-strip {
+        width: 100%;
         text-align: center;
+        margin: 0 auto;
+        padding: 10px 0;
     }
     
     .exam-title { 
         font-size: 2.2rem;
         font-weight: bold;
+        display: inline-block;
         margin: 0;
-        padding: 0;
-        line-height: 1.2;
     }
     
-    .q-id { 
-        color: #888; 
-        font-size: 1.1rem; 
-        font-weight: bold; 
-        display: block;
-        margin-top: 5px;
-    }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; display: block; }
 
-    div[data-testid="column"] button {
-        white-space: nowrap !important;
-        min-width: 42px !important;
-    }
+    /* הצמדת התוכן למעלה - ביטול מרווחים מיותרים */
+    .stMainBlockContainer > div:nth-child(2) { margin-top: -20px !important; }
+    div[data-testid="stVerticalBlock"] > div { padding-top: 0 !important; }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -63,26 +59,33 @@ st.markdown("""
     }
 
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
-    .stDivider { margin: 0.8rem 0 !important; }
+    .stDivider { margin: 0.5rem 0 !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# Header פשוט - לוגו בצד אחד, שם בצד שני
-h_col1, h_col2 = st.columns([1, 1])
-with h_col1: st.markdown(f"👤 {user_name}")
-with h_col2: st.markdown("**🏠 מתווך בקליק**")
+# 1. סטריפ עליון קבוע
+st.markdown(f"""
+    <div class="header-container">
+        <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
+        <div style="font-size: 1rem; color: #666;">👤 {user_name}</div>
+    </div>
+""", unsafe_allow_html=True)
 
 logic.initialize_exam()
 
+# 2. סטריפ כותרת - מופיע תמיד באותו מקום
+title_text = "הוראות למבחן רישויי מקרקעין" if ("step" not in st.session_state or st.session_state.step == "instructions") else "מבחן רישוי למתווכים"
+q_sub = f'<span class="q-id">שאלה {st.session_state.current_q}</span>' if ("step" in st.session_state and st.session_state.step == "exam_run") else ""
+
+st.markdown(f"""
+    <div class="title-strip">
+        <div class="exam-title">{title_text}</div>
+        {q_sub}
+    </div>
+""", unsafe_allow_html=True)
+
+# 3. תוכן משתנה (הוראות או בחינה)
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    # כותרת ההוראות - משתמשת בתיבה המכווצת
-    st.markdown("""
-        <div class="centered-title-box">
-            <h1 class="exam-title">הוראות למבחן רישויי מקרקעין</h1>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.write("")
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         instructions = [
@@ -91,7 +94,6 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
             "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
         ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        
         st.write("")
         row_col1, row_col2 = st.columns([1.2, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
@@ -139,14 +141,6 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # כותרת השאלה - משתמשת בתיבה המכווצת
-        st.markdown(f"""
-            <div class="centered-title-box">
-                <div class="exam-title">מבחן רישוי למתווכים</div>
-                <span class="q-id">שאלה {st.session_state.current_q}</span>
-            </div>
-        """, unsafe_allow_html=True)
-        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
