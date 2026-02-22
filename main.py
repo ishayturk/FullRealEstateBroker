@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V48 | Date: 22/02/2026 | 16:30
+# Version: V49 | Date: 22/02/2026 | 16:45
 import streamlit as st
 import logic
 import time
@@ -33,22 +33,16 @@ st.markdown("""
         padding: 8px; border-radius: 8px; font-weight: bold;
         font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
-    .q-box-btn {
-        width: 100%; height: 40px; border-radius: 5px; border: 1px solid #eee;
-        background: #fff; color: #ccc; display: flex; align-items: center; 
-        justify-content: center; margin-bottom: 5px;
-    }
     .q-header-text {
         color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;
     }
     .q-text {
-        font-size: 1.25rem; /* גדול בערך ב-2 נקודות מהתשובות */
-        font-weight: bold;    /* מודגש */
+        font-size: 1.25rem;
+        font-weight: bold;
         line-height: 1.5; 
         margin-bottom: 15px;
         color: #000;
     }
-    /* עיצוב התשובות ברדיו כדי לוודא גודל סטנדרטי */
     div[data-testid="stMarkdownContainer"] p {
         font-size: 1.1rem;
     }
@@ -70,11 +64,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
         st.markdown('<h1 class="centered-title">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
-        instructions = [
-            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
-            "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
-            "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
-        ]
+        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
         for i, txt in enumerate(instructions, 1):
             st.write(f"{i}. {txt}")
         
@@ -82,8 +72,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         row_col1, row_col2 = st.columns([2.5, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
-            try: is_ready = logic.is_first_question_ready()
-            except: is_ready = False
+            is_ready = logic.is_first_question_ready()
             if st.button("התחל בחינה", disabled=not (agree and is_ready)):
                 logic.start_exam_logic()
                 st.rerun()
@@ -93,14 +82,20 @@ elif st.session_state.step == "exam_run":
     
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        st.markdown(f'<div class="timer-display">90:00</div>', unsafe_allow_html=True)
+        # שעון פעיל
+        st.markdown(f'<div class="timer-display">{logic.get_remaining_time_str()}</div>', unsafe_allow_html=True)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
+        
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    cols[i].markdown(f'<div class="q-box-btn">{idx}</div>', unsafe_allow_html=True)
+                    # כפתור אקטיבי רק אם השאלה אושרה לניווט
+                    is_active = idx in st.session_state.nav_active_questions
+                    if cols[i].button(str(idx), key=f"nav_{idx}", disabled=not is_active):
+                        st.session_state.current_q = idx
+                        st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
@@ -111,16 +106,25 @@ elif st.session_state.step == "exam_run":
             st.markdown(f'<p class="q-header-text">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             
-            choice = st.radio("", q["options"], index=None, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
+            # טעינת תשובה קודמת אם קיימת
+            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
+            choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
+            
             if choice:
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             
             st.divider()
             b_next, b_prev, b_finish = st.columns(3)
             with b_next:
-                st.button("לשאלה הבאה", disabled=True, key="btn_next_dummy")
+                # כפתור הבא פעיל רק אם נבחרה תשובה
+                if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
+                    logic.move_to_next()
+                    st.rerun()
             with b_prev:
-                st.button("לשאלה הקודמת", disabled=True, key="btn_prev_dummy")
+                # כפתור הקודם פעיל רק אם אנחנו מעל שאלה 1
+                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
+                    st.session_state.current_q -= 1
+                    st.rerun()
             with b_finish:
                 if 25 in st.session_state.answers_user:
                     st.button("סיום בחינה", key="btn_finish_active")
