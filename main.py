@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V118 | Date: 22/02/2026 | 22:45
+# Version: V119 | Date: 22/02/2026 | 22:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,13 +24,27 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* תיקון בנייד - מניעת דחיקה שמאלה */
+    /* התאמות לנייד */
     @media (max-width: 768px) {
         .mobile-spacer { height: 50px; }
-        h2 { font-size: 1.3rem !important; text-align: center !important; }
         
-        /* שמירה על שורה אחת בסטריפ ללא flex מעוות */
-        div[data-testid="column"] { min-width: auto !important; }
+        /* כפיית שורה אחת לסטריפ העליון ללא חריגה מהמסך */
+        div[data-testid="stHorizontalBlock"]:first-of-type {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 2px !important;
+        }
+        
+        div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"] {
+            width: auto !important;
+            min-width: auto !important;
+            flex: 1 !important;
+        }
+
+        h2 { font-size: 1.3rem !important; text-align: center !important; }
         
         .mobile-inst-padding {
             padding-right: 25px !important;
@@ -65,11 +79,11 @@ st.markdown('<div class="mobile-spacer"></div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (2:1:2)
+# 1. סטריפ עליון (2:1:2) - גופן מוגדל ב-2 נקודות (1.1rem)
 h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; white-space: nowrap; font-size: 0.9rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; white-space: nowrap; font-size: 0.9rem;">👤 {user_name}</div>', unsafe_allow_html=True)
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; white-space: nowrap; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h2: st.markdown('<div style="text-align: center; color: #eee; font-size: 1.1rem;">|</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; white-space: nowrap; font-size: 1.1rem;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
@@ -77,7 +91,7 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    _, center_col, _ = st.columns([0.2, 1.6, 0.2]) # הרחבת העמודה המרכזית בנייד
+    _, center_col, _ = st.columns([0.1, 1.8, 0.1])
     
     with center_col:
         st.markdown('<div class="mobile-inst-padding">', unsafe_allow_html=True)
