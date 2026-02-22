@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V72 | Date: 22/02/2026 | 23:58
+# Version: V75 | Date: 23/02/2026 | 00:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,26 +13,37 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     
     .block-container { 
-        max-width: 1100px !important; 
+        max-width: 1000px !important; 
         margin: 0 auto !important; 
         padding-top: 1rem !important; 
     }
     
-    /* Header ללא קו מפריד וצמוד למעלה */
+    /* Header Container - צמצום לרוחב הטקסט */
     .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 5px 0;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
     }
+
+    /* כיווץ הכותרת למרכז וסידור שאלה X מעליה */
+    .exam-header-box {
+        text-align: center;
+        margin: 0 auto 30px auto;
+        width: fit-content;
+    }
+    .exam-title { 
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; }
 
     .instruction-box { padding-right: 25px; }
 
-    @media (max-width: 768px) {
-        div[data-testid="column"]:nth-of-type(1) { display: none !important; }
-        .block-container { padding-right: 15px !important; padding-left: 15px !important; }
-    }
+    /* עיצוב רדיו - הצמדה לימין */
+    div[data-testid="stRadio"] > label { font-size: 1.2rem !important; }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -42,31 +53,18 @@ st.markdown("""
         }
     }
 
-    /* כיווץ כותרת הבחינה למרכז בלבד */
-    .exam-title-container {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        margin-bottom: 5px;
-    }
-    .exam-title { 
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-        border-bottom: none;
-    }
-
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-    .stDivider { margin: 0.5rem 0 !important; }
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
+    .stDivider { margin: 1rem 0 !important; }
     
+    /* עיצוב כפתור הלוגו */
     .stButton > button[key="logo_link"] {
-        background: none; border: none; padding: 0; color: black;
-        font-size: 1.2rem; font-weight: bold; cursor: pointer;
+        background: none; border: 1px solid #ddd; border-radius: 8px; 
+        padding: 5px 15px; color: black; font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Header ללא קו
+# Header
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
 h_left, h_right = st.columns([1, 1])
 with h_left:
@@ -84,14 +82,10 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     with center_col:
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
         st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
-        # החזרת כל רשימת ההסברים
         instructions = [
-            "המבחן כולל 25 שאלות.", 
-            "זמן מוקצב: 90 דקות.", 
-            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", 
-            "ניתן לחזור אחורה רק לשאלות שנענו.", 
-            "ציון עובר: 60.", 
-            "חל איסור על שימוש בחומר עזר."
+            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+            "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
         ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -125,11 +119,12 @@ elif st.session_state.step == "exam_run":
         </script>
         """
 
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    col_nav, col_main = st.columns([1, 2.5], gap="large")
     
     with col_nav:
         components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
+        # רשת כפתורים 4 בעמודה
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
@@ -142,12 +137,16 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # כותרת מכווצת ללא קו
-        st.markdown('<div class="exam-title-container"><div class="exam-title">מבחן רישוי למתווכים</div></div>', unsafe_allow_html=True)
+        # כותרת ומזהה שאלה מרוכזים (כמו בתמונה)
+        st.markdown(f"""
+            <div class="exam-header-box">
+                <div class="exam-title">מבחן רישוי למתווכים</div>
+                <div class="q-id">שאלה {st.session_state.current_q}</div>
+            </div>
+        """, unsafe_allow_html=True)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
@@ -157,12 +156,11 @@ elif st.session_state.step == "exam_run":
             
             st.divider()
             
-            b_next, b_prev, b_finish = st.columns(3)
+            # כפתורי ניווט צמודים
+            b_next, b_prev, b_finish = st.columns([1, 1, 1])
             with b_next:
                 if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
-                        logic.move_to_next()
-                        st.rerun()
+                    st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next", on_click=logic.move_to_next)
                 else:
                     st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
 
@@ -170,6 +168,7 @@ elif st.session_state.step == "exam_run":
                 if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
                     st.session_state.current_q -= 1
                     st.rerun()
+            
             with b_finish:
                 if 25 in st.session_state.answers_user:
                     st.button("סיום בחינה", key="btn_finish_active")
