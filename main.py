@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V70 | Date: 22/02/2026 | 23:35
+# Version: V73 | Date: 22/02/2026 | 23:59
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,16 +18,14 @@ st.markdown("""
         padding-top: 1rem !important; 
     }
     
-    /* Header מהודק ללא מריחה */
     .header-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 0;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #f0f0f0;
+        padding: 5px 0;
+        margin-bottom: 10px;
     }
-    
+
     .instruction-box { padding-right: 25px; }
 
     @media (max-width: 768px) {
@@ -43,31 +41,37 @@ st.markdown("""
         }
     }
 
-    /* כותרת בחינה ממורכזת וצמודה */
     .exam-title-container {
         display: flex;
         justify-content: center;
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
     .exam-title { 
-        font-size: 1.8rem;
+        font-size: 1.4rem;
         font-weight: bold;
         text-align: center;
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
+    
+    .stButton > button[key="logo_link"] {
+        background: none; border: none; padding: 0; color: black;
+        font-size: 1.2rem; font-weight: bold; cursor: pointer;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Header מהודק (שימוש ב-HTML למניעת מריחה של ה-Columns)
-st.markdown(f"""
-    <div class="header-container">
-        <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
-        <div style="font-size: 1rem; color: #666;">👤 {user_name}</div>
-    </div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="header-container">', unsafe_allow_html=True)
+h_left, h_right = st.columns([1, 1])
+with h_left:
+    if st.button("🏠 מתווך בקליק", key="logo_link"):
+        st.session_state.step = "instructions"
+        st.rerun()
+with h_right:
+    st.markdown(f'<div style="font-size: 1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
@@ -76,7 +80,16 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     with center_col:
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
         st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
+        # 7 הסעיפים המלאים מהמקור שלך
+        instructions = [
+            "המבחן כולל 25 שאלות.", 
+            "זמן מוקצב: 90 דקות.", 
+            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", 
+            "ניתן לחזור אחורה רק לשאלות שנענו.", 
+            "ציון עובר: 60.", 
+            "שימוש במחשבון מותר.",
+            "חל איסור על שימוש בחומר עזר."
+        ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
@@ -114,50 +127,3 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
-                    # הדגשת שאלה נוכחית
-                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
-                    if cols[i].button(label, key=f"nav_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx
-                        st.rerun()
-
-    with col_main:
-        # כותרת ממורכזת ללא מריחה
-        st.markdown('<div class="exam-title-container"><div class="exam-title">מבחן רישוי למתווכים</div></div>', unsafe_allow_html=True)
-        
-        q = st.session_state.exam_data.get(st.session_state.current_q)
-        if q:
-            # מזהה שאלה נקי ללא "מתוך"
-            st.markdown(f'<p style="color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
-            
-            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
-            choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
-            if choice is not None: 
-                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
-            
-            st.divider()
-            
-            b_next, b_prev, b_finish = st.columns(3)
-            with b_next:
-                if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
-                        logic.move_to_next()
-                        st.rerun()
-                else:
-                    st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
-
-            with b_prev:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
-                    st.session_state.current_q -= 1
-                    st.rerun()
-            with b_finish:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="btn_finish_active")
-
-# סוף קובץ
