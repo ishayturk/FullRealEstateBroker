@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V103 | Date: 23/02/2026 | 01:10
+# Version: V106 | Date: 22/02/2026 | 20:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,7 +15,7 @@ st.markdown("""
     .block-container { 
         max-width: 1050px !important; 
         margin: 0 auto !important; 
-        padding-top: 0.5rem !important; 
+        padding-top: 0.2rem !important; 
     }
     
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
@@ -27,23 +27,23 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* מרכוז הוראות מדויק מתחת לכותרת */
-    .inst-wrapper {
+    /* מרכוז הוראות מתחת לכותרת */
+    .inst-container {
         display: flex;
         justify-content: center;
         width: 100%;
-        margin: 15px 0;
+        margin-top: 20px;
     }
-    .inst-box {
-        text-align: right;
+    .inst-content {
         display: inline-block;
+        text-align: right;
     }
 
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; }
     
-    /* הקפצת פריים הניווט (עמודה 1) לגובה השאלה */
+    /* העלאת פריים הניווט לגובה כותרת הבחינה */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-        margin-top: -60px !important;
+        margin-top: -85px !important;
     }
 
     @media (min-width: 769px) {
@@ -58,7 +58,7 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (עובד - לא נגענו)
+# 1. סטריפ עליון (2:1:2)
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem; padding-left: 10px;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -66,7 +66,7 @@ with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; padding
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-# 2. כותרת הדף
+# 2. כותרת
 is_inst = ("step" not in st.session_state or st.session_state.step == "instructions")
 t_val = "הוראות למבחן רישויי" if is_inst else "מבחן רישוי למתווכים"
 
@@ -76,10 +76,9 @@ with title_mid:
     if not is_inst:
         st.markdown(f'<div style="text-align: center; color: #888; font-weight: bold; font-size: 1.1rem;">שאלה {st.session_state.current_q}</div>', unsafe_allow_html=True)
 
-# 3. תוכן הדף
+# 3. תוכן
 if is_inst:
-    # תיקון מרכוז הוראות
-    st.markdown('<div class="inst-wrapper"><div class="inst-box">', unsafe_allow_html=True)
+    st.markdown('<div class="inst-container"><div class="inst-content">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
