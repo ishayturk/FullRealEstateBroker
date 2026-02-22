@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V31 | Date: 22/02/2026 | 09:05
+# Version: V32 | Date: 22/02/2026 | 09:15
 import streamlit as st
 import logic
 import time
@@ -9,20 +9,18 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* הגדרות כיוון כתיבה כלליות */
-    * { direction: rtl; text-align: right; }
+    /* הגדרות בסיס */
+    * { direction: rtl; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* מירכוז אבסולוטי של הקונטיינר הראשי */
+    /* קונטיינר ראשי - מגביל רוחב וממרכז את כל הדף */
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
-        padding-top: 0.5rem !important; /* צמצום מרווח עליון מהדפדפן */
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding-top: 1rem !important;
     }
     
-    /* סטריפ עליון - מיושר לקצוות ה-1000px */
+    /* סטריפ עליון - שימוש ב-flex למניעת מריחה */
     .header-strip {
         display: flex;
         justify-content: space-between;
@@ -30,16 +28,25 @@ st.markdown("""
         width: 100%;
         padding: 10px 0;
         border-bottom: 2px solid #f0f0f0;
-        margin-bottom: 15px; /* צמצום מרווח מהתוכן שמתחת */
+        margin-bottom: 5px; /* צמצום רווח מהתוכן */
     }
 
-    /* אזור תוכן ההסבר - ממורכז ומועלה למעלה */
+    /* מירכוז אגרסיבי של תוכן ההסבר */
     .content-area {
-        max-width: 700px;
-        margin: 0 auto;
-        padding-top: 0px; /* ביטול מרווח פנימי */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+        margin-top: 0px;
     }
     
+    .instruction-text {
+        text-align: right;
+        display: inline-block;
+        max-width: 600px;
+    }
+
     .nav-panel { 
         background-color: #f8f9fa; 
         border: 1px solid #e1e4e8; 
@@ -53,12 +60,12 @@ st.markdown("""
         font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
 
-    .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 0; }
-    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; margin-bottom: 20px; }
+    .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 0; width: 100%; }
+    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; margin-bottom: 20px; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
-# 1. הצגת הסטריפ העליון
+# 1. הזרקת הסטריפ העליון
 st.markdown(f"""
     <div class="header-strip">
         <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
@@ -68,10 +75,12 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# 2. אזור התוכן המשתנה
+# 2. אזור התוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<div class="content-area">', unsafe_allow_html=True)
-    st.title("הוראות למבחן רישויי מקרקעין")
+    st.markdown('<h1 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="instruction-text">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
         "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
@@ -79,14 +88,13 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     ]
     for i, txt in enumerate(instructions, 1):
         st.write(f"{i}. {txt}")
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.write("")
-    c1, c2 = st.columns([1.5, 1])
-    with c1: agree = st.checkbox("קראתי את ההוראות")
-    with c2:
-        if st.button("התחל בחינה", disabled=not agree):
-            st.session_state.start_time = time.time()
-            st.session_state.step = "exam_run"; st.rerun()
+    agree = st.checkbox("קראתי את ההוראות")
+    if st.button("התחל בחינה", disabled=not agree):
+        st.session_state.start_time = time.time()
+        st.session_state.step = "exam_run"; st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.step == "exam_run":
@@ -96,11 +104,11 @@ elif st.session_state.step == "exam_run":
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
         st.markdown(f"""
-            <div class="timer-display" id="timer-v31">--:--</div>
+            <div class="timer-display" id="timer-v32">--:--</div>
             <script>
             (function() {{
                 var t = {rem};
-                var display = document.getElementById('timer-v31');
+                var display = document.getElementById('timer-v32');
                 function run() {{
                     var m = Math.floor(t / 60);
                     var s = t % 60;
