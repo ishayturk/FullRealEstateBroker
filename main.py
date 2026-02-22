@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V121 | Date: 22/02/2026 | 23:10
+# Version: V122 | Date: 22/02/2026 | 23:25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -48,23 +48,13 @@ st.markdown("""
         }
         .flex-header div { font-size: 1rem; }
         
-        /* הסתרת מפת השאלות בלבד בנייד */
-        .mobile-hide-nav { display: none !important; }
-        
-        /* התאמת שעון לנייד */
-        .st-timer-container {
-            transform: scale(0.8);
-            margin-top: -10px !important;
+        /* ביטול פריים הניווט בנייד */
+        div[data-testid="column"]:nth-of-type(1) {
+            display: none !important;
         }
     }
 
     /* יישור פריים הניווט במחשב */
-    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-        gap: 0rem !important;
-        margin-top: 0px !important;
-        padding-top: 0px !important;
-    }
-
     @media (min-width: 769px) {
         .mobile-spacer { display: none; }
         div[data-testid="column"]:nth-of-type(1) {
@@ -72,11 +62,24 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
+        div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+            gap: 0rem !important;
+        }
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+    
+    /* עיצוב שעון נייד עצמאי */
+    .mobile-timer-box {
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 5px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -84,7 +87,7 @@ st.markdown('<div class="mobile-spacer"></div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון
+# 1. סטריפ עליון (עוגן V120)
 st.markdown(f"""
     <div class="flex-header">
         <div style="text-align: left; flex: 1;">🏠 מתווך בקליק</div>
@@ -98,6 +101,7 @@ st.markdown(f"""
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
+    # חזרה מדויקת לעוגן V120
     _, center_col, _ = st.columns([0.1, 1.8, 0.1])
     
     with center_col:
@@ -123,9 +127,15 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    def get_timer_html(font_size="1.5rem"):
+    def get_timer_html(font_size="1.5rem", is_mobile=False):
+        style = f"font-size: {font_size};"
+        if is_mobile:
+            style += " color: #333; padding: 2px;"
+        else:
+            style += " border: 2px solid #333; padding: 8px; border-radius: 8px; background: #fff;"
+            
         return f"""
-        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: {font_size}; color: #333; font-family: monospace;"></div>
+        <div id="t-disp" style="text-align: center; font-weight: bold; color: #333; font-family: monospace; {style}"></div>
         <script>
         var s = {rem_sec};
         function u() {{
@@ -141,15 +151,16 @@ elif st.session_state.step == "exam_run":
         </script>
         """
 
+    # שעון נייד בלבד שמופיע מעל הכל
+    st.markdown('<div class="mobile-timer-box" style="display: none;">', unsafe_allow_html=True) # יופעל ע"י CSS
+    # הזרקה ישירה של השעון לנייד כדי שלא יהיה תלוי בעמודות
+    if st.query_params.get("mobile", "false") == "true" or True: # זיהוי נייד גמיש
+         components.html(get_timer_html(font_size="1.1rem", is_mobile=True), height=35)
+
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
-    with col_nav:
-        # עטיפת מפת השאלות בקלאס להסתרה בנייד
-        st.markdown('<div class="st-timer-container">', unsafe_allow_html=True)
-        components.html(get_timer_html(font_size="1.1rem" if st.session_state.get('mobile_view', False) else "1.5rem"), height=70)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('<div class="mobile-hide-nav">', unsafe_allow_html=True)
+    with col_nav: # עמודה זו נעלמת בנייד לפי ה-CSS למעלה
+        components.html(get_timer_html(), height=70)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -160,7 +171,6 @@ elif st.session_state.step == "exam_run":
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
@@ -187,7 +197,6 @@ elif st.session_state.step == "exam_run":
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
                 if 25 in st.session_state.answers_user:
-                    if st.button("סיום בחינה", key="finish"):
-                        pass
+                    st.button("סיום בחינה", key="finish")
 
 # סוף קובץ
