@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V76 | Date: 23/02/2026 | 00:45
+# Version: V77 | Date: 23/02/2026 | 01:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -12,41 +12,52 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* החזרת רווח דף מקורי */
     .block-container { 
         max-width: 1100px !important; 
         margin: 0 auto !important; 
         padding-top: 1rem !important; 
     }
     
-    .header-container {
+    /* אובייקט Header מאוחד וממורכז */
+    .header-unified-container {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        padding: 5px 0;
+        gap: 40px; /* רווח קבוע בין הלוגו לשם המשתמש */
+        padding: 10px 0;
         margin-bottom: 20px;
+        width: 100%;
     }
 
-    /* כיווץ הכותרת בלבד - לא את רוחב הדף */
+    .instruction-box { padding-right: 25px; }
+
+    /* עיצוב כפתור הלוגו שייראה כחלק מהטקסט המאוחד */
+    .logo-btn-style > button {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        color: black !important;
+        font-size: 1.2rem !important;
+        font-weight: bold !important;
+        cursor: pointer;
+    }
+
     .exam-header-box {
         text-align: center;
         margin: 0 auto 30px auto;
         display: block;
-        width: 100%; /* תופס את כל השורה כדי לאפשר מרכוז פנימי */
+        width: 100%;
     }
     .exam-title { 
         font-size: 2rem;
         font-weight: bold;
-        display: inline-block; /* גורם לאלמנט להיות ברוחב הטקסט שלו בלבד */
+        display: inline-block;
         border-bottom: 2px solid #333;
         padding-bottom: 5px;
         margin-bottom: 5px;
     }
     .q-id { color: #888; font-size: 1.1rem; font-weight: bold; width: 100%; }
 
-    .instruction-box { padding-right: 25px; }
-
-    /* וידוא שכפתורי הניווט לא נשברים */
     div[data-testid="column"] button {
         white-space: nowrap !important;
         min-width: 45px !important;
@@ -62,23 +73,20 @@ st.markdown("""
 
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
     .stDivider { margin: 1rem 0 !important; }
-    
-    .stButton > button[key="logo_link"] {
-        background: none; border: 1px solid #ddd; border-radius: 8px; 
-        padding: 5px 15px; color: black; font-weight: bold;
-    }
     </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div class="header-container">', unsafe_allow_html=True)
-h_left, h_right = st.columns([1, 1])
-with h_left:
+# יצירת ה-Header המאוחד
+st.markdown('<div class="header-unified-container">', unsafe_allow_html=True)
+col_u1, col_u2 = st.columns([1, 1]) # שימוש בעמודות פנימיות למרכז בלבד
+with col_u1:
+    st.markdown('<div class="logo-btn-style">', unsafe_allow_html=True)
     if st.button("🏠 מתווך בקליק", key="logo_link"):
         st.session_state.step = "instructions"
         st.rerun()
-with h_right:
-    st.markdown(f'<div style="font-size: 1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+with col_u2:
+    st.markdown(f'<div style="font-size: 1rem; color: #666; text-align: right;">👤 {user_name}</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
@@ -142,7 +150,6 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # כותרת ממורכזת באמת בלי לפגוע ברוחב הדף
         st.markdown(f"""
             <div class="exam-header-box">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
@@ -176,7 +183,3 @@ elif st.session_state.step == "exam_run":
                     st.rerun()
             
             with b_finish:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="btn_finish_active")
-
-# סוף קובץ
