@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v31 | Date: 22/02/2026 | 23:55
+# Version: logic_v32 | Date: 22/02/2026 | 15:15
 import streamlit as st
 import time
 
@@ -19,6 +19,11 @@ def generate_question(q_number):
             "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
             "options": ["רישיון בתוקף והיות המתווך גורם יעיל", "חתימה על בלעדיות", "פרסום", "כל התשובות"],
             "correct": 0
+        },
+        2: {
+            "question": "שאלה מספר 2 - האם המתווך רשאי לבצע פעולות משפטיות?",
+            "options": ["כן, ללא הגבלה", "לא, חל איסור מוחלט", "רק באישור הלקוח", "רק אם הוא עורך דין"],
+            "correct": 1
         }
     }
     
@@ -36,18 +41,18 @@ def generate_question(q_number):
             st.session_state.is_q1_ready = True
 
 def is_first_question_ready():
-    # שימוש בגישה בטוחה ל-Session State
     return st.session_state.get("is_q1_ready", False)
 
+def start_exam_logic():
+    """פעולות לוגיות ברגע הלחיצה על התחלת בחינה"""
+    st.session_state.start_time = time.time()
+    st.session_state.step = "exam_run"
+    # ייצור שאלה 2 ברקע לפי הפרוטוקול
+    generate_question(2)
+
 def handle_navigation(direction):
-    curr = st.session_state.current_q
-    if direction == "next":
-        target = curr + 1
-        st.session_state.max_reached = max(st.session_state.max_reached, target)
-        generate_question(target)
-        st.session_state.current_q = target
-    elif direction == "prev" and curr > 1:
-        st.session_state.current_q -= 1
+    # פונקציונליות מנוטרלת כרגע לבקשת המשתמש
+    pass
 
 def get_remaining_seconds():
     if st.session_state.start_time is None: return 5400
