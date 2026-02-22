@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V99 | Date: 23/02/2026 | 00:05
+# Version: V100 | Date: 23/02/2026 | 00:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,22 +18,35 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
+    /* צמצום רווחים בין אלמנטים */
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
     div[data-testid="stVerticalBlock"] > div { gap: 0rem !important; }
 
     .header-box {
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
 
-    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; }
+    /* יישור הוראות למרכז */
+    .instructions-container {
+        display: table;
+        margin: 0 auto;
+        text-align: right;
+    }
+
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; }
     
+    /* העלאת פריים הניווט למעלה */
+    [data-testid="column"]:nth-of-type(1) {
+        margin-top: -15px !important;
+    }
+
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 15px !important;
+            padding: 10px !important;
         }
     }
     </style>
@@ -41,20 +54,13 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון במבנה 2:1:2 (הצמדה פנימה)
-# המטרה: שהתוכן יהיה מרוכז סביב האמצע
+# 1. סטריפ עליון
 header_col_right, header_col_mid, header_col_left = st.columns([2, 1, 2])
-
 with header_col_right:
-    # נצמד לשמאל (לכיוון האמצע)
     st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem; padding-left: 10px;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-
 with header_col_mid:
-    # חוצץ דק במרכז
     st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-
 with header_col_left:
-    # נצמד לימין (לכיוון האמצע)
     st.markdown(f'<div style="text-align: right; font-weight: bold; padding-right: 10px;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
@@ -72,28 +78,30 @@ with title_mid:
 # 3. תוכן הדף
 if is_inst:
     st.write("")
-    _, center_col, _ = st.columns([0.2, 2, 0.2])
-    with center_col:
-        instructions = [
-            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
-            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
-            "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
-        ]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        st.write("")
-        c1, c2 = st.columns([1, 1])
-        with c1: agree = st.checkbox("קראתי את ההוראות")
-        with c2:
-            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-                logic.start_exam_logic()
-                st.rerun()
+    st.markdown('<div class="instructions-container">', unsafe_allow_html=True)
+    instructions = [
+        "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+        "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+        "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
+    ]
+    for i, txt in enumerate(instructions, 1):
+        st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;{i}. {txt}")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.write("")
+    c1, c2 = st.columns([1, 1])
+    with c1: agree = st.checkbox("קראתי את ההוראות")
+    with c2:
+        if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+            logic.start_exam_logic()
+            st.rerun()
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
     def get_timer_html():
         return f"""
-        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
+        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 5px; border-radius: 8px; font-weight: bold; font-size: 1.4rem; color: #333; font-family: monospace;"></div>
         <script>
         var s = {rem_sec};
         function u() {{
@@ -111,7 +119,7 @@ elif st.session_state.step == "exam_run":
 
     col_nav, col_main = st.columns([1, 2.8], gap="medium")
     with col_nav:
-        components.html(get_timer_html(), height=75)
+        components.html(get_timer_html(), height=65)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
