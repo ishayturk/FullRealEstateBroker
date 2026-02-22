@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V30 | Date: 22/02/2026 | 08:45
+# Version: V31 | Date: 22/02/2026 | 09:05
 import streamlit as st
 import logic
 import time
@@ -13,24 +13,33 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* הגבלת רוחב התוכן הכולל למירכוז אחיד */
+    /* מירכוז אבסולוטי של הקונטיינר הראשי */
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
-        padding-top: 1rem !important;
+        padding-top: 0.5rem !important; /* צמצום מרווח עליון מהדפדפן */
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
     
-    /* סטריפ עליון - קבוע, נפרד וממורכז */
+    /* סטריפ עליון - מיושר לקצוות ה-1000px */
     .header-strip {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        padding: 15px 0;
+        padding: 10px 0;
         border-bottom: 2px solid #f0f0f0;
-        margin-bottom: 30px; /* רווח קבוע מהתוכן שמתחת */
+        margin-bottom: 15px; /* צמצום מרווח מהתוכן שמתחת */
     }
 
+    /* אזור תוכן ההסבר - ממורכז ומועלה למעלה */
+    .content-area {
+        max-width: 700px;
+        margin: 0 auto;
+        padding-top: 0px; /* ביטול מרווח פנימי */
+    }
+    
     .nav-panel { 
         background-color: #f8f9fa; 
         border: 1px solid #e1e4e8; 
@@ -44,18 +53,12 @@ st.markdown("""
         font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
 
-    /* תיבת תוכן (הסבר/שאלות) - נפרדת מהכותרת */
-    .content-area {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    
     .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 0; }
     .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
-# 1. הצגת הסטריפ העליון (תמיד באותו מקום ובאותו גודל)
+# 1. הצגת הסטריפ העליון
 st.markdown(f"""
     <div class="header-strip">
         <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
@@ -65,7 +68,7 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# 2. אזור התוכן המשתנה (הוראות או בחינה)
+# 2. אזור התוכן המשתנה
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<div class="content-area">', unsafe_allow_html=True)
     st.title("הוראות למבחן רישויי מקרקעין")
@@ -93,11 +96,11 @@ elif st.session_state.step == "exam_run":
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
         st.markdown(f"""
-            <div class="timer-display" id="timer-v30">--:--</div>
+            <div class="timer-display" id="timer-v31">--:--</div>
             <script>
             (function() {{
                 var t = {rem};
-                var display = document.getElementById('timer-v30');
+                var display = document.getElementById('timer-v31');
                 function run() {{
                     var m = Math.floor(t / 60);
                     var s = t % 60;
