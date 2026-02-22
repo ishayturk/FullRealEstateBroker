@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V65 | Date: 22/02/2026 | 21:35
+# Version: V66 | Date: 22/02/2026 | 21:50
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -12,48 +12,37 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* מרווח מהסטריפ העליון המקורי של המערכת */
+    /* ריווח מהסטריפ העליון ומהצדדים */
     .block-container { 
         max-width: 1100px !important; 
         margin: 0 auto !important; 
-        padding-top: 2rem !important; 
+        padding-top: 1.5rem !important; 
     }
     
-    /* עיצוב ה-Header הפנימי - מוקטן לנייד */
-    .header-style { 
-        border-bottom: 2px solid #f0f0f0; 
-        padding-bottom: 10px; 
-        margin-bottom: 20px; 
-        text-align: center; 
-    }
-    .logo-row { font-size: 1.3rem; font-weight: bold; margin-bottom: 3px; color: #333; text-align: center; }
-    .user-row { font-size: 1rem; color: #666; text-align: center; }
+    /* עיצוב Header בסיסי */
+    .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; }
+    
+    /* ריווח לטקסט ההסבר בנייד ובמחשב */
+    .instruction-text { margin-right: 20px !important; line-height: 1.6; }
 
-    /* שעון מובייל - מוסתר לחלוטין בדסקטופ */
-    .mobile-only-timer { 
-        display: none; 
-        height: 0px !important; 
-        margin: 0px !important; 
-        overflow: hidden; 
-    }
+    /* הסתרת שעון המובייל לחלוטין בדסקטופ */
+    .mobile-only-timer { display: none; height: 0; overflow: hidden; }
 
     @media (max-width: 768px) {
-        /* ריווח מהצדדים בנייד */
-        .block-container { padding-right: 20px !important; padding-left: 20px !important; }
+        /* ביטול מוחלט של פריים הניווט (עמודה 1) בנייד */
+        div[data-testid="column"]:nth-of-type(1) { display: none !important; width: 0 !important; min-width: 0 !important; }
+        div[data-testid="column"]:nth-of-type(2) { width: 100% !important; }
         
-        /* הסתרת עמודת הניווט (המפה והשעון הגדול) */
-        div[data-testid="column"]:nth-of-type(1) { display: none !important; }
+        /* הצגת השעון בנייד */
+        .mobile-only-timer { display: block !important; height: auto !important; margin-bottom: 15px !important; }
         
-        /* הצגת השעון הקטן בנייד */
-        .mobile-only-timer { 
-            display: block !important; 
-            height: auto !important; 
-            margin-bottom: 15px !important; 
-            overflow: visible !important;
-        }
+        /* הפיכת ה-Header לשתי שורות בנייד בלבד */
+        .header-col-left { text-align: center !important; margin-top: 5px; }
+        .header-col-right { text-align: center !important; }
     }
 
     @media (min-width: 769px) {
+        /* עיצוב פריים ניווט אפור במחשב */
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -63,17 +52,18 @@ st.markdown("""
 
     .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.5; margin-bottom: 15px; color: #000; }
-    .centered-title { text-align: center; width: 100%; margin-top: 0px !important; }
+    .centered-title { text-align: center; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
-# ה-Header הפנימי (מתחת לסטריפ הראשי)
-st.markdown(f"""
-    <div class="header-style">
-        <div class="logo-row">🏠 מתווך בקליק</div>
-        <div class="user-row">👤 {user_name}</div>
-    </div>
-""", unsafe_allow_html=True)
+# Header - שורה אחת במחשב, מתאים את עצמו בנייד דרך CSS
+st.markdown('<div class="header-style">', unsafe_allow_html=True)
+h_col1, h_col2 = st.columns([1, 1])
+with h_col1:
+    st.markdown(f'<div class="header-col-right" style="font-size: 1.3rem; font-weight: bold;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h_col2:
+    st.markdown(f'<div class="header-col-left" style="font-size: 1.1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
@@ -82,7 +72,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     with center_col:
         st.markdown('<h1 class="centered-title">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
         instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
+        st.markdown('<div class="instruction-text">', unsafe_allow_html=True)
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+        st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
         row_col1, row_col2 = st.columns([2.5, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
@@ -116,6 +108,7 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
+        # פריים ניווט (מוסתר בנייד דרך CSS)
         components.html(get_timer_html("timer-desktop", "1.7rem", "10px"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -129,6 +122,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
+        # שעון מובייל (מוסתר במחשב)
         st.markdown('<div class="mobile-only-timer">', unsafe_allow_html=True)
         components.html(get_timer_html("timer-mobile", "1.1rem", "5px"), height=50)
         st.markdown('</div>', unsafe_allow_html=True)
