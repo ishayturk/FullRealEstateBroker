@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V77 | Date: 23/02/2026 | 01:10
+# Version: V78 | Date: 23/02/2026 | 01:25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,49 +18,54 @@ st.markdown("""
         padding-top: 1rem !important; 
     }
     
-    /* אובייקט Header מאוחד וממורכז */
-    .header-unified-container {
+    /* Header Container - רספונסיבי וממורכז לתוכן */
+    .header-wrapper {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        gap: 40px; /* רווח קבוע בין הלוגו לשם המשתמש */
-        padding: 10px 0;
-        margin-bottom: 20px;
         width: 100%;
+        max-width: 1000px;
+        margin: 0 auto 20px auto;
+        padding: 10px 0;
     }
 
-    .instruction-box { padding-right: 25px; }
+    /* התאמה לנייד */
+    @media (max-width: 600px) {
+        .header-wrapper {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+    }
 
-    /* עיצוב כפתור הלוגו שייראה כחלק מהטקסט המאוחד */
-    .logo-btn-style > button {
-        background: none !important;
-        border: none !important;
-        padding: 0 !important;
-        color: black !important;
-        font-size: 1.2rem !important;
-        font-weight: bold !important;
+    .logo-link-style {
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-decoration: none;
+        color: black;
         cursor: pointer;
     }
 
     .exam-header-box {
         text-align: center;
         margin: 0 auto 30px auto;
-        display: block;
         width: 100%;
     }
     .exam-title { 
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: bold;
         display: inline-block;
         border-bottom: 2px solid #333;
         padding-bottom: 5px;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
     }
-    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; width: 100%; }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; }
 
+    /* ניווט - מניעת שבירת טקסט בכפתורים */
     div[data-testid="column"] button {
         white-space: nowrap !important;
-        min-width: 45px !important;
+        min-width: 42px !important;
+        padding: 2px 5px !important;
     }
 
     @media (min-width: 769px) {
@@ -76,17 +81,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# יצירת ה-Header המאוחד
-st.markdown('<div class="header-unified-container">', unsafe_allow_html=True)
-col_u1, col_u2 = st.columns([1, 1]) # שימוש בעמודות פנימיות למרכז בלבד
-with col_u1:
-    st.markdown('<div class="logo-btn-style">', unsafe_allow_html=True)
-    if st.button("🏠 מתווך בקליק", key="logo_link"):
-        st.session_state.step = "instructions"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-with col_u2:
-    st.markdown(f'<div style="font-size: 1rem; color: #666; text-align: right;">👤 {user_name}</div>', unsafe_allow_html=True)
+# הצגת Header ללא Columns של Streamlit
+st.markdown(f"""
+    <div class="header-wrapper">
+        <div class="logo-link-style">🏠 מתווך בקליק</div>
+        <div style="font-size: 1rem; color: #666;">👤 {user_name}</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# כפתור שקוף מעל הלוגו בשביל הפונקציונליות של Streamlit
+st.markdown('<div style="position: absolute; top: 15px; right: 50px; opacity: 0;">', unsafe_allow_html=True)
+if st.button("back", key="logo_link"):
+    st.session_state.step = "instructions"
+    st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
@@ -95,7 +102,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
-        st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
+        st.markdown('<div style="padding-right: 25px;">', unsafe_allow_html=True)
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
             "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -150,6 +157,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
+        # כותרת ומזהה שאלה במבנה ממורכז ומהודק
         st.markdown(f"""
             <div class="exam-header-box">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
