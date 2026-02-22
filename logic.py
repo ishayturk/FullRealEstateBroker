@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v29 | Date: 22/02/2026 | 07:20
+# Version: logic_v30 | Date: 22/02/2026 | 23:50
 import streamlit as st
 import time
 
@@ -10,9 +10,11 @@ def initialize_exam():
         st.session_state.start_time = None
         st.session_state.answers_user = {}
         st.session_state.max_reached = 1
+        st.session_state.is_q1_ready = False  # אתחול סטטוס מוכנות שאלה 1
         generate_question(1)
 
 def generate_question(q_number):
+    # סימולציה של בנק שאלות (בעתיד יישאב מהעוגן בזמן ריצה)
     bank = {
         1: {
             "question": "על פי חוק המתווכים, מהו התנאי לזכאות לדמי תיווך?",
@@ -20,6 +22,7 @@ def generate_question(q_number):
             "correct": 0
         }
     }
+    
     if q_number not in st.session_state.exam_data:
         if q_number in bank:
             st.session_state.exam_data[q_number] = bank[q_number]
@@ -29,6 +32,14 @@ def generate_question(q_number):
                 "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
                 "correct": 0
             }
+        
+        # עדכון ששאלה 1 מוכנה בזיכרון
+        if q_number == 1:
+            st.session_state.is_q1_ready = True
+
+def is_first_question_ready():
+    """בודק אם שאלה 1 מוכנה בזיכרון"""
+    return st.session_state.get("is_q1_ready", False)
 
 def handle_navigation(direction):
     curr = st.session_state.current_q
