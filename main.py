@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V73 | Date: 22/02/2026 | 23:59
+# Version: V72 | Date: 22/02/2026 | 23:58
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,6 +18,7 @@ st.markdown("""
         padding-top: 1rem !important; 
     }
     
+    /* Header ללא קו מפריד וצמוד למעלה */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -41,6 +42,7 @@ st.markdown("""
         }
     }
 
+    /* כיווץ כותרת הבחינה למרכז בלבד */
     .exam-title-container {
         display: flex;
         justify-content: center;
@@ -48,9 +50,10 @@ st.markdown("""
         margin-bottom: 5px;
     }
     .exam-title { 
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: bold;
         text-align: center;
+        border-bottom: none;
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
@@ -63,6 +66,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Header ללא קו
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
 h_left, h_right = st.columns([1, 1])
 with h_left:
@@ -80,14 +84,13 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     with center_col:
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
         st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
-        # 7 הסעיפים המלאים מהמקור שלך
+        # החזרת כל רשימת ההסברים
         instructions = [
             "המבחן כולל 25 שאלות.", 
             "זמן מוקצב: 90 דקות.", 
             "מעבר לשאלה הבאה רק לאחר סימון תשובה.", 
             "ניתן לחזור אחורה רק לשאלות שנענו.", 
             "ציון עובר: 60.", 
-            "שימוש במחשבון מותר.",
             "חל איסור על שימוש בחומר עזר."
         ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
@@ -127,3 +130,41 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                idx = r + i + 1
+                if idx <= 25:
+                    is_active = idx in st.session_state.nav_active_questions
+                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
+                    if cols[i].button(label, key=f"nav_{idx}", disabled=not is_active):
+                        st.session_state.current_q = idx
+                        st.rerun()
+
+    with col_main:
+        # כותרת מכווצת ללא קו
+        st.markdown('<div class="exam-title-container"><div class="exam-title">מבחן רישוי למתווכים</div></div>', unsafe_allow_html=True)
+        
+        q = st.session_state.exam_data.get(st.session_state.current_q)
+        if q:
+            st.markdown(f'<p style="color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
+            
+            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
+            choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
+            if choice is not None: 
+                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
+            
+            st.divider()
+            
+            b_next, b_prev, b_finish = st.columns(3)
+            with b_next:
+                if st.session_state.current_q < 25:
+                    if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
+                        logic.move_to_next()
+                        st.rerun()
+                else:
+                    st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
+
+            with b_prev:
+                if st.button("לשאלה הקודמת", disabled=(st
