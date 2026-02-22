@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V91 | Date: 22/02/2026 | 22:20
+# Version: V93 | Date: 22/02/2026 | 22:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,7 +18,7 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
-    /* איפוס מרווחים אגרסיבי */
+    /* איפוס מרווחים אגרסיבי להצמדה למעלה */
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
     div[data-testid="stVerticalBlock"] > div { gap: 0rem !important; }
 
@@ -31,29 +31,28 @@ st.markdown("""
         border-bottom: 1px solid #eee;
     }
 
-    /* תיבת כותרת קבועה - כמו באפליקציה השנייה */
+    /* תיבת כותרת שמתכווצת לרוחב הטקסט וממרכזת את עצמה */
     .fixed-title-container {
         width: 100%;
-        display: flex;
-        justify-content: center;
-        margin: 10px 0 20px 0;
+        margin: 5px 0 15px 0;
     }
     
     .exam-title-box { 
-        background-color: transparent;
-        padding: 5px 20px;
+        display: table; /* גורם לתיבה להתכווץ למידות הטקסט */
+        margin: 0 auto; /* ממרכז את התיבה המכווצת */
         text-align: center;
-        min-width: 300px;
+        padding: 0 10px;
     }
     
     .exam-title { 
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         font-weight: bold;
         margin: 0;
         color: #31333F;
+        line-height: 1.1;
     }
     
-    .q-id-sub { color: #888; font-size: 1.2rem; font-weight: bold; display: block; margin-top: -5px; }
+    .q-id-sub { color: #888; font-size: 1.1rem; font-weight: bold; display: block; margin-top: 2px; }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -63,8 +62,8 @@ st.markdown("""
         }
     }
 
-    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
-    .stDivider { margin: 0.5rem 0 !important; }
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    .stDivider { margin: 0.4rem 0 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -78,7 +77,7 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# 2. כותרת בתיבה קבועה (כמו בתמונה ששלחת)
+# 2. כותרת בתיבה מכווצת (בכל הדפים)
 is_inst = ("step" not in st.session_state or st.session_state.step == "instructions")
 title_text = "הוראות למבחן רישויי" if is_inst else "מבחן רישוי למתווכים"
 sub_text = f'<span class="q-id-sub">שאלה {st.session_state.current_q}</span>' if not is_inst else ""
@@ -86,7 +85,7 @@ sub_text = f'<span class="q-id-sub">שאלה {st.session_state.current_q}</span>
 st.markdown(f"""
     <div class="fixed-title-container">
         <div class="exam-title-box">
-            <h1 class="exam-title">{title_text}</h1>
+            <div class="exam-title">{title_text}</div>
             {sub_text}
         </div>
     </div>
