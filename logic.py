@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v32 | Date: 22/02/2026 | 15:15
+# Version: logic_v33 | Date: 22/02/2026 | 16:45
 import streamlit as st
 import time
 
@@ -11,6 +11,8 @@ def initialize_exam():
         st.session_state.answers_user = {}
         st.session_state.max_reached = 1
         st.session_state.is_q1_ready = False
+        # רשימת שאלות שניתן לנווט אליהן דרך מפת השאלות
+        st.session_state.nav_active_questions = set() 
         generate_question(1)
 
 def generate_question(q_number):
@@ -32,7 +34,7 @@ def generate_question(q_number):
             st.session_state.exam_data[q_number] = bank[q_number]
         else:
             st.session_state.exam_data[q_number] = {
-                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה",
+                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה המדמה אורך של כמה שורות כדי לבחון את תצוגת הפונט והמרווחים כפי שסוכם.",
                 "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
                 "correct": 0
             }
@@ -48,23 +50,24 @@ def start_exam_logic():
     st.session_state.step = "exam_run"
     generate_question(2)
 
-def handle_navigation(direction):
-    pass
+def move_to_next():
+    """לוגיקה למעבר לשאלה הבאה ואישור ניווט לשאלה הנוכחית"""
+    current = st.session_state.current_q
+    # אישור השאלה הנוכחית לניווט במפת השאלות
+    st.session_state.nav_active_questions.add(current)
+    
+    # מעבר לשאלה הבאה
+    st.session_state.current_q += 1
+    if st.session_state.current_q > st.session_state.max_reached:
+        st.session_state.max_reached = st.session_state.current_q
+        generate_question(st.session_state.current_q + 1)
 
-def get_remaining_seconds():
-    if st.session_state.start_time is None: return 5400
+def get_remaining_time_str():
+    if st.session_state.start_time is None:
+        return "90:00"
     elapsed = time.time() - st.session_state.start_time
-    return int(max(0, 5400 - elapsed))
-
-def get_results_data():
-    score = 0
-    results = []
-    for i in range(1, 26):
-        q = st.session_state.exam_data.get(i)
-        ans = st.session_state.answers_user.get(i)
-        correct = (q and ans is not None and ans == q["correct"])
-        if correct: score += 4
-        results.append({"num": i, "is_correct": correct})
-    return score, results
+    remaining = max(0, 5400 - int(elapsed))
+    mins, secs = divmod(remaining, 60)
+    return f"{mins:02d}:{secs:02d}"
 
 # סוף קובץ
