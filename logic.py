@@ -11,7 +11,6 @@ def initialize_exam():
         st.session_state.answers_user = {}
         st.session_state.max_reached = 1
         st.session_state.is_q1_ready = False
-        # רשימת שאלות שניתן לנווט אליהן דרך מפת השאלות
         st.session_state.nav_active_questions = set() 
         generate_question(1)
 
@@ -51,12 +50,8 @@ def start_exam_logic():
     generate_question(2)
 
 def move_to_next():
-    """לוגיקה למעבר לשאלה הבאה ואישור ניווט לשאלה הנוכחית"""
     current = st.session_state.current_q
-    # אישור השאלה הנוכחית לניווט במפת השאלות
     st.session_state.nav_active_questions.add(current)
-    
-    # מעבר לשאלה הבאה
     st.session_state.current_q += 1
     if st.session_state.current_q > st.session_state.max_reached:
         st.session_state.max_reached = st.session_state.current_q
