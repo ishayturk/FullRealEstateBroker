@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V116 | Date: 22/02/2026 | 22:20
+# Version: V117 | Date: 22/02/2026 | 22:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,33 +18,39 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
-    /* סטריפ עליון קשיח לשורה אחת - מונע קריסה בנייד */
-    .custom-header {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        padding: 10px 5px;
+    .header-box {
         border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
         margin-bottom: 15px;
-        direction: ltr; /* לצורך סידור flex משמאל לימין */
     }
-    .header-item-left { text-align: left; flex: 2; font-weight: bold; font-size: 0.95rem; white-space: nowrap; }
-    .header-item-center { text-align: center; flex: 1; color: #eee; }
-    .header-item-right { text-align: right; flex: 2; font-weight: bold; font-size: 0.95rem; white-space: nowrap; direction: rtl; }
 
+    /* התאמות לנייד */
     @media (max-width: 768px) {
-        h2 { font-size: 1.4rem !important; }
+        /* דחיקה למטה למניעת הסתרה */
+        div[data-testid="stHorizontalBlock"]:first-of-type {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding-top: 45px !important;
+        }
+        
+        h2 { font-size: 1.35rem !important; }
+        
         .mobile-inst-padding {
             padding-right: 30px !important;
             padding-left: 10px !important;
             width: 100% !important;
         }
-        .header-item-left, .header-item-right { font-size: 0.85rem; }
+
+        /* הקטנת גופנים בסטריפ בנייד */
+        div[data-testid="stHorizontalBlock"]:first-of-type div {
+            font-size: 0.85rem !important;
+        }
     }
 
-    /* יישור פריים הניווט */
+    /* יישור פריים הניווט במחשב */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
         gap: 0rem !important;
         margin-top: 0px !important;
@@ -67,14 +73,13 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון מותאם (Flexbox)
-st.markdown(f"""
-    <div class="custom-header">
-        <div class="header-item-left">🏠 מתווך בקליק</div>
-        <div class="header-item-center">|</div>
-        <div class="header-item-right">👤 {user_name}</div>
-    </div>
-""", unsafe_allow_html=True)
+# 1. סטריפ עליון (2:1:2) - חוזר למבנה עמודות יציב
+h1, h2, h3 = st.columns([2, 1, 2])
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
@@ -107,62 +112,4 @@ elif st.session_state.step == "exam_run":
     
     def get_timer_html():
         return f"""
-        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
-        <script>
-        var s = {rem_sec};
-        function u() {{
-            var m = Math.floor(s / 60); var sec = s % 60;
-            var el = document.getElementById('t-disp');
-            if (el) {{
-                if (s <= 600) el.style.color = "red";
-                el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
-            }}
-            if (s > 0) s--;
-        }}
-        u(); setInterval(u, 1000);
-        </script>
-        """
-
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
-    
-    with col_nav:
-        components.html(get_timer_html(), height=70)
-        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
-                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx; st.rerun()
-
-    with col_main:
-        st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
-        
-        q = st.session_state.exam_data.get(st.session_state.current_q)
-        if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
-            
-            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
-            choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
-            if choice is not None: 
-                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
-            
-            st.divider()
-            
-            bn, bp, bf = st.columns(3)
-            with bn:
-                if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
-                        logic.move_to_next(); st.rerun()
-            with bp:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
-                    st.session_state.current_q -= 1; st.rerun()
-            with bf:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="finish")
-
-# סוף קובץ
+        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius
