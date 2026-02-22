@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V33 | Date: 22/02/2026 | 09:30
+# Version: V34 | Date: 22/02/2026 | 09:40
 import streamlit as st
 import logic
 import time
@@ -13,40 +13,22 @@ st.markdown("""
     * { direction: rtl; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* 1. הקופסה החיצונית ביותר של הדף */
+    /* קונטיינר ראשי */
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
         padding-top: 1rem !important;
     }
     
-    /* 2. קופסת הסטריפ (Header Box) */
+    /* סטריפ עליון קבוע */
     .header-box {
-        width: 100%;
-        max-width: 900px; /* צמצום רוחב הסטריפ כפי שביקשת */
-        margin: 0 auto;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
         padding: 10px 0;
         border-bottom: 2px solid #f0f0f0;
-    }
-
-    /* 3. קופסת התוכן (Content Box) */
-    .content-box {
-        width: 100%;
-        max-width: 700px; /* קופסה צרה יותר למירכוז ההסבר */
-        margin: 20px auto 0 auto; /* רווח מהסטריפ ומירכוז */
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* מירכוז כל האובייקטים בתוך הקופסה */
-    }
-
-    /* יישור הטקסט בתוך רשימת ההוראות */
-    .instructions-list {
-        width: 100%;
-        text-align: right;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
 
     .nav-panel { 
@@ -64,7 +46,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# הצגת קופסת הסטריפ
+# הצגת הסטריפ העליון - תמיד בראש הדף
 st.markdown(f"""
     <div class="header-box">
         <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
@@ -74,37 +56,35 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# דף הוראות בתוך קופסת התוכן
+# דף הוראות - שימוש בעמודות למירכוז עצמאי
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="content-box">', unsafe_allow_html=True)
-    st.markdown('<h1 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
+    _, center_col, _ = st.columns([1, 4, 1])
     
-    st.markdown('<div class="instructions-list">', unsafe_allow_html=True)
-    instructions = [
-        "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
-        "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
-        "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
-    ]
-    for i, txt in enumerate(instructions, 1):
-        st.write(f"{i}. {txt}")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # מירכוז ה-Checkbox והכפתור
-    agree = st.checkbox("קראתי את ההוראות")
-    if st.button("התחל בחינה", disabled=not agree):
-        st.session_state.start_time = time.time()
-        st.session_state.step = "exam_run"; st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    with center_col:
+        st.markdown('<h1 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
+        
+        instructions = [
+            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
+            "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
+            "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
+        ]
+        for i, txt in enumerate(instructions, 1):
+            st.write(f"{i}. {txt}")
+        
+        st.write("")
+        # מירכוז אלמנטי הבחירה והכפתור
+        agree = st.checkbox("קראתי את ההוראות")
+        if st.button("התחל בחינה", disabled=not agree, use_container_width=True):
+            st.session_state.start_time = time.time()
+            st.session_state.step = "exam_run"; st.rerun()
 
 elif st.session_state.step == "exam_run":
-    # לוגיקת הבחינה נשמרת ללא שינוי במבנה העמודות
     col_nav, col_main = st.columns([1, 2.5], gap="large")
     
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
-        st.markdown(f'<div class="timer-display" id="timer-v33">--:--</div>', unsafe_allow_html=True)
-        # (המשך לוגיקת שעון כפי שהייתה ב-V32)
+        st.markdown(f'<div class="timer-display" id="timer-v34">--:--</div>', unsafe_allow_html=True)
         
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
