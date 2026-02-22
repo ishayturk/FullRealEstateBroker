@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V109 | Date: 22/02/2026 | 21:40
+# Version: V110 | Date: 22/02/2026 | 21:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,6 +24,19 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
+    /* מרכוז בלוק ההוראות כגוף אחד */
+    .inst-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 15px;
+    }
+    .inst-content {
+        display: inline-block;
+        text-align: right;
+        min-width: 300px;
+    }
+
     /* יישור פריים הניווט וצמצום רווחים פנימיים */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
         gap: 0rem !important;
@@ -35,14 +48,13 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 15px !important; /* צמצום קל של הפדינג הפנימי */
+            padding: 15px !important;
         }
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
     
-    /* הצמדת כותרת מפת השאלות לשעון */
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     </style>
 """, unsafe_allow_html=True)
@@ -59,24 +71,29 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; margin-bottom: 0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    _, center_col, _ = st.columns([1, 4, 1])
-    with center_col:
-        st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.write("")
-        _, footer_row, _ = st.columns([0.5, 2, 0.5])
-        with footer_row:
-            f_c1, f_c2 = st.columns([1.2, 1])
-            with f_c1: agree = st.checkbox("קראתי את ההוראות")
-            with f_c2:
-                if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-                    logic.start_exam_logic()
-                    st.rerun()
+    # מרכוז גוף ההוראות
+    st.markdown('<div class="inst-container"><div class="inst-content">', unsafe_allow_html=True)
+    instructions = [
+        "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+        "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+        "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
+    ]
+    for i, txt in enumerate(instructions, 1):
+        st.write(f"{i}. {txt}")
+    st.markdown('</div></div>', unsafe_allow_html=True)
+    
+    st.write("")
+    # שורה תחתונה - מרכוז וסגירת רווחים
+    _, footer_row, _ = st.columns([0.5, 2, 0.5])
+    with footer_row:
+        f_c1, f_c2 = st.columns([1.2, 1])
+        with f_c1: agree = st.checkbox("קראתי את ההוראות")
+        with f_c2:
+            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+                logic.start_exam_logic()
+                st.rerun()
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
@@ -102,7 +119,6 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # פריים הניווט - שעון בגובה מוקטן
         components.html(get_timer_html(), height=70)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
