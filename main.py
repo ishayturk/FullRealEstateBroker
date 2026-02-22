@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V117 | Date: 22/02/2026 | 22:30
+# Version: V118 | Date: 22/02/2026 | 22:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,29 +24,17 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* התאמות לנייד */
+    /* תיקון בנייד - מניעת דחיקה שמאלה */
     @media (max-width: 768px) {
-        /* דחיקה למטה למניעת הסתרה */
-        div[data-testid="stHorizontalBlock"]:first-of-type {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding-top: 45px !important;
-        }
+        .mobile-spacer { height: 50px; }
+        h2 { font-size: 1.3rem !important; text-align: center !important; }
         
-        h2 { font-size: 1.35rem !important; }
+        /* שמירה על שורה אחת בסטריפ ללא flex מעוות */
+        div[data-testid="column"] { min-width: auto !important; }
         
         .mobile-inst-padding {
-            padding-right: 30px !important;
+            padding-right: 25px !important;
             padding-left: 10px !important;
-            width: 100% !important;
-        }
-
-        /* הקטנת גופנים בסטריפ בנייד */
-        div[data-testid="stHorizontalBlock"]:first-of-type div {
-            font-size: 0.85rem !important;
         }
     }
 
@@ -58,6 +46,7 @@ st.markdown("""
     }
 
     @media (min-width: 769px) {
+        .mobile-spacer { display: none; }
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -71,13 +60,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# רווח ייעודי לנייד למניעת הסתרה
+st.markdown('<div class="mobile-spacer"></div>', unsafe_allow_html=True)
+
 logic.initialize_exam()
 
-# 1. סטריפ עליון (2:1:2) - חוזר למבנה עמודות יציב
+# 1. סטריפ עליון (2:1:2)
 h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; white-space: nowrap; font-size: 0.9rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; white-space: nowrap; font-size: 0.9rem;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
@@ -85,7 +77,7 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    _, center_col, _ = st.columns([1, 1.2, 1])
+    _, center_col, _ = st.columns([0.2, 1.6, 0.2]) # הרחבת העמודה המרכזית בנייד
     
     with center_col:
         st.markdown('<div class="mobile-inst-padding">', unsafe_allow_html=True)
