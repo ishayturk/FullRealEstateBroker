@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V55 | Date: 22/02/2026 | 18:50
+# Version: V56 | Date: 22/02/2026 | 19:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -11,17 +11,17 @@ st.markdown("""
     <style>
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
-    .block-container { max-width: 1000px !important; margin: 0 auto !important; padding-top: 1rem !important; }
+    .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
     
-    /* צביעת פריים הניווט כולו באפור עדין */
-    [data-testid="stVerticalBlock"] > [data-testid="stColumn"]:first-child {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #e1e4e8;
+    /* צביעת עמודת הניווט כולה באפור עדין */
+    [data-testid="column"]:nth-child(1) [data-testid="stVerticalBlock"] {
+        background-color: #f1f3f5 !important;
+        padding: 20px !important;
+        border-radius: 15px !important;
+        min-height: 80vh;
     }
-    
+
     .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.5; margin-bottom: 15px; color: #000; }
     div[data-testid="stMarkdownContainer"] p { font-size: 1.1rem; }
@@ -54,9 +54,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
                 st.rerun()
 
 elif st.session_state.step == "exam_run":
-    col_nav, col_main = st.columns([1, 2.5], gap="large")
+    col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
-        # שעון צד-לקוח עם לוגיקת צבע אדום ב-10 דקות האחרונות
+        # שעון צד-לקוח עם לוגיקת צבע אדום
         rem_sec = logic.get_remaining_seconds()
         timer_html = f"""
         <div id="timer" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.7rem; color: #333; margin-bottom: 20px; font-family: monospace;"></div>
@@ -66,12 +66,7 @@ elif st.session_state.step == "exam_run":
             var m = Math.floor(seconds / 60);
             var s = seconds % 60;
             var timerDiv = document.getElementById('timer');
-            
-            // צביעה באדום אם נותרו פחות מ-10 דקות (600 שניות)
-            if (seconds <= 600) {{
-                timerDiv.style.color = "red";
-            }}
-            
+            if (seconds <= 600) {{ timerDiv.style.color = "red"; }}
             timerDiv.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
             if (seconds > 0) seconds--;
         }}
