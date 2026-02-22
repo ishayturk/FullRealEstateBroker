@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V75 | Date: 23/02/2026 | 00:30
+# Version: V76 | Date: 23/02/2026 | 00:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -12,13 +12,13 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
+    /* החזרת רווח דף מקורי */
     .block-container { 
-        max-width: 1000px !important; 
+        max-width: 1100px !important; 
         margin: 0 auto !important; 
         padding-top: 1rem !important; 
     }
     
-    /* Header Container - צמצום לרוחב הטקסט */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -27,23 +27,30 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* כיווץ הכותרת למרכז וסידור שאלה X מעליה */
+    /* כיווץ הכותרת בלבד - לא את רוחב הדף */
     .exam-header-box {
         text-align: center;
         margin: 0 auto 30px auto;
-        width: fit-content;
+        display: block;
+        width: 100%; /* תופס את כל השורה כדי לאפשר מרכוז פנימי */
     }
     .exam-title { 
         font-size: 2rem;
         font-weight: bold;
+        display: inline-block; /* גורם לאלמנט להיות ברוחב הטקסט שלו בלבד */
+        border-bottom: 2px solid #333;
+        padding-bottom: 5px;
         margin-bottom: 5px;
     }
-    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; width: 100%; }
 
     .instruction-box { padding-right: 25px; }
 
-    /* עיצוב רדיו - הצמדה לימין */
-    div[data-testid="stRadio"] > label { font-size: 1.2rem !important; }
+    /* וידוא שכפתורי הניווט לא נשברים */
+    div[data-testid="column"] button {
+        white-space: nowrap !important;
+        min-width: 45px !important;
+    }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -56,7 +63,6 @@ st.markdown("""
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
     .stDivider { margin: 1rem 0 !important; }
     
-    /* עיצוב כפתור הלוגו */
     .stButton > button[key="logo_link"] {
         background: none; border: 1px solid #ddd; border-radius: 8px; 
         padding: 5px 15px; color: black; font-weight: bold;
@@ -124,7 +130,6 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
-        # רשת כפתורים 4 בעמודה
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
@@ -137,7 +142,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # כותרת ומזהה שאלה מרוכזים (כמו בתמונה)
+        # כותרת ממורכזת באמת בלי לפגוע ברוחב הדף
         st.markdown(f"""
             <div class="exam-header-box">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
@@ -156,11 +161,12 @@ elif st.session_state.step == "exam_run":
             
             st.divider()
             
-            # כפתורי ניווט צמודים
             b_next, b_prev, b_finish = st.columns([1, 1, 1])
             with b_next:
                 if st.session_state.current_q < 25:
-                    st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next", on_click=logic.move_to_next)
+                    if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
+                        logic.move_to_next()
+                        st.rerun()
                 else:
                     st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
 
