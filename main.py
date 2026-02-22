@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V38 | Date: 22/02/2026 | 10:30
+# Version: V39 | Date: 22/02/2026 | 23:50
 import streamlit as st
 import logic
 import time
@@ -69,7 +69,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         row_col1, row_col2 = st.columns([2.5, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
-            if st.button("התחל בחינה", disabled=not agree):
+            # הכפתור פעיל רק אם הצ'קבוקס מסומן וגם שאלה 1 מוכנה בזיכרון
+            exam_is_ready = logic.is_first_question_ready()
+            if st.button("התחל בחינה", disabled=not (agree and exam_is_ready)):
                 st.session_state.start_time = time.time()
                 st.session_state.step = "exam_run"; st.rerun()
 
