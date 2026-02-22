@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V52 | Date: 22/02/2026 | 17:45
+# Version: V53 | Date: 22/02/2026 | 17:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -47,15 +47,11 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 
 elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="large")
-    
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        
-        # שעון צד-לקוח (JavaScript)
         rem_sec = logic.get_remaining_seconds()
         timer_html = f"""
-        <div id="timer" style="text-align: center; background: #fff; border: 1px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;">
-        </div>
+        <div id="timer" style="text-align: center; background: #fff; border: 1px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;"></div>
         <script>
         var seconds = {rem_sec};
         function updateTimer() {{
@@ -69,7 +65,6 @@ elif st.session_state.step == "exam_run":
         </script>
         """
         components.html(timer_html, height=70)
-        
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
