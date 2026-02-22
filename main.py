@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V56 | Date: 22/02/2026 | 19:10
+# Version: V58 | Date: 22/02/2026 | 19:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,12 +14,29 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
     
-    /* צביעת עמודת הניווט כולה באפור עדין */
-    [data-testid="column"]:nth-child(1) [data-testid="stVerticalBlock"] {
-        background-color: #f1f3f5 !important;
-        padding: 20px !important;
-        border-radius: 15px !important;
-        min-height: 80vh;
+    /* עיצוב שעון נייד - מוסתר כברירת מחדל */
+    .mobile-timer-container { display: none; }
+
+    /* הסתרת פריים הניווט במובייל והצגת שעון נייד */
+    @media (max-width: 768px) {
+        [data-testid="column"]:nth-child(1) { display: none !important; }
+        .mobile-timer-container { 
+            display: block; 
+            text-align: center; 
+            background: #fff; 
+            padding: 5px; 
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* צביעת עמודת הניווט בדסקטופ */
+    @media (min-width: 769px) {
+        [data-testid="column"]:nth-child(1) {
+            background-color: #f1f3f5 !important;
+            border-radius: 15px;
+            padding: 20px !important;
+        }
     }
 
     .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
@@ -54,28 +71,29 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
                 st.rerun()
 
 elif st.session_state.step == "exam_run":
+    rem_sec = logic.get_remaining_seconds()
+    
+    # הזרקת רכיב השעון (משותף ל-2 התצוגות, העיצוב ב-CSS יקבע מה רואים)
+    timer_js = f"""
+    <div id="timer-box" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.7rem; color: #333; font-family: monospace;"></div>
+    <script>
+    var seconds = {rem_sec};
+    function updateTimer() {{
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        var tDiv = document.getElementById('timer-box');
+        if (seconds <= 600) {{ tDiv.style.color = "red"; }}
+        tDiv.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        if (seconds > 0) seconds--;
+    }}
+    updateTimer(); setInterval(updateTimer, 1000);
+    </script>
+    """
+
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    
     with col_nav:
-        # שעון צד-לקוח עם לוגיקת צבע אדום
-        rem_sec = logic.get_remaining_seconds()
-        timer_html = f"""
-        <div id="timer" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.7rem; color: #333; margin-bottom: 20px; font-family: monospace;"></div>
-        <script>
-        var seconds = {rem_sec};
-        function updateTimer() {{
-            var m = Math.floor(seconds / 60);
-            var s = seconds % 60;
-            var timerDiv = document.getElementById('timer');
-            if (seconds <= 600) {{ timerDiv.style.color = "red"; }}
-            timerDiv.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-            if (seconds > 0) seconds--;
-        }}
-        updateTimer();
-        setInterval(updateTimer, 1000);
-        </script>
-        """
-        components.html(timer_html, height=85)
-        
+        components.html(timer_js, height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -88,6 +106,11 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
+        # שעון קטן לנייד בלבד (יופיע בראש עמודת השאלות רק ברוחב מסך קטן)
+        st.markdown('<div class="mobile-timer-container">', unsafe_allow_html=True)
+        components.html(timer_js.replace('1.7rem', '1.2rem').replace('padding: 10px', 'padding: 5px'), height=50)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
