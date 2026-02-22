@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V98 | Date: 22/02/2026 | 23:55
+# Version: V99 | Date: 23/02/2026 | 00:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -12,22 +12,19 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* הצמדת כל הדף למעלה */
     .block-container { 
         max-width: 1050px !important; 
         margin: 0 auto !important; 
-        padding-top: 0rem !important; 
-        margin-top: -30px !important;
+        padding-top: 0.5rem !important; 
     }
     
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
     div[data-testid="stVerticalBlock"] > div { gap: 0rem !important; }
 
-    /* עיצוב הסטריפ העליון - 2 שורות גובה מקסימום */
     .header-box {
         border-bottom: 1px solid #eee;
-        padding: 5px 0;
-        margin-bottom: 10px;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
     }
 
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; }
@@ -45,32 +42,32 @@ st.markdown("""
 logic.initialize_exam()
 
 # 1. סטריפ עליון במבנה 2:1:2 (הצמדה פנימה)
+# המטרה: שהתוכן יהיה מרוכז סביב האמצע
 header_col_right, header_col_mid, header_col_left = st.columns([2, 1, 2])
 
 with header_col_right:
     # נצמד לשמאל (לכיוון האמצע)
-    st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem; padding-left: 10px;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 
 with header_col_mid:
-    # מרכז ריק או סמל קטן
-    st.markdown('<div style="text-align: center; color: #ccc;">|</div>', unsafe_allow_html=True)
+    # חוצץ דק במרכז
+    st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
 
 with header_col_left:
     # נצמד לימין (לכיוון האמצע)
-    st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align: right; font-weight: bold; padding-right: 10px;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-# 2. כותרת הדף - מוצמדת למעלה
+# 2. כותרת הדף
 is_inst = ("step" not in st.session_state or st.session_state.step == "instructions")
 t_val = "הוראות למבחן רישויי" if is_inst else "מבחן רישוי למתווכים"
 
-# שימוש בעמודות גם לכותרת כדי לשמור על מירכוז הדוק
 _, title_mid, _ = st.columns([1, 2, 1])
 with title_mid:
-    st.markdown(f'<h1 style="text-align: center; font-size: 2rem; margin: 0;">{t_val}</h1>', unsafe_allow_html=True)
+    st.markdown(f'<h1 style="text-align: center; font-size: 2.2rem; margin: 0; line-height: 1.1;">{t_val}</h1>', unsafe_allow_html=True)
     if not is_inst:
-        st.markdown(f'<div style="text-align: center; color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="text-align: center; color: #888; font-weight: bold; font-size: 1.1rem;">שאלה {st.session_state.current_q}</div>', unsafe_allow_html=True)
 
 # 3. תוכן הדף
 if is_inst:
