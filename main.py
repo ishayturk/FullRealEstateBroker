@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V124 | Date: 22/02/2026 | 23:58
+# Version: V125 | Date: 22/02/2026 | 23:59
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,15 +13,15 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     
     .block-container { 
-        max-width: 900px !important; 
+        max-width: 950px !important; 
         margin: 0 auto !important; 
-        padding-top: 0.2rem !important; 
+        padding-top: 0rem !important; 
     }
     
     .header-box {
         border-bottom: 1px solid #eee;
         margin-top: 2px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
 
     .flex-header {
@@ -30,60 +30,51 @@ st.markdown("""
         align-items: center;
         width: 100%;
         padding: 5px 0;
-        gap: 10px;
-    }
-    .flex-header div {
-        white-space: nowrap;
-        font-weight: bold;
-        font-size: 1.1rem;
     }
 
-    /* עיצוב שורת כותרת ושעון */
-    .title-timer-row {
+    /* שורת כותרת ושעון דחוסה למעלה */
+    .exam-header-row {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        gap: 40px;
         margin-top: 0px;
         padding-top: 0px;
+        margin-bottom: 10px;
     }
 
     @media (max-width: 768px) {
         .mobile-spacer { height: 50px; }
-        .title-timer-row { flex-direction: column; gap: 5px; }
-        h2 { font-size: 1.3rem !important; text-align: center !important; margin: 0 !important; }
-        .mobile-inst-padding { padding-right: 25px !important; padding-left: 10px !important; }
-        .flex-header div { font-size: 1rem; }
+        .exam-header-row { flex-direction: column; gap: 0px; }
+        h2 { font-size: 1.2rem !important; text-align: center !important; margin: 2px 0 !important; }
+        .mobile-inst-padding { padding-right: 25px !important; }
     }
 
-    /* עיצוב מפת הניווט כמספרים נקיים */
-    .nav-map-text {
+    /* עיצוב מספרים לניווט */
+    .nav-num-container {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 15px;
-        margin-top: 30px;
-        padding: 10px;
+        gap: 12px;
+        margin-top: 10px;
     }
-
-    /* ביטול עיצוב כפתור סטנדרטי למפת הניווט */
+    
     div[data-testid="stHorizontalBlock"] button {
         background: none !important;
         border: none !important;
         padding: 0 !important;
         color: #007bff !important;
         text-decoration: underline;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         min-width: auto !important;
     }
     div[data-testid="stHorizontalBlock"] button:disabled {
         color: #000 !important;
         text-decoration: none !important;
-        cursor: default !important;
         background: none !important;
     }
 
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; text-align: right; }
+    .q-text { font-size: 1.2rem; font-weight: bold; line-height: 1.3; margin-bottom: 10px; }
+    .stDivider { margin: 0.5rem 0 !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -103,8 +94,9 @@ st.markdown(f"""
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; margin-top:0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
+    # מרכוז מדויק מעוגן V120
     _, center_col, _ = st.columns([0.1, 1.8, 0.1])
     with center_col:
         st.markdown('<div class="mobile-inst-padding">', unsafe_allow_html=True)
@@ -130,7 +122,7 @@ elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
     timer_html = f"""
-    <div id="t-disp" style="font-weight: bold; font-family: monospace; color: #333; font-size: 1.2rem;"></div>
+    <div id="t-disp" style="font-weight: bold; font-family: monospace; color: #333; font-size: 1.1rem; text-align: center;"></div>
     <script>
     var s = {rem_sec};
     function u() {{
@@ -146,16 +138,15 @@ elif st.session_state.step == "exam_run":
     </script>
     """
 
-    # שורת כותרת ושעון
-    st.markdown('<div class="title-timer-row">', unsafe_allow_html=True)
-    st.markdown('<h2 style="margin:0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
+    # שורת כותרת ושעון צמודה למעלה
+    st.markdown('<div class="exam-header-row">', unsafe_allow_html=True)
+    st.markdown('<h2 style="margin:0; padding:0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
     components.html(timer_html, height=30, width=100)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # אזור השאלה
     q = st.session_state.exam_data.get(st.session_state.current_q)
     if q:
-        st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
         st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
         
         prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
@@ -165,25 +156,24 @@ elif st.session_state.step == "exam_run":
         
         st.divider()
         
-        # כפתורי פעולה
+        # כפתורי ניווט מקוריים
         bn, bp, bf = st.columns(3)
         with bn:
             if st.session_state.current_q < 25:
-                if st.button("לשאלה הבאה ⬅️", disabled=(choice is None), use_container_width=True):
+                if st.button("לשאלה הבאה ⬅️", disabled=(choice is None)):
                     logic.move_to_next(); st.rerun()
         with bp:
-            if st.button("➡️ לשאלה הקודמת", disabled=(st.session_state.current_q == 1), use_container_width=True):
+            if st.button("➡️ לשאלה הקודמת", disabled=(st.session_state.current_q == 1)):
                 st.session_state.current_q -= 1; st.rerun()
         with bf:
             if 25 in st.session_state.answers_user:
-                st.button("סיום בחינה ✅", key="finish", use_container_width=True)
+                st.button("סיום בחינה ✅", key="finish")
 
-        # מפת ניווט - מספרים טקסטואליים בתחתית
-        st.markdown('<div class="nav-map-text">', unsafe_allow_html=True)
-        map_cols = st.columns(25)
+        # מפת מספרים תחתונה דחוסה
+        st.markdown('<div class="nav-num-container">', unsafe_allow_html=True)
+        num_cols = st.columns(25)
         for i in range(1, 26):
-            with map_cols[i-1]:
-                # לוגיקה: אקטיבי רק אם נענתה ועברו הלאה (קיים ב-nav_active_questions)
+            with num_cols[i-1]:
                 is_active = i in st.session_state.nav_active_questions
                 if st.button(str(i), key=f"map_{i}", disabled=not is_active):
                     st.session_state.current_q = i; st.rerun()
