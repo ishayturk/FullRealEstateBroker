@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V101 | Date: 23/02/2026 | 00:35
+# Version: V102 | Date: 23/02/2026 | 00:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,7 +15,7 @@ st.markdown("""
     .block-container { 
         max-width: 1050px !important; 
         margin: 0 auto !important; 
-        padding-top: 0.5rem !important; 
+        padding-top: 0.2rem !important; 
     }
     
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
@@ -23,26 +23,28 @@ st.markdown("""
 
     .header-box {
         border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
+        padding-bottom: 2px;
+        margin-bottom: 5px;
     }
 
-    /* מרכוז רשימת ההוראות מתחת לכותרת */
-    .instructions-wrapper {
-        text-align: center;
+    /* מרכוז הוראות מדויק */
+    .inst-container {
+        display: flex;
+        justify-content: center;
         width: 100%;
-        margin-top: 10px;
+        margin-top: 15px;
     }
-    .instructions-content {
-        display: inline-block;
+    .inst-content {
         text-align: right;
+        min-width: 300px;
     }
 
     .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; }
     
-    /* העלאת פריים הניווט והטיימר למעלה */
-    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-        margin-top: -45px !important;
+    /* הקפצת פריים הניווט והשעון למעלה */
+    div[data-testid="column"]:nth-of-type(1) {
+        position: relative !important;
+        top: -65px !important;
     }
 
     @media (min-width: 769px) {
@@ -77,7 +79,7 @@ with title_mid:
 
 # 3. תוכן
 if is_inst:
-    st.markdown('<div class="instructions-wrapper"><div class="instructions-content">', unsafe_allow_html=True)
+    st.markdown('<div class="inst-container"><div class="inst-content">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -118,7 +120,7 @@ elif st.session_state.step == "exam_run":
 
     col_nav, col_main = st.columns([1, 2.8], gap="medium")
     with col_nav:
-        components.html(get_timer_html(), height=65)
+        components.html(get_timer_html(), height=60)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
