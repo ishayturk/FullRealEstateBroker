@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V58 | Date: 22/02/2026 | 19:45
+# Version: V59 | Date: 22/02/2026 | 20:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,24 +14,18 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
     
-    /* עיצוב שעון נייד - מוסתר כברירת מחדל */
-    .mobile-timer-container { display: none; }
+    /* הגדרות לשעון הנייד - מוסתר בדסקטופ */
+    .mobile-timer-area { display: none; }
 
-    /* הסתרת פריים הניווט במובייל והצגת שעון נייד */
     @media (max-width: 768px) {
+        /* הסתרת פריים הניווט בנייד */
         [data-testid="column"]:nth-child(1) { display: none !important; }
-        .mobile-timer-container { 
-            display: block; 
-            text-align: center; 
-            background: #fff; 
-            padding: 5px; 
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 10px;
-        }
+        /* הצגת אזור השעון בנייד */
+        .mobile-timer-area { display: block; margin-bottom: 15px; }
     }
 
-    /* צביעת עמודת הניווט בדסקטופ */
     @media (min-width: 769px) {
+        /* עיצוב פריים ניווט אפור בדסקטופ */
         [data-testid="column"]:nth-child(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -73,27 +67,29 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # הזרקת רכיב השעון (משותף ל-2 התצוגות, העיצוב ב-CSS יקבע מה רואים)
-    timer_js = f"""
-    <div id="timer-box" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.7rem; color: #333; font-family: monospace;"></div>
-    <script>
-    var seconds = {rem_sec};
-    function updateTimer() {{
-        var m = Math.floor(seconds / 60);
-        var s = seconds % 60;
-        var tDiv = document.getElementById('timer-box');
-        if (seconds <= 600) {{ tDiv.style.color = "red"; }}
-        tDiv.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-        if (seconds > 0) seconds--;
-    }}
-    updateTimer(); setInterval(updateTimer, 1000);
-    </script>
-    """
+    # פונקציה לייצור השעון עם גמישות בגודל
+    def get_timer_html(font_size="1.7rem", padding="10px"):
+        return f"""
+        <div id="timer-display" style="text-align: center; background: #fff; border: 2px solid #333; padding: {padding}; border-radius: 8px; font-weight: bold; font-size: {font_size}; color: #333; font-family: monospace;"></div>
+        <script>
+        var seconds = {rem_sec};
+        function update() {{
+            var m = Math.floor(seconds / 60);
+            var s = seconds % 60;
+            var el = document.getElementById('timer-display');
+            if (seconds <= 600) {{ el.style.color = "red"; }}
+            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            if (seconds > 0) seconds--;
+        }}
+        update(); setInterval(update, 1000);
+        </script>
+        """
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        components.html(timer_js, height=85)
+        # שעון דסקטופ (גדול)
+        components.html(get_timer_html("1.7rem", "10px"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -106,9 +102,9 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # שעון קטן לנייד בלבד (יופיע בראש עמודת השאלות רק ברוחב מסך קטן)
-        st.markdown('<div class="mobile-timer-container">', unsafe_allow_html=True)
-        components.html(timer_js.replace('1.7rem', '1.2rem').replace('padding: 10px', 'padding: 5px'), height=50)
+        # אזור שעון נייד (קטן) - נשלט ע"י CSS
+        st.markdown('<div class="mobile-timer-area">', unsafe_allow_html=True)
+        components.html(get_timer_html("1.1rem", "5px"), height=50)
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
@@ -120,17 +116,4 @@ elif st.session_state.step == "exam_run":
             choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             if choice: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             st.divider()
-            b_next, b_prev, b_finish = st.columns(3)
-            with b_next:
-                if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
-                    logic.move_to_next()
-                    st.rerun()
-            with b_prev:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
-                    st.session_state.current_q -= 1
-                    st.rerun()
-            with b_finish:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="btn_finish_active")
-
-# סוף קובץ
+            b_next, b_prev,
