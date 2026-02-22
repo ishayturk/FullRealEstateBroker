@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V49 | Date: 22/02/2026 | 16:45
+# Version: V50 | Date: 22/02/2026 | 17:00
 import streamlit as st
 import logic
 import time
@@ -37,15 +37,9 @@ st.markdown("""
         color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;
     }
     .q-text {
-        font-size: 1.25rem;
-        font-weight: bold;
-        line-height: 1.5; 
-        margin-bottom: 15px;
-        color: #000;
+        font-size: 1.25rem; font-weight: bold; line-height: 1.5; margin-bottom: 15px; color: #000;
     }
-    div[data-testid="stMarkdownContainer"] p {
-        font-size: 1.1rem;
-    }
+    div[data-testid="stMarkdownContainer"] p { font-size: 1.1rem; }
     .centered-title { text-align: center; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
@@ -82,16 +76,18 @@ elif st.session_state.step == "exam_run":
     
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        # שעון פעיל
-        st.markdown(f'<div class="timer-display">{logic.get_remaining_time_str()}</div>', unsafe_allow_html=True)
-        st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         
+        # שימוש במיכל ריק עבור השעון כדי לעדכן רק אותו
+        timer_placeholder = st.empty()
+        time_str = logic.get_remaining_time_str()
+        timer_placeholder.markdown(f'<div class="timer-display">{time_str}</div>', unsafe_allow_html=True)
+        
+        st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    # כפתור אקטיבי רק אם השאלה אושרה לניווט
                     is_active = idx in st.session_state.nav_active_questions
                     if cols[i].button(str(idx), key=f"nav_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx
@@ -100,13 +96,11 @@ elif st.session_state.step == "exam_run":
 
     with col_main:
         st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
-        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p class="q-header-text">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             
-            # טעינת תשובה קודמת אם קיימת
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             
@@ -116,12 +110,10 @@ elif st.session_state.step == "exam_run":
             st.divider()
             b_next, b_prev, b_finish = st.columns(3)
             with b_next:
-                # כפתור הבא פעיל רק אם נבחרה תשובה
                 if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
                     logic.move_to_next()
                     st.rerun()
             with b_prev:
-                # כפתור הקודם פעיל רק אם אנחנו מעל שאלה 1
                 if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
                     st.session_state.current_q -= 1
                     st.rerun()
