@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V115 | Date: 22/02/2026 | 22:12
+# Version: V116 | Date: 22/02/2026 | 22:20
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,31 +18,30 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
-    .header-box {
+    /* סטריפ עליון קשיח לשורה אחת - מונע קריסה בנייד */
+    .custom-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 10px 5px;
         border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
         margin-bottom: 15px;
+        direction: ltr; /* לצורך סידור flex משמאל לימין */
     }
+    .header-item-left { text-align: left; flex: 2; font-weight: bold; font-size: 0.95rem; white-space: nowrap; }
+    .header-item-center { text-align: center; flex: 1; color: #eee; }
+    .header-item-right { text-align: right; flex: 2; font-weight: bold; font-size: 0.95rem; white-space: nowrap; direction: rtl; }
 
-    /* התאמות לנייד */
     @media (max-width: 768px) {
-        /* סטריפ עליון - שמירה על שורה אחת ומרווחים שווים */
-        div[data-testid="stHorizontalBlock"]:first-of-type {
-            display: flex !important;
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            gap: 5px !important;
-        }
-        
         h2 { font-size: 1.4rem !important; }
-        
-        /* הרחקת הטקסט מהקצה הימני ללא דחיקת כל העמוד */
         .mobile-inst-padding {
             padding-right: 30px !important;
             padding-left: 10px !important;
             width: 100% !important;
         }
+        .header-item-left, .header-item-right { font-size: 0.85rem; }
     }
 
     /* יישור פריים הניווט */
@@ -68,13 +67,14 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (2:1:2)
-h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 0.95rem; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; font-size: 0.95rem; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
+# 1. סטריפ עליון מותאם (Flexbox)
+st.markdown(f"""
+    <div class="custom-header">
+        <div class="header-item-left">🏠 מתווך בקליק</div>
+        <div class="header-item-center">|</div>
+        <div class="header-item-right">👤 {user_name}</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
