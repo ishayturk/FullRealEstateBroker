@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V110 | Date: 22/02/2026 | 21:45
+# Version: V111 | Date: 22/02/2026 | 21:50
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,20 +24,18 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* מרכוז בלוק ההוראות כגוף אחד */
-    .inst-container {
-        display: flex;
-        justify-content: center;
+    /* מרכוז אבסולוטי של בלוק ההוראות */
+    .inst-outer {
+        text-align: center;
         width: 100%;
-        margin-top: 15px;
+        margin: 20px 0;
     }
-    .inst-content {
+    .inst-inner {
         display: inline-block;
         text-align: right;
-        min-width: 300px;
     }
 
-    /* יישור פריים הניווט וצמצום רווחים פנימיים */
+    /* יישור פריים הניווט */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
         gap: 0rem !important;
         margin-top: 0px !important;
@@ -71,10 +69,10 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center; margin-bottom: 0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; margin-bottom: 10px;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # מרכוז גוף ההוראות
-    st.markdown('<div class="inst-container"><div class="inst-content">', unsafe_allow_html=True)
+    # גוף ההוראות הממורכז
+    st.markdown('<div class="inst-outer"><div class="inst-inner">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
