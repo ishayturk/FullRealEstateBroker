@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V39 | Date: 22/02/2026 | 23:50
+# Version: V40 | Date: 22/02/2026 | 23:55
 import streamlit as st
 import logic
 import time
@@ -9,30 +9,24 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* הגדרות בסיס נקיות */
     * { direction: rtl; }
     header, #MainMenu, footer { visibility: hidden; }
-    
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
         padding-top: 1rem !important;
     }
-    
-    /* הסטריפ כאלמנט פשוט עם קו תחתון */
     .header-style {
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 10px;
         margin-bottom: 20px;
     }
-
     .nav-panel { 
         background-color: #f8f9fa; 
         border: 1px solid #e1e4e8; 
         padding: 20px; 
         border-radius: 12px; 
     }
-    
     .timer-display {
         text-align: center; background: #fff; border: 1px solid #333;
         padding: 8px; border-radius: 8px; font-weight: bold;
@@ -41,7 +35,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 1. הצגת הסטריפ בתוך עמודות למירכוז מושלם
 _, head_col, _ = st.columns([1, 4, 1])
 with head_col:
     st.markdown('<div class="header-style">', unsafe_allow_html=True)
@@ -50,9 +43,9 @@ with head_col:
     with c2: st.markdown(f"<div style='text-align: left; font-size: 1.2rem;'>👤 <b>{user_name}</b></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+# אתחול לוגיקה
 logic.initialize_exam()
 
-# 2. דף הוראות
 if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
@@ -67,11 +60,16 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         
         st.write("")
         row_col1, row_col2 = st.columns([2.5, 1])
-        with row_col1: agree = st.checkbox("קראתי את ההוראות")
+        with row_col1: 
+            agree = st.checkbox("קראתי את ההוראות") # החזרת המלל המדויק
         with row_col2:
-            # הכפתור פעיל רק אם הצ'קבוקס מסומן וגם שאלה 1 מוכנה בזיכרון
-            exam_is_ready = logic.is_first_question_ready()
-            if st.button("התחל בחינה", disabled=not (agree and exam_is_ready)):
+            # בדיקה בטוחה אם שאלה 1 מוכנה
+            try:
+                is_ready = logic.is_first_question_ready()
+            except:
+                is_ready = False
+                
+            if st.button("התחל בחינה", disabled=not (agree and is_ready)):
                 st.session_state.start_time = time.time()
                 st.session_state.step = "exam_run"; st.rerun()
 
@@ -79,9 +77,7 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="large")
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        rem = logic.get_remaining_seconds()
-        st.markdown(f'<div class="timer-display" id="timer-v38">--:--</div>', unsafe_allow_html=True)
-        
+        st.markdown(f'<div class="timer-display">--:--</div>', unsafe_allow_html=True)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
