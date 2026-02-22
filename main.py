@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V87 | Date: 22/02/2026 | 21:50
+# Version: V88 | Date: 22/02/2026 | 21:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,30 +18,36 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
+    /* Header Container - ללא Flex סותר */
     .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         width: 100%;
-        padding: 5px 0;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
     }
 
-    /* תיבת כותרת נפרדת ועצמאית */
-    .title-box-wrapper {
+    /* הכותרת המכווצת - פתרון Margin Auto */
+    .centered-title-box {
+        display: table; /* גורם לתיבה להתכווץ בדיוק לרוחב הטקסט */
+        margin: 0 auto; /* ממרכז את התיבה המכווצת */
         text-align: center;
-        width: 100%;
-        max-width: 800px; /* תואם לרוחב המקסימלי של התוכן */
-        margin: 10px auto 20px auto;
     }
     
     .exam-title { 
         font-size: 2.2rem;
         font-weight: bold;
-        display: inline-block;
+        margin: 0;
+        padding: 0;
+        line-height: 1.2;
     }
     
-    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
+    .q-id { 
+        color: #888; 
+        font-size: 1.1rem; 
+        font-weight: bold; 
+        display: block;
+        margin-top: 5px;
+    }
 
     div[data-testid="column"] button {
         white-space: nowrap !important;
@@ -61,32 +67,32 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header עליון קבוע
-st.markdown(f"""
-    <div class="header-container">
-        <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
-        <div style="font-size: 1rem; color: #666;">👤 {user_name}</div>
-    </div>
-""", unsafe_allow_html=True)
+# Header פשוט - לוגו בצד אחד, שם בצד שני
+h_col1, h_col2 = st.columns([1, 1])
+with h_col1: st.markdown(f"👤 {user_name}")
+with h_col2: st.markdown("**🏠 מתווך בקליק**")
 
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    # תיבת כותרת נפרדת בדף ההוראות
-    st.markdown('<div class="title-box-wrapper"><div class="exam-title">הוראות למבחן רישויי מקרקעין</div></div>', unsafe_allow_html=True)
+    # כותרת ההוראות - משתמשת בתיבה המכווצת
+    st.markdown("""
+        <div class="centered-title-box">
+            <h1 class="exam-title">הוראות למבחן רישויי מקרקעין</h1>
+        </div>
+    """, unsafe_allow_html=True)
     
+    st.write("")
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
-        st.markdown('<div style="padding-right: 10px;">', unsafe_allow_html=True)
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
             "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
             "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
         ]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.write("")
         
+        st.write("")
         row_col1, row_col2 = st.columns([1.2, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
@@ -133,11 +139,11 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # תיבת כותרת נפרדת בדף הבחינה
+        # כותרת השאלה - משתמשת בתיבה המכווצת
         st.markdown(f"""
-            <div class="title-box-wrapper">
+            <div class="centered-title-box">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
-                <div class="q-id">שאלה {st.session_state.current_q}</div>
+                <span class="q-id">שאלה {st.session_state.current_q}</span>
             </div>
         """, unsafe_allow_html=True)
         
