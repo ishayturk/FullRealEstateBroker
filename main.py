@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V113 | Date: 22/02/2026 | 21:58
+# Version: V114 | Date: 22/02/2026 | 22:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -22,6 +22,26 @@ st.markdown("""
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
         margin-bottom: 15px;
+    }
+
+    /* התאמות לנייד בלבד */
+    @media (max-width: 768px) {
+        /* מניעת קריסת סטריפ עליון */
+        div[data-testid="stHorizontalBlock"]:first-of-type {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        
+        /* הקטנת כותרת הסבר */
+        h2 { font-size: 1.4rem !important; }
+        
+        /* הרחקת הוראות מהקצה הימני */
+        .mobile-inst-padding {
+            padding-right: 30px !important;
+        }
     }
 
     /* יישור פריים הניווט */
@@ -49,9 +69,9 @@ logic.initialize_exam()
 
 # 1. סטריפ עליון (2:1:2)
 h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1rem; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; font-size: 1rem; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
@@ -59,10 +79,10 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # מרכוז באמצעות עמודות Streamlit - הכי יציב
     _, center_col, _ = st.columns([1, 1.2, 1])
     
     with center_col:
+        st.markdown('<div class="mobile-inst-padding">', unsafe_allow_html=True)
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
             "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -70,9 +90,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         ]
         for i, txt in enumerate(instructions, 1):
             st.write(f"{i}. {txt}")
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.write("")
-        # שורה תחתונה מהודקת בתוך המרכז
         f_c1, f_c2 = st.columns([1, 1])
         with f_c1:
             agree = st.checkbox("קראתי את ההוראות")
