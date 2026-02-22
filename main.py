@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V120 | Date: 22/02/2026 | 22:58
+# Version: V121 | Date: 22/02/2026 | 23:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,7 +24,6 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* סטריפ עליון מבוסס Flex למניעת בריחה מהמסך */
     .flex-header {
         display: flex;
         justify-content: space-between;
@@ -39,6 +38,7 @@ st.markdown("""
         font-size: 1.1rem;
     }
 
+    /* התאמות לנייד */
     @media (max-width: 768px) {
         .mobile-spacer { height: 50px; }
         h2 { font-size: 1.3rem !important; text-align: center !important; }
@@ -46,10 +46,19 @@ st.markdown("""
             padding-right: 25px !important;
             padding-left: 10px !important;
         }
-        .flex-header div { font-size: 1rem; } /* הקטנה קלה רק לנייד צר */
+        .flex-header div { font-size: 1rem; }
+        
+        /* הסתרת מפת השאלות בלבד בנייד */
+        .mobile-hide-nav { display: none !important; }
+        
+        /* התאמת שעון לנייד */
+        .st-timer-container {
+            transform: scale(0.8);
+            margin-top: -10px !important;
+        }
     }
 
-    /* יישור פריים הניווט */
+    /* יישור פריים הניווט במחשב */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
         gap: 0rem !important;
         margin-top: 0px !important;
@@ -75,7 +84,7 @@ st.markdown('<div class="mobile-spacer"></div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון ב-HTML נקי
+# 1. סטריפ עליון
 st.markdown(f"""
     <div class="flex-header">
         <div style="text-align: left; flex: 1;">🏠 מתווך בקליק</div>
@@ -114,9 +123,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    def get_timer_html():
+    def get_timer_html(font_size="1.5rem"):
         return f"""
-        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
+        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: {font_size}; color: #333; font-family: monospace;"></div>
         <script>
         var s = {rem_sec};
         function u() {{
@@ -135,7 +144,12 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        components.html(get_timer_html(), height=70)
+        # עטיפת מפת השאלות בקלאס להסתרה בנייד
+        st.markdown('<div class="st-timer-container">', unsafe_allow_html=True)
+        components.html(get_timer_html(font_size="1.1rem" if st.session_state.get('mobile_view', False) else "1.5rem"), height=70)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div class="mobile-hide-nav">', unsafe_allow_html=True)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -146,6 +160,7 @@ elif st.session_state.step == "exam_run":
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
@@ -172,6 +187,7 @@ elif st.session_state.step == "exam_run":
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
                 if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="finish")
+                    if st.button("סיום בחינה", key="finish"):
+                        pass
 
 # סוף קובץ
