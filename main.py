@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V86 | Date: 22/02/2026 | 21:35
+# Version: V87 | Date: 22/02/2026 | 21:50
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -27,17 +27,18 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    .exam-header-box {
+    /* תיבת כותרת נפרדת ועצמאית */
+    .title-box-wrapper {
         text-align: center;
-        margin: 10px auto 20px auto;
         width: 100%;
+        max-width: 800px; /* תואם לרוחב המקסימלי של התוכן */
+        margin: 10px auto 20px auto;
     }
     
     .exam-title { 
         font-size: 2.2rem;
         font-weight: bold;
         display: inline-block;
-        padding-bottom: 2px;
     }
     
     .q-id { color: #888; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
@@ -60,6 +61,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Header עליון קבוע
 st.markdown(f"""
     <div class="header-container">
         <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
@@ -70,9 +72,9 @@ st.markdown(f"""
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="exam-header-box"><div class="exam-title">הוראות למבחן רישויי מקרקעין</div></div>', unsafe_allow_html=True)
+    # תיבת כותרת נפרדת בדף ההוראות
+    st.markdown('<div class="title-box-wrapper"><div class="exam-title">הוראות למבחן רישויי מקרקעין</div></div>', unsafe_allow_html=True)
     
-    # הזזת ההסברים למרכז יותר (שינוי יחס עמודות ל-1,2,1)
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         st.markdown('<div style="padding-right: 10px;">', unsafe_allow_html=True)
@@ -85,7 +87,6 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
         
-        # צמצום רווח הדוק בין הצ'קבוקס לכפתור
         row_col1, row_col2 = st.columns([1.2, 1])
         with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
@@ -132,8 +133,9 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
+        # תיבת כותרת נפרדת בדף הבחינה
         st.markdown(f"""
-            <div class="exam-header-box">
+            <div class="title-box-wrapper">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
                 <div class="q-id">שאלה {st.session_state.current_q}</div>
             </div>
