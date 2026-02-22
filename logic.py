@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: logic_v33 | Date: 22/02/2026 | 16:45
+# Version: logic_v34 | Date: 22/02/2026 | 17:55
 import streamlit as st
 import time
 
@@ -33,7 +33,7 @@ def generate_question(q_number):
             st.session_state.exam_data[q_number] = bank[q_number]
         else:
             st.session_state.exam_data[q_number] = {
-                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה המדמה אורך של כמה שורות כדי לבחון את תצוגת הפונט והמרווחים כפי שסוכם.",
+                "question": f"שאלה מקצועית מספר {q_number} - תוכן לבדיקה המדמה אורך של כמה שורות.",
                 "options": ["תשובה 1", "תשובה 2", "תשובה 3", "תשובה 4"],
                 "correct": 0
             }
@@ -57,12 +57,10 @@ def move_to_next():
         st.session_state.max_reached = st.session_state.current_q
         generate_question(st.session_state.current_q + 1)
 
-def get_remaining_time_str():
-    if st.session_state.start_time is None:
-        return "90:00"
+def get_remaining_seconds():
+    if st.session_state.get("start_time") is None:
+        return 5400
     elapsed = time.time() - st.session_state.start_time
-    remaining = max(0, 5400 - int(elapsed))
-    mins, secs = divmod(remaining, 60)
-    return f"{mins:02d}:{secs:02d}"
+    return max(0, 5400 - int(elapsed))
 
 # סוף קובץ
