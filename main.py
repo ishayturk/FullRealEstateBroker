@@ -167,4 +167,11 @@ elif st.session_state.step == "exam_run":
                     st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
 
             with b_prev:
-                if st.button("לשאלה הקודמת", disabled=(st
+                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
+                    st.session_state.current_q -= 1
+                    st.rerun()
+            with b_finish:
+                if 25 in st.session_state.answers_user:
+                    st.button("סיום בחינה", key="btn_finish_active")
+
+# סוף קובץ
