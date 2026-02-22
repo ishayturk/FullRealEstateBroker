@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V102 | Date: 23/02/2026 | 00:45
+# Version: V103 | Date: 23/02/2026 | 01:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,7 +15,7 @@ st.markdown("""
     .block-container { 
         max-width: 1050px !important; 
         margin: 0 auto !important; 
-        padding-top: 0.2rem !important; 
+        padding-top: 0.5rem !important; 
     }
     
     div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
@@ -23,35 +23,34 @@ st.markdown("""
 
     .header-box {
         border-bottom: 1px solid #eee;
-        padding-bottom: 2px;
-        margin-bottom: 5px;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
     }
 
-    /* מרכוז הוראות מדויק */
-    .inst-container {
+    /* מרכוז הוראות מדויק מתחת לכותרת */
+    .inst-wrapper {
         display: flex;
         justify-content: center;
         width: 100%;
-        margin-top: 15px;
+        margin: 15px 0;
     }
-    .inst-content {
+    .inst-box {
         text-align: right;
-        min-width: 300px;
+        display: inline-block;
     }
 
-    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; }
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; }
     
-    /* הקפצת פריים הניווט והשעון למעלה */
-    div[data-testid="column"]:nth-of-type(1) {
-        position: relative !important;
-        top: -65px !important;
+    /* הקפצת פריים הניווט (עמודה 1) לגובה השאלה */
+    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+        margin-top: -60px !important;
     }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 10px !important;
+            padding: 15px !important;
         }
     }
     </style>
@@ -59,7 +58,7 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (2:1:2)
+# 1. סטריפ עליון (עובד - לא נגענו)
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem; padding-left: 10px;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -67,7 +66,7 @@ with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; padding
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-# 2. כותרת
+# 2. כותרת הדף
 is_inst = ("step" not in st.session_state or st.session_state.step == "instructions")
 t_val = "הוראות למבחן רישויי" if is_inst else "מבחן רישוי למתווכים"
 
@@ -77,9 +76,10 @@ with title_mid:
     if not is_inst:
         st.markdown(f'<div style="text-align: center; color: #888; font-weight: bold; font-size: 1.1rem;">שאלה {st.session_state.current_q}</div>', unsafe_allow_html=True)
 
-# 3. תוכן
+# 3. תוכן הדף
 if is_inst:
-    st.markdown('<div class="inst-container"><div class="inst-content">', unsafe_allow_html=True)
+    # תיקון מרכוז הוראות
+    st.markdown('<div class="inst-wrapper"><div class="inst-box">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -120,7 +120,7 @@ elif st.session_state.step == "exam_run":
 
     col_nav, col_main = st.columns([1, 2.8], gap="medium")
     with col_nav:
-        components.html(get_timer_html(), height=60)
+        components.html(get_timer_html(), height=65)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
