@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V35 | Date: 22/02/2026 | 09:50
+# Version: V36 | Date: 22/02/2026 | 10:05
 import streamlit as st
 import logic
 import time
@@ -13,22 +13,23 @@ st.markdown("""
     * { direction: rtl; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* קונטיינר ראשי */
+    /* קונטיינר ראשי - העוגן של כל הדף */
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
         padding-top: 1rem !important;
     }
     
-    /* סטריפ עליון קבוע */
+    /* סטריפ עליון - מורכז בכוח על ידי margin auto */
     .header-box {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        max-width: 1000px; /* זהה לרוחב הבלוק הראשי */
+        margin: 0 auto 30px auto; /* ממרכז את הסטריפ עצמו בדף */
         padding: 10px 0;
         border-bottom: 2px solid #f0f0f0;
-        margin-bottom: 30px;
     }
 
     .nav-panel { 
@@ -73,7 +74,6 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         
         st.write("")
         
-        # שורת עבודה: צ'קבוקס וכפתור בשורה אחת
         row_col1, row_col2 = st.columns([2.5, 1])
         with row_col1:
             agree = st.checkbox("קראתי את ההוראות")
@@ -88,7 +88,7 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
-        st.markdown(f'<div class="timer-display" id="timer-v35">--:--</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="timer-display" id="timer-v36">--:--</div>', unsafe_allow_html=True)
         
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
