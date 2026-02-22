@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V44 | Date: 22/02/2026 | 15:35
+# Version: V46 | Date: 22/02/2026 | 16:00
 import streamlit as st
 import logic
 import time
@@ -9,7 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    * { direction: rtl; }
+    * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container {
         max-width: 1000px !important;
@@ -20,6 +20,7 @@ st.markdown("""
         border-bottom: 2px solid #f0f0f0;
         padding-bottom: 10px;
         margin-bottom: 20px;
+        text-align: center;
     }
     .nav-panel { 
         background-color: #f8f9fa; 
@@ -37,6 +38,11 @@ st.markdown("""
         background: #fff; color: #ccc; display: flex; align-items: center; 
         justify-content: center; margin-bottom: 5px;
     }
+    .q-header-text {
+        color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 0px;
+    }
+    /* מירכוז ספציפי לכותרת המבחן בלבד */
+    .centered-title { text-align: center; width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -53,7 +59,7 @@ logic.initialize_exam()
 if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
-        st.markdown('<h1 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
+        st.markdown('<h1 class="centered-title">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
             "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
@@ -88,26 +94,26 @@ elif st.session_state.step == "exam_run":
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
-        st.markdown('<div style="text-align: center;"><h2 style="margin:0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
-        st.markdown(f'<p style="color: #555;">שאלה {st.session_state.current_q} מתוך 25</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
+            # יישור ימני מוחלט לכותרת השאלה
+            st.markdown(f'<p class="q-header-text">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f"#### {q['question']}")
-            # בחירת תשובה מעדכנת את הזיכרון
-            choice = st.radio("בחר תשובה:", q["options"], index=None, key=f"radio_{st.session_state.current_q}")
+            
+            # רדיו ללא label כדי למנוע דחיפת טקסט
+            choice = st.radio("", q["options"], index=None, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             if choice:
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             
             st.divider()
-            # סדר כפתורים: הבא (ימין), הקודם (מרכז), סיום (שמאל - מותנה)
             b_next, b_prev, b_finish = st.columns(3)
             with b_next:
                 st.button("לשאלה הבאה", disabled=True, key="btn_next_dummy")
             with b_prev:
                 st.button("לשאלה הקודמת", disabled=True, key="btn_prev_dummy")
             with b_finish:
-                # כפתור סיום מופיע רק אם המשתמש ענה על שאלה 25
                 if 25 in st.session_state.answers_user:
                     st.button("סיום בחינה", key="btn_finish_active")
 
