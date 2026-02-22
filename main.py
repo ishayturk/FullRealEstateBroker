@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V29 | Date: 22/02/2026 | 07:20
+# Version: V30 | Date: 22/02/2026 | 08:45
 import streamlit as st
 import logic
 import time
@@ -9,23 +9,28 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
+    /* הגדרות כיוון כתיבה כלליות */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    .app-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 20px;
+    /* הגבלת רוחב התוכן הכולל למירכוז אחיד */
+    .block-container {
+        max-width: 1000px !important;
+        margin: 0 auto !important;
+        padding-top: 1rem !important;
     }
     
-    .fixed-header {
-        display: flex; 
-        justify-content: space-between; 
+    /* סטריפ עליון - קבוע, נפרד וממורכז */
+    .header-strip {
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        padding: 10px 0;
-        margin-bottom: 5px;
+        width: 100%;
+        padding: 15px 0;
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 30px; /* רווח קבוע מהתוכן שמתחת */
     }
-    
+
     .nav-panel { 
         background-color: #f8f9fa; 
         border: 1px solid #e1e4e8; 
@@ -39,32 +44,30 @@ st.markdown("""
         font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
 
-    .centered-box { 
-        max-width: 700px; 
-        margin: 0 auto; 
-        padding-top: 10px; 
+    /* תיבת תוכן (הסבר/שאלות) - נפרדת מהכותרת */
+    .content-area {
+        max-width: 800px;
+        margin: 0 auto;
     }
     
     .exam-title-main { font-size: 1.8rem; font-weight: bold; text-align: center; margin: 0; }
-    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-    
-    .block-container { padding-top: 1rem !important; }
+    .exam-subtitle { font-size: 1.1rem; color: #555; text-align: center; margin-bottom: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="app-container">', unsafe_allow_html=True)
-
+# 1. הצגת הסטריפ העליון (תמיד באותו מקום ובאותו גודל)
 st.markdown(f"""
-    <div class="fixed-header">
-        <div style="font-size: 1.2rem;">🏠 <b>מתווך בקליק</b></div>
-        <div style="font-size: 1.1rem;">👤 <b>{user_name}</b></div>
+    <div class="header-strip">
+        <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
+        <div style="font-size: 1.2rem;">👤 <b>{user_name}</b></div>
     </div>
 """, unsafe_allow_html=True)
 
 logic.initialize_exam()
 
+# 2. אזור התוכן המשתנה (הוראות או בחינה)
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<div class="centered-box">', unsafe_allow_html=True)
+    st.markdown('<div class="content-area">', unsafe_allow_html=True)
     st.title("הוראות למבחן רישויי מקרקעין")
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
@@ -90,11 +93,11 @@ elif st.session_state.step == "exam_run":
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
         st.markdown(f"""
-            <div class="timer-display" id="timer-v29">--:--</div>
+            <div class="timer-display" id="timer-v30">--:--</div>
             <script>
             (function() {{
                 var t = {rem};
-                var display = document.getElementById('timer-v29');
+                var display = document.getElementById('timer-v30');
                 function run() {{
                     var m = Math.floor(t / 60);
                     var s = t % 60;
@@ -144,7 +147,5 @@ elif st.session_state.step == "exam_run":
             with b3:
                 if 25 in st.session_state.answers_user:
                     if st.button("סיום בחינה"): st.session_state.step = "summary"; st.rerun()
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 # סוף קובץ
