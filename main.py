@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V50 | Date: 22/02/2026 | 17:00
+# Version: V51 | Date: 22/02/2026 | 17:15
 import streamlit as st
 import logic
 import time
@@ -44,6 +44,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# פונקציית פרגמנט לעדכון השעון בזמן אמת
+@st.fragment(run_every=1.0)
+def show_live_timer():
+    time_str = logic.get_remaining_time_str()
+    st.markdown(f'<div class="timer-display">{time_str}</div>', unsafe_allow_html=True)
+
 _, head_col, _ = st.columns([1, 4, 1])
 with head_col:
     st.markdown('<div class="header-style">', unsafe_allow_html=True)
@@ -77,10 +83,8 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         
-        # שימוש במיכל ריק עבור השעון כדי לעדכן רק אותו
-        timer_placeholder = st.empty()
-        time_str = logic.get_remaining_time_str()
-        timer_placeholder.markdown(f'<div class="timer-display">{time_str}</div>', unsafe_allow_html=True)
+        # קריאה לפונקציית השעון החי
+        show_live_timer()
         
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
