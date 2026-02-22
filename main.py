@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V34 | Date: 22/02/2026 | 09:40
+# Version: V35 | Date: 22/02/2026 | 09:50
 import streamlit as st
 import logic
 import time
@@ -46,7 +46,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# הצגת הסטריפ העליון - תמיד בראש הדף
+# הצגת הסטריפ העליון
 st.markdown(f"""
     <div class="header-box">
         <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
@@ -56,7 +56,7 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# דף הוראות - שימוש בעמודות למירכוז עצמאי
+# דף הוראות
 if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     
@@ -72,11 +72,15 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
             st.write(f"{i}. {txt}")
         
         st.write("")
-        # מירכוז אלמנטי הבחירה והכפתור
-        agree = st.checkbox("קראתי את ההוראות")
-        if st.button("התחל בחינה", disabled=not agree, use_container_width=True):
-            st.session_state.start_time = time.time()
-            st.session_state.step = "exam_run"; st.rerun()
+        
+        # שורת עבודה: צ'קבוקס וכפתור בשורה אחת
+        row_col1, row_col2 = st.columns([2.5, 1])
+        with row_col1:
+            agree = st.checkbox("קראתי את ההוראות")
+        with row_col2:
+            if st.button("התחל בחינה", disabled=not agree):
+                st.session_state.start_time = time.time()
+                st.session_state.step = "exam_run"; st.rerun()
 
 elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="large")
@@ -84,7 +88,7 @@ elif st.session_state.step == "exam_run":
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
-        st.markdown(f'<div class="timer-display" id="timer-v34">--:--</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="timer-display" id="timer-v35">--:--</div>', unsafe_allow_html=True)
         
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
