@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V108 | Date: 22/02/2026 | 21:35
+# Version: V109 | Date: 22/02/2026 | 21:40
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,8 +24,9 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* תיקון יישור פריים הניווט לגובה כותרת הבחינה */
+    /* יישור פריים הניווט וצמצום רווחים פנימיים */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
         margin-top: 0px !important;
         padding-top: 0px !important;
     }
@@ -34,12 +35,15 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 20px !important;
+            padding: 15px !important; /* צמצום קל של הפדינג הפנימי */
         }
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
+    
+    /* הצמדת כותרת מפת השאלות לשעון */
+    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -57,7 +61,6 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # גוף ההוראות (ללא שינוי מ-V67)
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
         st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
@@ -66,7 +69,6 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         st.markdown('</div>', unsafe_allow_html=True)
         
         st.write("")
-        # שורה תחתונה - מרכוז וסגירת רווחים
         _, footer_row, _ = st.columns([0.5, 2, 0.5])
         with footer_row:
             f_c1, f_c2 = st.columns([1.2, 1])
@@ -81,7 +83,7 @@ elif st.session_state.step == "exam_run":
     
     def get_timer_html():
         return f"""
-        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.6rem; color: #333; font-family: monospace;"></div>
+        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
         <script>
         var s = {rem_sec};
         function u() {{
@@ -100,8 +102,9 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        components.html(get_timer_html(), height=85)
-        st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
+        # פריים הניווט - שעון בגובה מוקטן
+        components.html(get_timer_html(), height=70)
+        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
@@ -113,7 +116,6 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # הצמדת הכותרת לראש ה-Column כדי להשוות גובה לשעון
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
