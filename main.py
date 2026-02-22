@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V114 | Date: 22/02/2026 | 22:05
+# Version: V115 | Date: 22/02/2026 | 22:12
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,7 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    * { direction: rtl; text-align: right; }
+    * { direction: rtl; text-align: right; box-sizing: border-box; }
     header, #MainMenu, footer { visibility: hidden; }
     
     .block-container { 
@@ -24,23 +24,24 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* התאמות לנייד בלבד */
+    /* התאמות לנייד */
     @media (max-width: 768px) {
-        /* מניעת קריסת סטריפ עליון */
+        /* סטריפ עליון - שמירה על שורה אחת ומרווחים שווים */
         div[data-testid="stHorizontalBlock"]:first-of-type {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: center !important;
             justify-content: space-between !important;
+            align-items: center !important;
+            gap: 5px !important;
         }
         
-        /* הקטנת כותרת הסבר */
         h2 { font-size: 1.4rem !important; }
         
-        /* הרחקת הוראות מהקצה הימני */
+        /* הרחקת הטקסט מהקצה הימני ללא דחיקת כל העמוד */
         .mobile-inst-padding {
             padding-right: 30px !important;
+            padding-left: 10px !important;
+            width: 100% !important;
         }
     }
 
@@ -69,9 +70,9 @@ logic.initialize_exam()
 
 # 1. סטריפ עליון (2:1:2)
 h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1rem; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 0.95rem; white-space: nowrap;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; font-size: 1rem; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold; font-size: 0.95rem; white-space: nowrap;">👤 {user_name}</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
