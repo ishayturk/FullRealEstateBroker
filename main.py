@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V36 | Date: 22/02/2026 | 10:05
+# Version: V38 | Date: 22/02/2026 | 10:30
 import streamlit as st
 import logic
 import time
@@ -9,27 +9,21 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* הגדרות בסיס */
+    /* הגדרות בסיס נקיות */
     * { direction: rtl; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* קונטיינר ראשי - העוגן של כל הדף */
     .block-container {
         max-width: 1000px !important;
         margin: 0 auto !important;
         padding-top: 1rem !important;
     }
     
-    /* סטריפ עליון - מורכז בכוח על ידי margin auto */
-    .header-box {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        max-width: 1000px; /* זהה לרוחב הבלוק הראשי */
-        margin: 0 auto 30px auto; /* ממרכז את הסטריפ עצמו בדף */
-        padding: 10px 0;
+    /* הסטריפ כאלמנט פשוט עם קו תחתון */
+    .header-style {
         border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
     }
 
     .nav-panel { 
@@ -47,23 +41,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# הצגת הסטריפ העליון
-st.markdown(f"""
-    <div class="header-box">
-        <div style="font-size: 1.3rem;">🏠 <b>מתווך בקליק</b></div>
-        <div style="font-size: 1.2rem;">👤 <b>{user_name}</b></div>
-    </div>
-""", unsafe_allow_html=True)
+# 1. הצגת הסטריפ בתוך עמודות למירכוז מושלם
+_, head_col, _ = st.columns([1, 4, 1])
+with head_col:
+    st.markdown('<div class="header-style">', unsafe_allow_html=True)
+    c1, c2 = st.columns([1, 1])
+    with c1: st.markdown(f"<div style='text-align: right; font-size: 1.3rem;'>🏠 <b>מתווך בקליק</b></div>", unsafe_allow_html=True)
+    with c2: st.markdown(f"<div style='text-align: left; font-size: 1.2rem;'>👤 <b>{user_name}</b></div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
 
-# דף הוראות
+# 2. דף הוראות
 if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
-    
     with center_col:
         st.markdown('<h1 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
-        
         instructions = [
             "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
             "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.",
@@ -73,10 +66,8 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
             st.write(f"{i}. {txt}")
         
         st.write("")
-        
         row_col1, row_col2 = st.columns([2.5, 1])
-        with row_col1:
-            agree = st.checkbox("קראתי את ההוראות")
+        with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
             if st.button("התחל בחינה", disabled=not agree):
                 st.session_state.start_time = time.time()
@@ -84,11 +75,10 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 
 elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="large")
-    
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
         rem = logic.get_remaining_seconds()
-        st.markdown(f'<div class="timer-display" id="timer-v36">--:--</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="timer-display" id="timer-v38">--:--</div>', unsafe_allow_html=True)
         
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
