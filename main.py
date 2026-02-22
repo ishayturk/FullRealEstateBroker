@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V66 | Date: 22/02/2026 | 21:50
+# Version: V67 | Date: 22/02/2026 | 22:10
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -12,37 +12,25 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
-    /* ריווח מהסטריפ העליון ומהצדדים */
     .block-container { 
         max-width: 1100px !important; 
         margin: 0 auto !important; 
-        padding-top: 1.5rem !important; 
+        padding-top: 1rem !important; 
     }
     
-    /* עיצוב Header בסיסי */
+    /* Header מקורי מהעוגן */
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; }
     
-    /* ריווח לטקסט ההסבר בנייד ובמחשב */
-    .instruction-text { margin-right: 20px !important; line-height: 1.6; }
-
-    /* הסתרת שעון המובייל לחלוטין בדסקטופ */
-    .mobile-only-timer { display: none; height: 0; overflow: hidden; }
+    /* רווח לימין בדף ההסבר */
+    .instruction-box { padding-right: 25px; }
 
     @media (max-width: 768px) {
-        /* ביטול מוחלט של פריים הניווט (עמודה 1) בנייד */
-        div[data-testid="column"]:nth-of-type(1) { display: none !important; width: 0 !important; min-width: 0 !important; }
-        div[data-testid="column"]:nth-of-type(2) { width: 100% !important; }
-        
-        /* הצגת השעון בנייד */
-        .mobile-only-timer { display: block !important; height: auto !important; margin-bottom: 15px !important; }
-        
-        /* הפיכת ה-Header לשתי שורות בנייד בלבד */
-        .header-col-left { text-align: center !important; margin-top: 5px; }
-        .header-col-right { text-align: center !important; }
+        /* ביטול פריים ניווט בנייד */
+        div[data-testid="column"]:nth-of-type(1) { display: none !important; }
+        .block-container { padding-right: 15px !important; padding-left: 15px !important; }
     }
 
     @media (min-width: 769px) {
-        /* עיצוב פריים ניווט אפור במחשב */
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -50,19 +38,18 @@ st.markdown("""
         }
     }
 
-    .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.5; margin-bottom: 15px; color: #000; }
-    .centered-title { text-align: center; width: 100%; }
+    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    .stDivider { margin: 0.5rem 0 !important; } /* צמצום רווח Divider */
     </style>
 """, unsafe_allow_html=True)
 
-# Header - שורה אחת במחשב, מתאים את עצמו בנייד דרך CSS
+# Header מקורי (שורה אחת)
 st.markdown('<div class="header-style">', unsafe_allow_html=True)
 h_col1, h_col2 = st.columns([1, 1])
 with h_col1:
-    st.markdown(f'<div class="header-col-right" style="font-size: 1.3rem; font-weight: bold;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size: 1.3rem; font-weight: bold;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h_col2:
-    st.markdown(f'<div class="header-col-left" style="font-size: 1.1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size: 1.1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 logic.initialize_exam()
@@ -70,9 +57,9 @@ logic.initialize_exam()
 if "step" not in st.session_state or st.session_state.step == "instructions":
     _, center_col, _ = st.columns([1, 4, 1])
     with center_col:
-        st.markdown('<h1 class="centered-title">הוראות למבחן רישויי מקרקעין</h1>', unsafe_allow_html=True)
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "בסיום 90 דקות המבחן יינעל.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
-        st.markdown('<div class="instruction-text">', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+        st.markdown('<div class="instruction-box">', unsafe_allow_html=True)
+        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
@@ -86,15 +73,15 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    def get_timer_html(id_tag, font_size, padding):
+    def get_timer_html(font_size):
         return f"""
-        <div id="{id_tag}" style="text-align: center; background: #fff; border: 2px solid #333; padding: {padding}; border-radius: 8px; font-weight: bold; font-size: {font_size}; color: #333; font-family: monospace;"></div>
+        <div id="timer-display" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: {font_size}; color: #333; font-family: monospace;"></div>
         <script>
         var seconds = {rem_sec};
         function update() {{
             var m = Math.floor(seconds / 60);
             var s = seconds % 60;
-            var el = document.getElementById('{id_tag}');
+            var el = document.getElementById('timer-display');
             if (el) {{
                 if (seconds <= 600) {{ el.style.color = "red"; }}
                 el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
@@ -108,8 +95,8 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # פריים ניווט (מוסתר בנייד דרך CSS)
-        components.html(get_timer_html("timer-desktop", "1.7rem", "10px"), height=85)
+        # שעון דסקטופ בלבד
+        components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -122,20 +109,22 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # שעון מובייל (מוסתר במחשב)
-        st.markdown('<div class="mobile-only-timer">', unsafe_allow_html=True)
-        components.html(get_timer_html("timer-mobile", "1.1rem", "5px"), height=50)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # בנייד - הצגת שעון קטן בראש השאלה בלבד (לא קיים במחשב)
+        if st.columns([1])[0].button("", key="is_mobile_check", help="hidden"): pass # Dummy for detection
         
-        st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
+        st.markdown('<h2 style="text-align: center; margin-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
+        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
-            st.markdown(f'<p class="q-header-text">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
+            
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             if choice: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
-            st.divider()
+            
+            st.divider() # Divider מצומצם דרך CSS
+            
             b_next, b_prev, b_finish = st.columns(3)
             with b_next:
                 if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
