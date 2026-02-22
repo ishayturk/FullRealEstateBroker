@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V54 | Date: 22/02/2026 | 18:10
+# Version: V55 | Date: 22/02/2026 | 18:50
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,7 +13,15 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1000px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
-    .nav-panel { background-color: #f8f9fa; border: 1px solid #e1e4e8; padding: 20px; border-radius: 12px; }
+    
+    /* צביעת פריים הניווט כולו באפור עדין */
+    [data-testid="stVerticalBlock"] > [data-testid="stColumn"]:first-child {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #e1e4e8;
+    }
+    
     .q-header-text { color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; }
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.5; margin-bottom: 15px; color: #000; }
     div[data-testid="stMarkdownContainer"] p { font-size: 1.1rem; }
@@ -48,23 +56,31 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="large")
     with col_nav:
-        st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
+        # שעון צד-לקוח עם לוגיקת צבע אדום ב-10 דקות האחרונות
         rem_sec = logic.get_remaining_seconds()
         timer_html = f"""
-        <div id="timer" style="text-align: center; background: #fff; border: 1px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;"></div>
+        <div id="timer" style="text-align: center; background: #fff; border: 2px solid #333; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 1.7rem; color: #333; margin-bottom: 20px; font-family: monospace;"></div>
         <script>
         var seconds = {rem_sec};
         function updateTimer() {{
             var m = Math.floor(seconds / 60);
             var s = seconds % 60;
-            document.getElementById('timer').innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            var timerDiv = document.getElementById('timer');
+            
+            // צביעה באדום אם נותרו פחות מ-10 דקות (600 שניות)
+            if (seconds <= 600) {{
+                timerDiv.style.color = "red";
+            }}
+            
+            timerDiv.innerHTML = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
             if (seconds > 0) seconds--;
         }}
         updateTimer();
         setInterval(updateTimer, 1000);
         </script>
         """
-        components.html(timer_html, height=70)
+        components.html(timer_html, height=85)
+        
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -75,7 +91,6 @@ elif st.session_state.step == "exam_run":
                     if cols[i].button(str(idx), key=f"nav_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx
                         st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
         st.markdown('<div class="centered-title"><h2>מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
