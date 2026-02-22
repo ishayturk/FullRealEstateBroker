@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V82 | Date: 22/02/2026 | 20:00
+# Version: V83 | Date: 22/02/2026 | 19:25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,6 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
+    /* הגדרות גלובליות - יישור לימין */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
@@ -18,6 +19,7 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
+    /* Header - מוגבל לרוחב התוכן ולא נמרח לקצוות המסך */
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -28,6 +30,7 @@ st.markdown("""
         padding: 5px 0;
     }
 
+    /* כיווץ הכותרת לרוחב הטקסט בלבד */
     .exam-header-box {
         text-align: center;
         margin: 10px auto 20px auto;
@@ -37,12 +40,21 @@ st.markdown("""
     .exam-title { 
         font-size: 2.2rem;
         font-weight: bold;
-        display: inline-block;
+        display: inline-block; /* הופך את האלמנט לרוחב הטקסט שלו בלבד */
         border-bottom: 2px solid #333;
         padding-bottom: 2px;
+        text-align: center;
     }
     
-    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; margin-top: 5px; width: 100%; text-align: center; }
+
+    /* יישור דף ההסבר לימין */
+    .instructions-wrapper {
+        text-align: right;
+        width: 100%;
+        max-width: 800px;
+        margin-right: 0;
+    }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -52,12 +64,12 @@ st.markdown("""
         }
     }
 
-    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; text-align: right; }
     .stDivider { margin: 0.8rem 0 !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# Header קבוע
+# Header
 st.markdown(f"""
     <div class="header-container">
         <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
@@ -68,15 +80,10 @@ st.markdown(f"""
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    # כותרת ההוראות ממורכזת כמו בבחינה
-    st.markdown(f"""
-        <div class="exam-header-box">
-            <div class="exam-title">הוראות למבחן רישויי מקרקעין</div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: right; margin-top: 0;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # תוכן ההוראות בשורה אחת מיושרת לימין
-    st.markdown('<div style="max-width: 800px; margin: 0 auto 0 0;">', unsafe_allow_html=True)
+    # הסבר מיושר לימין ללא מרכוז
+    st.markdown('<div class="instructions-wrapper">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -132,6 +139,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
+        # כותרת מכווצת לרוחב הטקסט בלבד ומורכזת
         st.markdown(f"""
             <div class="exam-header-box">
                 <div class="exam-title">מבחן רישוי למתווכים</div>
@@ -148,21 +156,3 @@ elif st.session_state.step == "exam_run":
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             
             st.divider()
-            
-            b_next, b_prev, b_finish = st.columns([1, 1, 1])
-            with b_next:
-                if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
-                        logic.move_to_next()
-                        st.rerun()
-                else:
-                    st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
-            with b_prev:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
-                    st.session_state.current_q -= 1
-                    st.rerun()
-            with b_finish:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="btn_finish_active")
-
-# סוף קובץ
