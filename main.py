@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V81 | Date: 22/02/2026 | 19:15
+# Version: V82 | Date: 22/02/2026 | 20:00
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -28,10 +28,9 @@ st.markdown("""
         padding: 5px 0;
     }
 
-    /* כותרת מכווצת וממורכזת בתוך הפריים שלה */
     .exam-header-box {
         text-align: center;
-        margin: 0 auto 20px auto;
+        margin: 10px auto 20px auto;
         width: 100%;
     }
     
@@ -58,7 +57,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header
+# Header קבוע
 st.markdown(f"""
     <div class="header-container">
         <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
@@ -69,30 +68,30 @@ st.markdown(f"""
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    # שימוש במבנה עמודות זהה לבחינה כדי שהכותרת תתמרכז באותו מקום
-    col_nav_off, col_main_inst = st.columns([1, 2.5], gap="large")
+    # כותרת ההוראות ממורכזת כמו בבחינה
+    st.markdown(f"""
+        <div class="exam-header-box">
+            <div class="exam-title">הוראות למבחן רישויי מקרקעין</div>
+        </div>
+    """, unsafe_allow_html=True)
     
-    with col_main_inst:
-        st.markdown(f"""
-            <div class="exam-header-box">
-                <div class="exam-title">הוראות למבחן רישויי מקרקעין</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        instructions = [
-            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
-            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
-            "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
-        ]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        
-        st.write("")
-        row_col1, row_col2 = st.columns([2, 1])
-        with row_col1: agree = st.checkbox("קראתי את ההוראות")
-        with row_col2:
-            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-                logic.start_exam_logic()
-                st.rerun()
+    # תוכן ההוראות בשורה אחת מיושרת לימין
+    st.markdown('<div style="max-width: 800px; margin: 0 auto 0 0;">', unsafe_allow_html=True)
+    instructions = [
+        "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+        "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+        "ציון עובר: 60.", "שימוש במחשבון מותר.", "חל איסור על שימוש בחומר עזר."
+    ]
+    for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.write("")
+    row_col1, row_col2 = st.columns([2, 1])
+    with row_col1: agree = st.checkbox("קראתי את ההוראות")
+    with row_col2:
+        if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+            logic.start_exam_logic()
+            st.rerun()
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
