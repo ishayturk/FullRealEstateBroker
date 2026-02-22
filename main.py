@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V111 | Date: 22/02/2026 | 21:50
+# Version: V112 | Date: 22/02/2026 | 21:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,15 +24,22 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* מרכוז אבסולוטי של בלוק ההוראות */
-    .inst-outer {
-        text-align: center;
+    /* מרכוז אבסולוטי ללא מחיצות עמודה */
+    .full-width-container {
         width: 100%;
-        margin: 20px 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
     }
-    .inst-inner {
+    .inst-box {
         display: inline-block;
         text-align: right;
+        border: 1px solid #f0f0f0;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #f9f9f9;
     }
 
     /* יישור פריים הניווט */
@@ -52,7 +59,6 @@ st.markdown("""
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
-    
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     </style>
 """, unsafe_allow_html=True)
@@ -69,10 +75,10 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
-    st.markdown('<h2 style="text-align: center; margin-bottom: 10px;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # גוף ההוראות הממורכז
-    st.markdown('<div class="inst-outer"><div class="inst-inner">', unsafe_allow_html=True)
+    # שימוש במכולה רחבה למרכוז מלא
+    st.markdown('<div class="full-width-container"><div class="inst-box">', unsafe_allow_html=True)
     instructions = [
         "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
         "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
@@ -80,18 +86,20 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
     ]
     for i, txt in enumerate(instructions, 1):
         st.write(f"{i}. {txt}")
-    st.markdown('</div></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
+    # שורה תחתונה - צמודה ומרכזית
     st.write("")
-    # שורה תחתונה - מרכוז וסגירת רווחים
-    _, footer_row, _ = st.columns([0.5, 2, 0.5])
-    with footer_row:
-        f_c1, f_c2 = st.columns([1.2, 1])
-        with f_c1: agree = st.checkbox("קראתי את ההוראות")
-        with f_c2:
-            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-                logic.start_exam_logic()
-                st.rerun()
+    f_c1, f_c2 = st.columns([1, 1])
+    with f_c1: 
+        st.markdown('<div style="display: flex; justify-content: flex-end;">', unsafe_allow_html=True)
+        agree = st.checkbox("קראתי את ההוראות")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with f_c2:
+        if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+            logic.start_exam_logic()
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
