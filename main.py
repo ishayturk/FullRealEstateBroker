@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V112 | Date: 22/02/2026 | 21:55
+# Version: V113 | Date: 22/02/2026 | 21:58
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -22,24 +22,6 @@ st.markdown("""
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
         margin-bottom: 15px;
-    }
-
-    /* מרכוז אבסולוטי ללא מחיצות עמודה */
-    .full-width-container {
-        width: 100%;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 20px;
-    }
-    .inst-box {
-        display: inline-block;
-        text-align: right;
-        border: 1px solid #f0f0f0;
-        padding: 20px;
-        border-radius: 10px;
-        background-color: #f9f9f9;
     }
 
     /* יישור פריים הניווט */
@@ -77,29 +59,27 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     
-    # שימוש במכולה רחבה למרכוז מלא
-    st.markdown('<div class="full-width-container"><div class="inst-box">', unsafe_allow_html=True)
-    instructions = [
-        "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
-        "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
-        "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
-    ]
-    for i, txt in enumerate(instructions, 1):
-        st.write(f"{i}. {txt}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # מרכוז באמצעות עמודות Streamlit - הכי יציב
+    _, center_col, _ = st.columns([1, 1.2, 1])
     
-    # שורה תחתונה - צמודה ומרכזית
-    st.write("")
-    f_c1, f_c2 = st.columns([1, 1])
-    with f_c1: 
-        st.markdown('<div style="display: flex; justify-content: flex-end;">', unsafe_allow_html=True)
-        agree = st.checkbox("קראתי את ההוראות")
-        st.markdown('</div>', unsafe_allow_html=True)
-    with f_c2:
-        if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-            logic.start_exam_logic()
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    with center_col:
+        instructions = [
+            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+            "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
+        ]
+        for i, txt in enumerate(instructions, 1):
+            st.write(f"{i}. {txt}")
+        
+        st.write("")
+        # שורה תחתונה מהודקת בתוך המרכז
+        f_c1, f_c2 = st.columns([1, 1])
+        with f_c1:
+            agree = st.checkbox("קראתי את ההוראות")
+        with f_c2:
+            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+                logic.start_exam_logic()
+                st.rerun()
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
