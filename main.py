@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V61 | Date: 22/02/2026 | 20:40
+# Version: V62 | Date: 22/02/2026 | 21:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,22 +14,30 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 1rem !important; }
     .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
     
-    /* הסתרת אזור שעון המובייל לחלוטין בדסקטופ */
+    /* העלמת שעון המובייל לחלוטין בדסקטופ - זריקה מחוץ למסך */
     .mobile-only-timer { 
-        display: none; 
-        visibility: hidden; 
-        max-height: 0px; 
-        overflow: hidden; 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        width: 0px !important;
+        height: 0px !important;
+        overflow: hidden;
+        visibility: hidden;
     }
 
     @media (max-width: 768px) {
         /* הסתרת פריים הניווט (והשעון הגדול) בנייד */
         [data-testid="column"]:nth-child(1) { display: none !important; }
-        /* הצגת השעון הקטן בנייד בלבד */
+        
+        /* החזרת השעון הקטן למקומו בנייד בלבד */
         .mobile-only-timer { 
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: auto !important;
             display: block !important; 
             visibility: visible !important; 
-            max-height: 100px !important;
             margin-bottom: 15px; 
         }
     }
@@ -99,7 +107,7 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # שעון דסקטופ
+        # שעון דסקטופ (הנראה כרגיל במחשב)
         components.html(get_timer_html("timer-desktop", "1.7rem", "10px"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -113,7 +121,7 @@ elif st.session_state.step == "exam_run":
                         st.rerun()
 
     with col_main:
-        # אזור שעון מובייל - מוסתר פיזית בדסקטופ
+        # שעון מובייל - במחשב הוא ברוחב 0 ומחוץ למסך
         st.markdown('<div class="mobile-only-timer">', unsafe_allow_html=True)
         components.html(get_timer_html("timer-mobile", "1.1rem", "5px"), height=50)
         st.markdown('</div>', unsafe_allow_html=True)
