@@ -44,14 +44,11 @@ def is_first_question_ready():
     return st.session_state.get("is_q1_ready", False)
 
 def start_exam_logic():
-    """פעולות לוגיות ברגע הלחיצה על התחלת בחינה"""
     st.session_state.start_time = time.time()
     st.session_state.step = "exam_run"
-    # ייצור שאלה 2 ברקע לפי הפרוטוקול
     generate_question(2)
 
 def handle_navigation(direction):
-    # פונקציונליות מנוטרלת כרגע לבקשת המשתמש
     pass
 
 def get_remaining_seconds():
