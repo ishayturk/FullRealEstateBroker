@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V41 | Date: 22/02/2026 | 15:15
+# Version: V44 | Date: 22/02/2026 | 15:35
 import streamlit as st
 import logic
 import time
@@ -32,6 +32,11 @@ st.markdown("""
         padding: 8px; border-radius: 8px; font-weight: bold;
         font-size: 1.5rem; color: #333; margin-bottom: 15px; font-family: monospace;
     }
+    .q-box-btn {
+        width: 100%; height: 40px; border-radius: 5px; border: 1px solid #eee;
+        background: #fff; color: #ccc; display: flex; align-items: center; 
+        justify-content: center; margin-bottom: 5px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -59,55 +64,51 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         
         st.write("")
         row_col1, row_col2 = st.columns([2.5, 1])
-        with row_col1: 
-            agree = st.checkbox("קראתי את ההוראות")
+        with row_col1: agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
-            try:
-                is_ready = logic.is_first_question_ready()
-            except:
-                is_ready = False
+            try: is_ready = logic.is_first_question_ready()
+            except: is_ready = False
             if st.button("התחל בחינה", disabled=not (agree and is_ready)):
                 logic.start_exam_logic()
                 st.rerun()
 
 elif st.session_state.step == "exam_run":
-    # יצירת המבנה של שני פריימים (עמודות)
     col_nav, col_main = st.columns([1, 2.5], gap="large")
     
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        # טיימר גולם
         st.markdown(f'<div class="timer-display">90:00</div>', unsafe_allow_html=True)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
-        # גלמים של מפת שאלות - ללא פונקציונליות לחיצה
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    cols[i].markdown(f"<div style='color:#ccc; text-align:center; padding:5px; border:1px solid #eee;'>{idx}</div>", unsafe_allow_html=True)
+                    cols[i].markdown(f'<div class="q-box-btn">{idx}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
-        # פריים מרכזי - כותרות
         st.markdown('<div style="text-align: center;"><h2 style="margin:0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
         st.markdown(f'<p style="color: #555;">שאלה {st.session_state.current_q} מתוך 25</p></div>', unsafe_allow_html=True)
         
-        # הצגת שאלה 1 מהזיכרון
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f"#### {q['question']}")
-            # רכיב רדיו - רדיוס מימין לטקסט
-            st.radio("בחר תשובה:", q["options"], 
-                     index=None,
-                     key=f"radio_{st.session_state.current_q}")
+            # בחירת תשובה מעדכנת את הזיכרון
+            choice = st.radio("בחר תשובה:", q["options"], index=None, key=f"radio_{st.session_state.current_q}")
+            if choice:
+                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             
             st.divider()
-            # גלמים של כפתורי ניווט - כבויים
-            b1, b2, _ = st.columns([1, 1, 2])
-            with b1:
-                st.button("הקודם", disabled=True, key="prev_dummy")
-            with b2:
-                st.button("הבא", disabled=True, key="next_dummy")
+            # סדר כפתורים: הבא (ימין), הקודם (מרכז), סיום (שמאל - מותנה)
+            b_next, b_prev, b_finish = st.columns(3)
+            with b_next:
+                st.button("לשאלה הבאה", disabled=True, key="btn_next_dummy")
+            with b_prev:
+                st.button("לשאלה הקודמת", disabled=True, key="btn_prev_dummy")
+            with b_finish:
+                # כפתור סיום מופיע רק אם המשתמש ענה על שאלה 25
+                if 25 in st.session_state.answers_user:
+                    st.button("סיום בחינה", key="btn_finish_active")
 
 # סוף קובץ
