@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V89 | Date: 22/02/2026 | 21:55
+# Version: V90 | Date: 22/02/2026 | 21:58
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,7 +18,10 @@ st.markdown("""
         padding-top: 0.5rem !important; 
     }
     
-    /* סטריפ עליון (לוגו ושם) */
+    /* איפוס מרווחים בין אלמנטים */
+    div.element-container { margin-bottom: 0px !important; padding-bottom: 0px !important; }
+    div[data-testid="stVerticalBlock"] > div { gap: 0rem !important; }
+
     .header-container {
         display: flex;
         justify-content: space-between;
@@ -26,15 +29,13 @@ st.markdown("""
         width: 100%;
         padding: 5px 0;
         border-bottom: 1px solid #eee;
-        margin-bottom: 5px;
     }
 
-    /* סטריפ כותרת עצמאי וממורכז */
     .title-strip {
         width: 100%;
         text-align: center;
         margin: 0 auto;
-        padding: 10px 0;
+        padding: 5px 0;
     }
     
     .exam-title { 
@@ -44,11 +45,7 @@ st.markdown("""
         margin: 0;
     }
     
-    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; display: block; }
-
-    /* הצמדת התוכן למעלה - ביטול מרווחים מיותרים */
-    .stMainBlockContainer > div:nth-child(2) { margin-top: -20px !important; }
-    div[data-testid="stVerticalBlock"] > div { padding-top: 0 !important; }
+    .q-id { color: #888; font-size: 1.1rem; font-weight: bold; display: block; margin-top: -5px; }
 
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -58,12 +55,12 @@ st.markdown("""
         }
     }
 
-    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 15px; color: #000; }
-    .stDivider { margin: 0.5rem 0 !important; }
+    .q-text { font-size: 1.3rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    .stDivider { margin: 0.3rem 0 !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 1. סטריפ עליון קבוע
+# 1. Header
 st.markdown(f"""
     <div class="header-container">
         <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
@@ -73,9 +70,10 @@ st.markdown(f"""
 
 logic.initialize_exam()
 
-# 2. סטריפ כותרת - מופיע תמיד באותו מקום
-title_text = "הוראות למבחן רישויי מקרקעין" if ("step" not in st.session_state or st.session_state.step == "instructions") else "מבחן רישוי למתווכים"
-q_sub = f'<span class="q-id">שאלה {st.session_state.current_q}</span>' if ("step" in st.session_state and st.session_state.step == "exam_run") else ""
+# 2. סטריפ כותרת קבוע
+is_inst = ("step" not in st.session_state or st.session_state.step == "instructions")
+title_text = "הוראות למבחן רישויי מקרקעין" if is_inst else "מבחן רישוי למתווכים"
+q_sub = f'<span class="q-id">שאלה {st.session_state.current_q}</span>' if not is_inst else ""
 
 st.markdown(f"""
     <div class="title-strip">
@@ -84,8 +82,8 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# 3. תוכן משתנה (הוראות או בחינה)
-if "step" not in st.session_state or st.session_state.step == "instructions":
+# 3. תוכן
+if is_inst:
     _, center_col, _ = st.columns([1, 2, 1])
     with center_col:
         instructions = [
@@ -125,7 +123,6 @@ elif st.session_state.step == "exam_run":
         """
 
     col_nav, col_main = st.columns([1, 2.5], gap="large")
-    
     with col_nav:
         components.html(get_timer_html("1.7rem"), height=85)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
@@ -148,21 +145,15 @@ elif st.session_state.step == "exam_run":
             choice = st.radio("", q["options"], index=prev_ans, key=f"radio_{st.session_state.current_q}", label_visibility="collapsed")
             if choice is not None: 
                 st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
-            
             st.divider()
-            
             b_next, b_prev, b_finish = st.columns([1, 1, 1])
             with b_next:
                 if st.session_state.current_q < 25:
                     if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
-                        logic.move_to_next()
-                        st.rerun()
-                else:
-                    st.button("לשאלה הבאה", disabled=True, key="btn_next_off")
+                        logic.move_to_next(); st.rerun()
             with b_prev:
                 if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="btn_prev"):
-                    st.session_state.current_q -= 1
-                    st.rerun()
+                    st.session_state.current_q -= 1; st.rerun()
             with b_finish:
                 if 25 in st.session_state.answers_user:
                     st.button("סיום בחינה", key="btn_finish_active")
