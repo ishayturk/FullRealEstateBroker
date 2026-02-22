@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V40 | Date: 22/02/2026 | 23:55
+# Version: V41 | Date: 22/02/2026 | 15:15
 import streamlit as st
 import logic
 import time
@@ -43,7 +43,6 @@ with head_col:
     with c2: st.markdown(f"<div style='text-align: left; font-size: 1.2rem;'>👤 <b>{user_name}</b></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# אתחול לוגיקה
 logic.initialize_exam()
 
 if "step" not in st.session_state or st.session_state.step == "instructions":
@@ -61,60 +60,54 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         st.write("")
         row_col1, row_col2 = st.columns([2.5, 1])
         with row_col1: 
-            agree = st.checkbox("קראתי את ההוראות") # החזרת המלל המדויק
+            agree = st.checkbox("קראתי את ההוראות")
         with row_col2:
-            # בדיקה בטוחה אם שאלה 1 מוכנה
             try:
                 is_ready = logic.is_first_question_ready()
             except:
                 is_ready = False
-                
             if st.button("התחל בחינה", disabled=not (agree and is_ready)):
-                st.session_state.start_time = time.time()
-                st.session_state.step = "exam_run"; st.rerun()
+                logic.start_exam_logic()
+                st.rerun()
 
 elif st.session_state.step == "exam_run":
+    # יצירת המבנה של שני פריימים (עמודות)
     col_nav, col_main = st.columns([1, 2.5], gap="large")
+    
     with col_nav:
         st.markdown('<div class="nav-panel">', unsafe_allow_html=True)
-        st.markdown(f'<div class="timer-display">--:--</div>', unsafe_allow_html=True)
+        # טיימר גולם
+        st.markdown(f'<div class="timer-display">90:00</div>', unsafe_allow_html=True)
         st.write("<b>מפת שאלות:</b>", unsafe_allow_html=True)
+        # גלמים של מפת שאלות - ללא פונקציונליות לחיצה
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    if idx <= st.session_state.max_reached:
-                        if cols[i].button(str(idx), key=f"btn_{idx}"):
-                            st.session_state.current_q = idx; st.rerun()
-                    else:
-                        cols[i].markdown(f"<div style='color:#ccc; text-align:center; padding-top:5px;'>{idx}</div>", unsafe_allow_html=True)
+                    cols[i].markdown(f"<div style='color:#ccc; text-align:center; padding:5px; border:1px solid #eee;'>{idx}</div>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
+        # פריים מרכזי - כותרות
         st.markdown('<div style="text-align: center;"><h2 style="margin:0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
         st.markdown(f'<p style="color: #555;">שאלה {st.session_state.current_q} מתוך 25</p></div>', unsafe_allow_html=True)
         
+        # הצגת שאלה 1 מהזיכרון
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f"#### {q['question']}")
-            ans = st.radio("בחר תשובה:", q["options"], 
-                           index=st.session_state.answers_user.get(st.session_state.current_q),
-                           key=f"radio_{st.session_state.current_q}")
-            if ans: 
-                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(ans)
+            # רכיב רדיו - רדיוס מימין לטקסט
+            st.radio("בחר תשובה:", q["options"], 
+                     index=None,
+                     key=f"radio_{st.session_state.current_q}")
             
             st.divider()
-            b1, b2, b3 = st.columns(3)
+            # גלמים של כפתורי ניווט - כבויים
+            b1, b2, _ = st.columns([1, 1, 2])
             with b1:
-                if st.button("הקודם", disabled=(st.session_state.current_q==1)):
-                    logic.handle_navigation("prev"); st.rerun()
+                st.button("הקודם", disabled=True, key="prev_dummy")
             with b2:
-                can_next = (st.session_state.current_q in st.session_state.answers_user and st.session_state.current_q < 25)
-                if st.button("הבא", disabled=not can_next):
-                    logic.handle_navigation("next"); st.rerun()
-            with b3:
-                if 25 in st.session_state.answers_user:
-                    if st.button("סיום בחינה"): st.session_state.step = "summary"; st.rerun()
+                st.button("הבא", disabled=True, key="next_dummy")
 
 # סוף קובץ
