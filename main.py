@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V68 | Date: 22/02/2026 | 22:50
+# Version: V70 | Date: 22/02/2026 | 23:35
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,8 +18,15 @@ st.markdown("""
         padding-top: 1rem !important; 
     }
     
-    /* Header מקורי מהעוגן - יושב מתחת לקצה העליון */
-    .header-style { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; }
+    /* Header מהודק ללא מריחה */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
     
     .instruction-box { padding-right: 25px; }
 
@@ -36,13 +43,17 @@ st.markdown("""
         }
     }
 
-    /* תיקון כותרת הבחינה - מניעת מריחה */
+    /* כותרת בחינה ממורכזת וצמודה */
+    .exam-title-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 10px;
+    }
     .exam-title { 
-        text-align: center; 
-        margin: 0 auto 20px auto; 
-        max-width: fit-content;
-        font-size: 2rem;
+        font-size: 1.8rem;
         font-weight: bold;
+        text-align: center;
     }
 
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
@@ -50,14 +61,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header מקורי (סטריפ עליון)
-st.markdown('<div class="header-style">', unsafe_allow_html=True)
-h_col1, h_col2 = st.columns([1, 1])
-with h_col1:
-    st.markdown(f'<div style="font-size: 1.3rem; font-weight: bold;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-with h_col2:
-    st.markdown(f'<div style="font-size: 1.1rem; color: #666; text-align: left;">👤 {user_name}</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# Header מהודק (שימוש ב-HTML למניעת מריחה של ה-Columns)
+st.markdown(f"""
+    <div class="header-container">
+        <div style="font-size: 1.2rem; font-weight: bold;">🏠 מתווך בקליק</div>
+        <div style="font-size: 1rem; color: #666;">👤 {user_name}</div>
+    </div>
+""", unsafe_allow_html=True)
 
 logic.initialize_exam()
 
@@ -110,19 +120,19 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    # הדגשת שאלה נוכחית ב-Bold לפי האפיון
+                    # הדגשת שאלה נוכחית
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"nav_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx
                         st.rerun()
 
     with col_main:
-        # כותרת בחינה מתוקנת (לא מרוחה)
-        st.markdown('<div class="exam-title">מבחן רישוי למתווכים</div>', unsafe_allow_html=True)
+        # כותרת ממורכזת ללא מריחה
+        st.markdown('<div class="exam-title-container"><div class="exam-title">מבחן רישוי למתווכים</div></div>', unsafe_allow_html=True)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
-            # מזהה שאלה מתוקן (ללא "מתוך")
+            # מזהה שאלה נקי ללא "מתוך"
             st.markdown(f'<p style="color: #888; font-weight: bold;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             
@@ -135,7 +145,6 @@ elif st.session_state.step == "exam_run":
             
             b_next, b_prev, b_finish = st.columns(3)
             with b_next:
-                # כפתור הבא - לא מופיע בשאלה 25 לפי האפיון
                 if st.session_state.current_q < 25:
                     if st.button("לשאלה הבאה", disabled=(choice is None), key="btn_next"):
                         logic.move_to_next()
@@ -148,7 +157,6 @@ elif st.session_state.step == "exam_run":
                     st.session_state.current_q -= 1
                     st.rerun()
             with b_finish:
-                # כפתור סיום מופיע רק בשאלה 25 לאחר סימון תשובה
                 if 25 in st.session_state.answers_user:
                     st.button("סיום בחינה", key="btn_finish_active")
 
