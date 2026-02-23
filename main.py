@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V131 | Date: 23/02/2026 | 09:15
+# Version: V132 | Date: 23/02/2026 | 09:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,7 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי (Shared) --- */
+    /* --- 1. מגזר כללי (General) --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
@@ -28,38 +28,52 @@ st.markdown("""
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
 
-    /* --- 2. מגזר מחשב (Desktop Only) --- */
+    /* --- 2. מגזר מחשב (Desktop) --- */
     @media (min-width: 769px) {
+        /* עיצוב הטור הימני המקורי מ-V113 */
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
             padding: 15px !important;
         }
-        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
         
-        #timer-display {
-            text-align: center; 
-            background: #ffffff; 
-            border: 3px solid #000; 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-weight: 900; 
-            font-size: 1.8rem; 
-            color: #000; 
+        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+
+        /* הגדלת והבלטת השעון בתוך הטור הימני */
+        .timer-wrapper {
+            background: #ffffff;
+            border: 3px solid #000;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 2rem; /* הגדלה משמעותית */
+            color: #000;
             font-family: monospace;
+            margin-bottom: 10px;
         }
+        
+        .mobile-timer { display: none; }
     }
 
-    /* --- 3. מגזר נייד (Mobile Only) --- */
+    /* --- 3. מגזר נייד (Mobile) --- */
     @media (max-width: 768px) {
-        #timer-display {
+        /* מחיקת פריים הניווט הימני לחלוטין */
+        div[data-testid="column"]:nth-of-type(1) {
+            display: none !important;
+        }
+
+        /* שעון נייד - טקסט נקי בלבד */
+        .mobile-timer {
+            display: block;
             text-align: left;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
             color: #333;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
         }
-        .q-text { margin-top: 15px; }
+
+        .timer-wrapper { display: none; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -100,13 +114,14 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    timer_html = f"""
-    <div id="timer-display"></div>
+    # יצירת ה-HTML של השעון פעם אחת
+    timer_content = f"""
+    <div id="t-val"></div>
     <script>
     var s = {rem_sec};
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('timer-display');
+        var el = document.getElementById('t-val');
         if (el) {{
             if (s <= 600) el.style.color = "red";
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
@@ -117,18 +132,14 @@ elif st.session_state.step == "exam_run":
     </script>
     """
 
-    # בדיקת רוחב מסך פשוטה דרך JS להחלטה על המבנה (בתוספת ל-CSS)
-    # ב-Streamlit הדרך הכי עניינית להפריד עמודות היא פשוט לבנות אותן אחרת
-    
-    # שימוש ב-st.columns רק אם לא "נייד" (לפי לוגיקה פשוטה של Streamlit)
-    # הערה: Streamlit לא יודע בזמן אמת על רוחב הדפדפן בפייתון, 
-    # לכן נשתמש במבנה עמודות שמתפרק בנייד, אך ננקה את תוכן עמודת הניווט בנייד דרך ה-CSS שכתבנו למעלה.
-    
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # הקוד הזה ירוץ, אך ה-CSS יעלים את כל העמודה הזו בנייד (display: none)
-        components.html(timer_html, height=80)
+        # שעון למחשב בתוך התיבה המעוצבת
+        st.markdown('<div class="timer-wrapper">', unsafe_allow_html=True)
+        components.html(timer_content, height=70)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -141,8 +152,10 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # בנייד, נזריק שעון נוסף שיופיע רק שם (ה-CSS שולט בזה)
-        st.markdown(f'<div class="mobile-only">{timer_html}</div>', unsafe_allow_html=True)
+        # שעון לנייד שמופיע רק כשהעמודה הימנית נעלמת
+        st.markdown('<div class="mobile-timer">', unsafe_allow_html=True)
+        components.html(timer_content, height=40)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
         
