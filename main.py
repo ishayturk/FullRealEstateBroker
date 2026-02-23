@@ -61,11 +61,10 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # הזרקת HTML עם עיצוב פנימי מלא למניעת השפעות חיצוניות
     combined_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            .t-title {{ font-size: 1.8rem; font-weight: bold; font-family: sans-serif; color: #000; }}
+            .t-title {{ font-size: 1.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
             .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.4rem; font-weight: bold; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem; }}
@@ -116,3 +115,13 @@ elif st.session_state.step == "exam_run":
             st.divider()
             bn, bp, bf = st.columns(3)
             with bn:
+                if st.session_state.current_q < 25:
+                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
+                        logic.move_to_next(); st.rerun()
+            with bp:
+                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
+                    st.session_state.current_q -= 1; st.rerun()
+            with bf:
+                if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+
+# סוף קובץ
