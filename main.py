@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V183 | Date: 23/02/2026 | 14:15
+# Version: V183 | Date: 23/02/2026 | 13:58
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -29,6 +29,7 @@ st.markdown("""
     .nav-link {
         text-decoration: none !important;
         color: #333 !important;
+        font-size: 1.1rem !important;
         display: block;
         cursor: pointer;
         font-weight: normal;
@@ -47,7 +48,7 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-        .nav-link { text-align: center; font-size: 1.1rem !important; }
+        .nav-link { text-align: center; }
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -59,20 +60,9 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .nav-title { display: none !important; }
-        /* ספרות בגודל 3 (מזערי) מיושרות לימין */
-        .nav-link { 
-            text-align: right !important; 
-            font-size: 0.3rem !important; 
-            padding-right: 2px !important;
-            width: 1ch !important; /* רוחב של תו אחד */
-        }
+        .nav-title { display: none !important; } /* הסרת הכותרת בנייד */
+        .nav-link { text-align: right; padding-right: 5px; } /* יישור לימין בנייד */
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-        /* מניעת דחיקה של התוכן */
-        div[data-testid="column"]:nth-of-type(1) {
-            min-width: 2ch !important;
-            width: 2ch !important;
-        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -131,9 +121,10 @@ elif st.session_state.step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
+
     components.html(header_html, height=80)
 
-    col_nav, col_main = st.columns([0.1, 2.5], gap="small") # צמצום משמעותי לעמודת הניווט
+    col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
