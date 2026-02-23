@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V176 | Date: 23/02/2026 | 13:05
+# Version: V177 | Date: 23/02/2026 | 13:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -22,7 +22,8 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 15px !important;
+            padding: 5px 15px 15px 15px !important; /* צמצום פדינג עליון מ-15 ל-5 */
+            margin-top: -15px !important; /* משיכה למעלה של כל הבלוק */
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
@@ -65,13 +66,11 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # מיכל אחוד לכותרת ושעון
     header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
             .t-title {{ font-size: 2.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
             .t-clock {{ font-size: 2.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 35px; }}
-            
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
                 .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
