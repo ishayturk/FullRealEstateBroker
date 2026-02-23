@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V238 | Date: 23/02/2026 | 22:25
+# Version: V241 | Date: 23/02/2026 | 23:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,33 +9,34 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- SECTION: GENERAL --- */
+    /* --- SECTION 1: GENERAL --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     
-    /* עיצוב בסיסי לכותרת המבחן והשעון */
-    .exam-header-wrapper { display: flex; align-items: center; justify-content: center; width: 100%; direction: rtl; }
+    /* אלמנטים משותפים לכותרת המבחן */
+    .exam-header-container { display: flex; align-items: center; justify-content: center; width: 100%; direction: rtl; }
     .exam-title-text { font-weight: bold; color: #000; margin: 0; }
     .exam-clock-text { font-weight: bold; direction: ltr; }
 
-    /* --- SECTION: DESKTOP --- */
+    /* --- SECTION 2: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
         .exam-title-text { font-size: 2.2rem; }
         .exam-clock-text { font-size: 2rem; margin-right: 30px; }
     }
 
-    /* --- SECTION: MOBILE (הקטנה משמעותית לשורה אחת) --- */
+    /* --- SECTION 3: MOBILE --- */
     @media (max-width: 768px) {
         .block-container { padding-top: 0px !important; }
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
         
-        .exam-header-wrapper { justify-content: space-between !important; padding: 0 10px; }
-        .exam-title-text { font-size: 1.05rem !important; white-space: nowrap; }
-        .exam-clock-text { font-size: 1.05rem !important; margin-right: 5px; }
+        /* תיקון כותרת ושעון בנייד לשורה אחת */
+        .exam-header-container { justify-content: space-between !important; padding: 0 10px; }
+        .exam-title-text { font-size: 1.1rem !important; white-space: nowrap; }
+        .exam-clock-text { font-size: 1.1rem !important; margin-right: 10px; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -43,13 +44,14 @@ st.markdown("""
 # אתחול
 logic.initialize_exam_state()
 
-# 1. סטריפ עליון
+# 1. סטריפ עליון (מעוגן V208)
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
 with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
+# 2. ניהול שלבי הבחינה
 current_step = st.session_state.get("step", "instructions")
 
 if current_step == "instructions":
@@ -57,7 +59,7 @@ if current_step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60."]
+        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60.", "המקור: חוק המתווכים, תקנות האתיקה ודיני המקרקעין."]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.write("")
         f_cols = st.columns([1, 1])
@@ -69,9 +71,8 @@ if current_step == "instructions":
 
 elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
-    # ה-HTML כעת נקי מסטייל פנימי, הכל נשלט מה-CSS למעלה
     header_html = f"""
-    <div class="exam-header-wrapper">
+    <div class="exam-header-container">
         <div class="exam-title-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="exam-clock-text"></div>
     </div>
