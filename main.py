@@ -1,22 +1,26 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V139 | Date: 23/02/2026 | 13:00
+# Version: V141 | Date: 23/02/2026 | 13:50
 import streamlit as st
 import logic
-import streamlit.components.v1 as components
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
 user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי (Shared) --- */
+    /* --- 1. מגזר כללי --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-    .stDivider { margin: 0.5rem 0 !important; }
+    
+    /* עיצוב מפת המספרים */
+    .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; }
+    .nav-num { padding: 8px 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ddd; display: block; text-decoration: none; color: #333; font-size: 0.9rem; }
+    .nav-num.active { background-color: #007bff; color: white !important; font-weight: bold; border-color: #0056b3; }
+    .nav-num.disabled { color: #ccc; cursor: default; border-color: #eee; pointer-events: none; }
 
-    /* --- 2. מגזר מחשב (Desktop - V113) --- */
+    /* --- 2. מגזר מחשב (Desktop - V113 Style) --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
@@ -24,28 +28,20 @@ st.markdown("""
             padding: 15px !important;
         }
         .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+        .nav-title { margin-top: 0px; margin-bottom: 10px; display: block; font-weight: bold; }
     }
 
-    /* --- 3. מגזר נייד (Mobile Only) --- */
+    /* --- 3. מגזר נייד (Mobile - Clean Start) --- */
     @media (max-width: 768px) {
-        /* ביטול נוכחות ויזואלית ופיזית של הטור הראשון */
-        [data-testid="column"]:nth-of-type(1) {
+        div[data-testid="column"]:nth-of-type(1) {
             display: none !important;
             height: 0 !important;
-            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
-        [data-testid="column"]:nth-of-type(2) {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-        }
-        /* הקטנת פונטים */
+        div[data-testid="column"]:nth-of-type(2) { width: 100% !important; }
         h2 { font-size: 1.2rem !important; }
         .q-text { font-size: 1.1rem !important; }
-        .stMarkdown p { font-size: 1rem !important; }
-        /* צמצום רווחים בתחתית הבחינה */
-        .stButton button { width: 100% !important; padding: 0.2rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -75,40 +71,27 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
                 logic.start_exam_logic(); st.rerun()
 
 elif st.session_state.step == "exam_run":
-    rem_sec = logic.get_remaining_seconds()
-    
-    # טיימר (מוסתר בנייד דרך ה-CSS של העמודה)
-    timer_html = f"""
-    <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
-    <script>
-    var s = {rem_sec};
-    function u() {{
-        var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('t-disp');
-        if (el) {{
-            if (s <= 600) el.style.color = "red";
-            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
-        }}
-        if (s > 0) s--;
-    }}
-    u(); setInterval(u, 1000);
-    </script>
-    """
+    # ניווט דרך URL (למפת המספרים)
+    q_param = st.query_params.get("q")
+    if q_param and int(q_param) != st.session_state.current_q:
+        st.session_state.current_q = int(q_param)
+        st.rerun()
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        components.html(timer_html, height=70)
-        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
-                    label = str(idx)
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx; st.rerun()
+        st.markdown('<p class="nav-title">מפת שאלות</p>', unsafe_allow_html=True)
+        # בניית מפת מספרים לחיצה
+        html_grid = '<div class="nav-grid">'
+        for i in range(1, 26):
+            is_active = i in st.session_state.nav_active_questions
+            is_current = (i == st.session_state.current_q)
+            cls = "nav-num"
+            if is_current: cls += " active"
+            elif not is_active: cls += " disabled"
+            html_grid += f'<a class="{cls}" href="?q={i}" target="_self">{i}</a>'
+        html_grid += '</div>'
+        st.markdown(html_grid, unsafe_allow_html=True)
 
     with col_main:
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
@@ -121,11 +104,9 @@ elif st.session_state.step == "exam_run":
             if choice is not None: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             st.divider()
             
-            # כפתורי ניווט - טקסט מקוצר בנייד
             bn, bp, bf = st.columns(3)
             with bn:
                 if st.session_state.current_q < 25:
-                    # בשימוש ב-Media Queries ב-CSS ניתן להסתיר טקסט מסוים, אך כאן נשתמש בתווית קצרה יותר שתתאים לכולם או תותאם ב-CSS
                     if st.button("הבא", key="next", disabled=(choice is None)):
                         logic.move_to_next(); st.rerun()
             with bp:
