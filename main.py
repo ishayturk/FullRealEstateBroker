@@ -103,4 +103,35 @@ elif current_step == "exam_run":
         idx = st.session_state.current_q
         q = st.session_state.exam_data.get(idx)
         if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom:
+            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["question"]}</div>', unsafe_allow_html=True)
+            choice = st.radio("", q["options"], index=st.session_state.answers_user.get(idx), key=f"r_{idx}", label_visibility="collapsed")
+            if choice is not None:
+                st.session_state.answers_user[idx] = q["options"].index(choice)
+                if idx == 25: st.session_state.finish_button_visible = True
+            st.divider()
+            b_p, b_n, b_f = st.columns([1, 1, 1.2])
+            with b_p:
+                if idx > 1 and st.button("לשאלה הקודמת"): st.session_state.current_q -= 1; st.rerun()
+            with b_n:
+                if idx < 25:
+                    if st.button("לשאלה הבאה", disabled=not (idx in st.session_state.answers_user and (idx+1) in st.session_state.exam_data)):
+                        st.session_state.current_q += 1; st.session_state.nav_active_questions.add(st.session_state.current_q)
+                        if idx <= 23: logic.ensure_question_exists(idx + 2)
+                        st.rerun()
+            with b_f:
+                if st.session_state.get("finish_button_visible") and st.button("סיים בחינה", type="primary"):
+                    st.session_state.step = "feedback"; st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_nav:
+        st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                n = r + i + 1
+                if n <= 25:
+                    is_active = n in st.session_state.nav_active_questions
+                    if cols[i].button(f"**{n}**" if n == st.session_state.current_q else str(n), key=f"n_{n}", disabled=not is_active):
+                        st.session_state.current_q = n; st.rerun()
+# סוף קובץ
