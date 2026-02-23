@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V182 | Date: 23/02/2026 | 13:55
+# Version: V183 | Date: 23/02/2026 | 14:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -25,15 +25,11 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
-    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-
-    /* עיצוב הספרות כטקסט נקי לחלוטין - ללא כפתורים או מסגרות */
+    
     .nav-link {
         text-decoration: none !important;
         color: #333 !important;
-        font-size: 1.1rem !important;
         display: block;
-        text-align: center;
         cursor: pointer;
         font-weight: normal;
     }
@@ -45,11 +41,13 @@ st.markdown("""
         color: #ccc !important;
         cursor: default;
         pointer-events: none;
-        font-weight: 100 !important; /* דק מאוד */
+        font-weight: 100 !important;
     }
     
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
+        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+        .nav-link { text-align: center; font-size: 1.1rem !important; }
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -61,7 +59,20 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
+        .nav-title { display: none !important; }
+        /* ספרות בגודל 3 (מזערי) מיושרות לימין */
+        .nav-link { 
+            text-align: right !important; 
+            font-size: 0.3rem !important; 
+            padding-right: 2px !important;
+            width: 1ch !important; /* רוחב של תו אחד */
+        }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        /* מניעת דחיקה של התוכן */
+        div[data-testid="column"]:nth-of-type(1) {
+            min-width: 2ch !important;
+            width: 2ch !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -120,10 +131,9 @@ elif st.session_state.step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-
     components.html(header_html, height=80)
 
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    col_nav, col_main = st.columns([0.1, 2.5], gap="small") # צמצום משמעותי לעמודת הניווט
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -132,7 +142,6 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    # שאלה בולטת רק אם היא כבר נענתה (נמצאת במילון התשובות)
                     is_answered = idx in st.session_state.answers_user
                     
                     state_class = "nav-link-answered" if is_answered else ("" if is_active else "nav-link-disabled")
