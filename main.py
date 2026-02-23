@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V213 | Date: 24/02/2026 | 01:30
+# Version: V214 | Date: 24/02/2026 | 01:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -31,7 +31,7 @@ st.markdown("""
 
 logic.initialize_exam_state()
 
-# סטריפ עליון - עוגן V38
+# סטריפ עליון - עוגן V38 (שורה אחת מתחת לקצה)
 st.write("")
 h_col1, h_col2, h_col3 = st.columns([1, 2, 1])
 with h_col3: st.markdown('<div style="text-align: right; font-weight: bold;">מתווך בקליק</div>', unsafe_allow_html=True)
@@ -45,7 +45,7 @@ step = st.session_state.get("step", "instructions")
 
 if step == "instructions":
     logic.ensure_question_exists(1)
-    # עמוד הסבר - עוגן V38
+    # עמוד הסבר - עוגן V38 בדיוק
     st.markdown('<h1 style="text-align: center;">מבחן רשם המתווכים</h1>', unsafe_allow_html=True)
     st.write("ברוכים הבאים למערכת סימולציית הבחינה של רשם המתווכים.")
     st.write("המבחן מדמה את התנאים האמיתיים של הבחינה הממשלתית.")
@@ -58,6 +58,7 @@ if step == "instructions":
     agree = st.checkbox("אני מאשר כי קראתי את ההוראות")
     is_q1_ready = 1 in st.session_state.exam_data
     
+    # כפתור מעבר - אקטיבי רק אם סומן צ'קבוקס ושאלה 1 מוכנה
     if st.button("עבור לבחינה", disabled=not (agree and is_q1_ready)):
         st.session_state.step = "exam_run"
         st.session_state.current_q = 1
@@ -86,8 +87,7 @@ elif step == "exam_run":
             with b_prev:
                 if idx > 1:
                     if st.button("לשאלה הקודמת"):
-                        st.session_state.current_q -= 1
-                        st.rerun()
+                        st.session_state.current_q -= 1; st.rerun()
             with b_next:
                 if idx < 25:
                     is_ready = (idx + 1) in st.session_state.exam_data
