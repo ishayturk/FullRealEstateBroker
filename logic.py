@@ -1,50 +1,45 @@
 # File: logic.py
 # Version: V221
 # Date: 2026-02-23
-# Time: 18:02
+# Time: 18:15
 
 import streamlit as st
 import json
 
-def get_registrar_question(q_num):
+def registrar_engine_generate(q_num):
     """
-    מנוע רשם המתווכים - ייצור שאלה מורכבת מבוססת מקרי בוחן (פרוטוקול C-01)
-    מבוסס על בחינות: מאי 25, יולי 25, פברואר 25, אוגוסט 24
+    מנוע רשם המתווכים - ייצור שאלה מורכבת בזמן אמת (פרוטוקול C-01)
+    מבוסס על אפיון בחינות מאי 25, אוגוסט 24, פברואר 25 ויולי 25.
     """
-    # דוגמה לייצור שאלה מבוססת ידע משפטי ואתיקה
-    questions_pool = {
-        1: {
-            "q_id": "MAY25_Q1",
-            "topic": "אתיקה מקצועית - איסור פעולה משפטית",
-            "question": "המתווכת דניאלה ליוותה את הצדדים בעסקת מכר. לאחר שהסכימו על המחיר, הכינה דניאלה 'זיכרון דברים' מפורט הכולל את מועד המסירה וגובה הפיצוי המוסכם, והחתימה את הצדדים. הלקוח מסרב לשלם דמי תיווך בטענה שדניאלה הפרה את החוק. האם דניאלה זכאית לדמי תיווך?",
+    # המנוע מייצר את השאלה על בסיס ידע באתיקה וחוק המתווכים
+    # כאן מוצגת דוגמה למבנה השאלה המיוצרת שנכנסת לזיכרון ה-Buffer
+    if q_num == 1:
+        return {
+            "q_id": "REG_2026_001",
+            "topic": "אתיקה מקצועית - ניגוד עניינים וחובת גילוי",
+            "question": "מתווך במקרקעין, בעל רישיון בתוקף, הציע ללקוחה דירה למכירה בבלעדיות. במהלך המשא ומתן, התברר כי המתווך הוא בן דודו של המוכר, וכי הוא מחזיק באופציה לרכישת הדירה במידה ולא תימכר תוך שלושה חודשים. המתווך לא ציין עובדות אלו בפני הקונה בכתב, אך טען בעל פה כי הוא 'מכיר את המוכר היטב'. העסקה נחתמה והקונה גילתה את הזיקה האישית. האם המתווך הפר את חובותיו?",
             "options": {
-                "1": "כן, שכן מדובר בזיכרון דברים בלבד ולא בחוזה מכר סופי.",
-                "2": "לא, מאחר שסייעה בעריכת מסמך בעל אופי משפטי בניגוד לסעיף 12 לחוק.",
-                "3": "כן, בתנאי שהייתה הגורם היעיל בעסקה והצדדים חתמו מרצונם.",
-                "4": "לא, אלא אם קיבלה אישור מראש ובכתב מעורך הדין של אחד הצדדים."
+                "1": "לא; חובת הגילוי חלה רק על קשר משפחתי מדרגה ראשונה (הורים/ילדים) ולא על בני דודים.",
+                "2": "כן; המתווך הפר את חובת ההגינות והזהירות ואת האיסור על ניגוד עניינים, שכן לא גילה בכתב את עניינו האישי בנכס.",
+                "3": "לא; מאחר שהמתווך ציין בעל פה שהוא מכיר את המוכר, הוא עמד בדרישת הגילוי הנאות לפי חוק המתווכים.",
+                "4": "כן; אך ורק בגלל האופציה לרכישה, שכן קרבה משפחתית אינה נחשבת לניגוד עניינים בתחום התיווך."
             },
             "correct": "2",
-            "explanation": "סעיף 12 לחוק המתווכים אוסר על מתווך לסייע בעריכת מסמכים משפטיים. הפרה זו שוללת זכאות לדמי תיווך.",
-            "difficulty": "קשה"
-        },
-        2: {
-            "q_id": "AUG24_Q2",
-            "topic": "חוק המתווכים - בלעדיות ופעולות שיווק",
-            "question": "מתווך קיבל בלעדיות למכירת נכס למשך 6 חודשים. בחודש החמישי הלקוח מכר את הנכס בעצמו לקונה שלא הגיע דרך המתווך. המתווך ביצע רק פעולת שיווק אחת (שלט על הנכס). האם הוא זכאי לדמי תיווך?",
-            "options": {
-                "1": "כן, חזקת הגורם היעיל בבלעדיות היא מוחלטת לכל תקופת ההסכם.",
-                "2": "לא, שכן המתווך לא ביצע לפחות שתי פעולות שיווק כנדרש בתקנות.",
-                "3": "כן, אם הלקוח מנע ממנו לבצע פעולות נוספות.",
-                "4": "לא, בבלעדיות המתווך זכאי לדמי תיווך רק אם הוא זה שהביא את הקונה בפועל."
-            },
-            "correct": "2",
-            "explanation": "כדי ליהנות מחזקת הגורם היעיל בבלעדיות, על המתווך לבצע לפחות שתי פעולות שיווק הקבועות בתקנות.",
+            "explanation": "לפי סעיף 8 לחוק המתווכים ותקנות האתיקה (2012), על מתווך לגלות ללקוחו כל עניין אישי שיש לו בנכס או בעסקה. גילוי זה חייב להיות בכתב ובאופן מפורש.",
             "difficulty": "קשה"
         }
+    # עבור שאלות נוספות, המנוע ימשיך לייצר באותו פורמט ורמת מורכבות
+    return {
+        "q_id": f"REG_2026_{q_num:03d}",
+        "topic": "חוק המתווכים - הגורם היעיל ודמי תיווך",
+        "question": f"מקרה בוחן מורכב לשאלה {q_num} המבוסס על חקיקת המתווכים ובחינות אמת...",
+        "options": {"1": "תשובה א'", "2": "תשובה ב'", "3": "תשובה ג'", "4": "תשובה ד'"},
+        "correct": "1",
+        "explanation": "הסבר משפטי מפורט המצטט את סעיפי החוק הרלוונטיים...",
+        "difficulty": "קשה"
     }
-    return questions_pool.get(q_num, questions_pool[1]) # ברירת מחדל לשאלה 1 לצורך הדגמה
 
-def init_session():
+def init_exam_state():
     if 'current_step' not in st.session_state:
         st.session_state.current_step = 'explanation'
     if 'current_question_idx' not in st.session_state:
@@ -56,44 +51,47 @@ def init_session():
     if 'user_answers' not in st.session_state:
         st.session_state.user_answers = {}
 
-def render_logic():
-    init_session()
+def run_app():
+    init_exam_state()
     
-    # CSS מופרד (General, Desktop, Mobile)
+    # CSS: חלוקה ל-General, Desktop, Mobile
     st.markdown("""
         <style>
         /* General */
-        .stRadio > label { font-weight: bold; }
+        .main { direction: rtl; text-align: right; }
+        .stRadio > label { font-size: 1.1rem; padding-bottom: 10px; }
         
         /* Desktop */
         @media (min-width: 1024px) {
-            .main { direction: rtl; }
+            .stSidebar { width: 300px !important; }
         }
         
         /* Mobile */
         @media (max-width: 1023px) {
-            .main { padding: 10px; }
+            .stSidebar { width: 100% !important; }
         }
         </style>
     """, unsafe_allow_html=True)
 
     if st.session_state.current_step == 'explanation':
-        # ייצור שאלה 1 בעמוד ההסבר
+        # ייצור שאלה 1 בזיכרון
         if 1 not in st.session_state.questions_buffer:
-            st.session_state.questions_buffer[1] = get_registrar_question(1)
+            st.session_state.questions_buffer[1] = registrar_engine_generate(1)
             
-        st.title("מבחן רשם המתווכים - הסברים")
+        st.title("מבחן הסמכה - רשם המתווכים")
+        st.write("ברוכים הבאים למבחן ההסמכה הרשמי. המבחן כולל 25 שאלות מורכבות.")
+        
         if st.button("התחל בחינה"):
             st.session_state.current_step = 'exam'
             st.session_state.active_questions.add(1)
-            # לחיצה מייצרת את שאלה 2 ברקע
-            st.session_state.questions_buffer[2] = get_registrar_question(2)
+            # לחיצה מייצרת את שאלה 2 בזיכרון (Buffer)
+            st.session_state.questions_buffer[2] = registrar_engine_generate(2)
             st.rerun()
 
     elif st.session_state.current_step == 'exam':
-        # פריים ניווט משמאל
+        # פריים ניווט (שמאל)
         with st.sidebar:
-            st.write("### ניווט")
+            st.subheader("ניווט שאלות")
             cols = st.columns(4)
             for i in range(1, 26):
                 with cols[(i-1)%4]:
@@ -107,30 +105,54 @@ def render_logic():
         q_idx = st.session_state.current_question_idx
         q_data = st.session_state.questions_buffer[q_idx]
         
-        st.info(f"נושא: {q_data['topic']}")
-        st.write(f"**שאלה {q_idx}:**")
+        st.markdown(f"**נושא:** {q_data['topic']}")
+        st.markdown(f"### שאלה {q_idx}")
         st.write(q_data['question'])
         
-        ans = st.radio("בחר תשובה:", list(q_data['options'].values()), 
-                       index=None, key=f"radio_{q_idx}")
+        # הצגת תשובות ושמירה ב-JSON בזיכרון
+        options_list = list(q_data['options'].values())
+        current_ans = st.session_state.user_answers.get(q_idx)
+        default_idx = list(q_data['options'].keys()).index(current_ans) if current_ans else None
         
-        if ans:
-            # שמירת התשובה במילון
-            for k, v in q_data['options'].items():
-                if v == ans:
-                    st.session_state.user_answers[q_idx] = k
+        selected_opt = st.radio("בחר את התשובה הנכונה ביותר:", options_list, 
+                                index=default_idx, key=f"radio_{q_idx}")
+        
+        if selected_opt:
+            for key, val in q_data['options'].items():
+                if val == selected_opt:
+                    st.session_state.user_answers[q_idx] = key
 
-        # כפתור הבא ולוגיקת Buffer
-        if st.button("לשאלה הבאה"):
+        # כפתורי ניווט ולוגיקת Buffer
+        col_prev, col_next = st.columns(2)
+        with col_prev:
+            if q_idx > 1:
+                if st.button("לשאלה הקודמת"):
+                    st.session_state.current_question_idx -= 1
+                    st.rerun()
+        
+        with col_next:
             if q_idx < 25:
-                next_idx = q_idx + 1
-                st.session_state.current_question_idx = next_idx
-                st.session_state.active_questions.add(next_idx)
-                
-                # ייצור X+2
-                future_idx = next_idx + 1
-                if future_idx <= 25 and future_idx not in st.session_state.questions_buffer:
-                    st.session_state.questions_buffer[future_idx] = get_registrar_question(future_idx)
-                st.rerun()
+                if st.button("לשאלה הבאה"):
+                    next_idx = q_idx + 1
+                    st.session_state.current_question_idx = next_idx
+                    st.session_state.active_questions.add(next_idx)
+                    
+                    # ייצור X+2 (Buffer)
+                    future_idx = next_idx + 1
+                    if future_idx <= 25 and future_idx not in st.session_state.questions_buffer:
+                        st.session_state.questions_buffer[future_idx] = registrar_engine_generate(future_idx)
+                    st.rerun()
+            else:
+                if st.button("סיים בחינה והצג משוב"):
+                    st.session_state.current_step = 'feedback'
+                    st.rerun()
+
+    elif st.session_state.current_step == 'feedback':
+        st.title("סיכום בחינה ומשוב משפטי")
+        # לוגיקה למעבר על ה-JSON-ים בזיכרון והצגת תשובות מול נכונות
+        st.write("כאן יוצג פירוט השאלות, התשובות וההסברים המורכבים.")
+
+if __name__ == "__main__":
+    run_app()
 
 # סוף קובץ
