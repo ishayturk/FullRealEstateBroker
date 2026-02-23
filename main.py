@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V181 | Date: 23/02/2026 | 13:45
+# Version: V182 | Date: 23/02/2026 | 13:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,7 +13,6 @@ if nav_q and nav_q.isdigit():
     target_q = int(nav_q)
     if "nav_active_questions" in st.session_state and target_q in st.session_state.nav_active_questions:
         st.session_state.current_q = target_q
-    # ניקוי הפרמטר מה-URL למניעת לולאה
     st.query_params.clear()
     st.query_params["user"] = user_name
     st.rerun()
@@ -28,7 +27,7 @@ st.markdown("""
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
 
-    /* עיצוב הספרות כטקסט נקי לחלוטין (במקום כפתורים) */
+    /* עיצוב הספרות כטקסט נקי לחלוטין - ללא כפתורים או מסגרות */
     .nav-link {
         text-decoration: none !important;
         color: #333 !important;
@@ -36,8 +35,9 @@ st.markdown("""
         display: block;
         text-align: center;
         cursor: pointer;
+        font-weight: normal;
     }
-    .nav-link-active {
+    .nav-link-answered {
         font-weight: bold !important;
         color: #000 !important;
     }
@@ -45,6 +45,7 @@ st.markdown("""
         color: #ccc !important;
         cursor: default;
         pointer-events: none;
+        font-weight: 100 !important; /* דק מאוד */
     }
     
     /* --- SECTION: DESKTOP --- */
@@ -131,10 +132,10 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    is_current = idx == st.session_state.current_q
+                    # שאלה בולטת רק אם היא כבר נענתה (נמצאת במילון התשובות)
+                    is_answered = idx in st.session_state.answers_user
                     
-                    # בניית הקישור כטקסט נקי
-                    state_class = "nav-link-active" if is_current else ("" if is_active else "nav-link-disabled")
+                    state_class = "nav-link-answered" if is_answered else ("" if is_active else "nav-link-disabled")
                     link_html = f'<a href="?user={user_name}&q={idx}" target="_self" class="nav-link {state_class}">{idx}</a>'
                     cols[i].markdown(link_html, unsafe_allow_html=True)
 
