@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V133 | Date: 23/02/2026 | 10:05
+# Version: V134 | Date: 23/02/2026 | 10:20
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,37 +9,52 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי (General) --- */
+    /* --- 1. מגזר כללי (מבוסס V113) --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
+    
     .block-container { 
         max-width: 1100px !important; 
         margin: 0 auto !important; 
         padding-top: 0.5rem !important; 
     }
-    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    
+    .header-box {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+    }
 
-    /* --- 2. מגזר מחשב (Desktop Only) --- */
+    /* יישור פריים הניווט */
+    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
+
+    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    .stDivider { margin: 0.5rem 0 !important; }
+    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+
+    /* --- 2. מגזר מחשב (Desktop) --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
             padding: 15px !important;
         }
-        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-        .desktop-timer-container {
-            text-align: center; background: #fff; border: 1px solid #333; 
-            padding: 8px; border-radius: 8px; font-weight: bold; 
-            font-size: 1.5rem; color: #333; font-family: monospace;
-        }
     }
 
-    /* --- 3. מגזר נייד (Mobile Only) --- */
+    /* --- 3. מגזר נייד (Mobile) --- */
     @media (max-width: 768px) {
-        /* הסתרה אגרסיבית של העמודה הראשונה אם נוצרה */
+        /* ביטול מוחלט של פריים הניווט בנייד */
         div[data-testid="column"]:nth-of-type(1) {
             display: none !important;
+        }
+        /* וידוא שהטור המרכזי תופס את כל הרוחב */
+        div[data-testid="column"]:nth-of-type(2) {
+            width: 100% !important;
+            min-width: 100% !important;
         }
     }
     </style>
@@ -49,10 +64,7 @@ logic.initialize_exam()
 
 # 1. סטריפ עליון (V113)
 h1, h2, h3 = st.columns([2, 1, 2])
-with h1: 
-    if st.button("🏠 מתווך בקליק", key="btn_home"):
-        st.session_state.step = "instructions"
-        st.rerun()
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
 with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
 
@@ -61,42 +73,52 @@ st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 # 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    
     _, center_col, _ = st.columns([1, 1.2, 1])
+    
     with center_col:
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+        instructions = [
+            "המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", 
+            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", 
+            "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."
+        ]
+        for i, txt in enumerate(instructions, 1):
+            st.write(f"{i}. {txt}")
+        
         st.write("")
-        agree = st.checkbox("קראתי את ההוראות")
-        if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
-            logic.start_exam_logic()
-            st.rerun()
+        f_c1, f_c2 = st.columns([1, 1])
+        with f_c1:
+            agree = st.checkbox("קראתי את ההוראות")
+        with f_c2:
+            if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
+                logic.start_exam_logic()
+                st.rerun()
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    timer_html = f"""
-    <div class="desktop-timer-container" id="t-disp"></div>
-    <script>
-    var s = {rem_sec};
-    function u() {{
-        var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('t-disp');
-        if (el) {{
-            if (s <= 600) el.style.color = "red";
-            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+    def get_timer_html():
+        return f"""
+        <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
+        <script>
+        var s = {rem_sec};
+        function u() {{
+            var m = Math.floor(s / 60); var sec = s % 60;
+            var el = document.getElementById('t-disp');
+            if (el) {{
+                if (s <= 600) el.style.color = "red";
+                el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+            }}
+            if (s > 0) s--;
         }}
-        if (s > 0) s--;
-    }}
-    u(); setInterval(u, 1000);
-    </script>
-    """
+        u(); setInterval(u, 1000);
+        </script>
+        """
 
-    # מבנה עמודות של V113 - בנייד העמודה הראשונה תוסתר ע"י CSS
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # תוכן זה יופיע רק במחשב (מוסתר ב-CSS בנייד)
-        components.html(timer_html, height=70)
+        components.html(get_timer_html(), height=70)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
