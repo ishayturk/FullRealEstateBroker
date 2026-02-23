@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V160 | Date: 23/02/2026 | 21:55
+# Version: V161 | Date: 23/02/2026 | 22:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,7 +15,6 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
 
     /* --- SECTION: DESKTOP --- */
@@ -25,6 +24,8 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
+        /* השאלה במחשב - גודל קטן יותר מהכותרת */
+        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -34,6 +35,8 @@ st.markdown("""
             margin-top: 0px !important;
             padding-top: 0px !important;
         }
+        /* השאלה בנייד - נשמרת לפי V159 */
+        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -64,15 +67,18 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # שעון וכותרת משולבים - הפרדה בין מחשב לנייד בתוך ה-HTML
+    # הגדרות HTML לכותרת ושעון - הפרדה מוחלטת בתוך ה-IFrame
     combined_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap; overflow: hidden;">
         <style>
-            .t-title {{ font-size: 1.5rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 30px; font-family: monospace; font-size: 1.2rem; font-weight: bold; }}
+            /* כותרת גדולה במחשב (2.2rem) ושעון קטן יותר (1.8rem) */
+            .t-title {{ font-size: 2.2rem !important; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.8rem !important; font-weight: bold; }}
+            
             @media (max-width: 768px) {{
-                .t-title {{ font-size: 1.1rem; }}
-                .t-clock {{ font-size: 1.0rem; margin-right: 15px; }}
+                /* שמירה על ערכי V159 לנייד */
+                .t-title {{ font-size: 1.1rem !important; }}
+                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px; }}
             }}
         </style>
         <div class="t-title">מבחן רישוי למתווכים</div>
@@ -96,7 +102,6 @@ elif st.session_state.step == "exam_run":
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
-        # בוטל השעון שהיה כאן ב-V113 לטובת הכותרת המאוחדת
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -109,7 +114,8 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        components.html(combined_header_html, height=50)
+        # גובה מותאם לכותרת גדולה במחשב
+        components.html(combined_header_html, height=65)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
@@ -122,4 +128,11 @@ elif st.session_state.step == "exam_run":
             with bn:
                 if st.session_state.current_q < 25:
                     if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
-                        logic.move
+                        logic.move_to_next(); st.rerun()
+            with bp:
+                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
+                    st.session_state.current_q -= 1; st.rerun()
+            with bf:
+                if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+
+# סוף קובץ
