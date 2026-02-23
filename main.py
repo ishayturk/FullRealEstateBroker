@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V138 | Date: 23/02/2026 | 12:15
+# Version: V139 | Date: 23/02/2026 | 13:00
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,7 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי (General) --- */
+    /* --- 1. מגזר כללי (Shared) --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
@@ -29,30 +29,23 @@ st.markdown("""
 
     /* --- 3. מגזר נייד (Mobile Only) --- */
     @media (max-width: 768px) {
-        /* הפיכת כפתורי הניווט הימני לבלתי נראים ותופסי 1px */
-        div[data-testid="column"]:nth-of-type(1) button {
-            background-color: white !important;
-            color: white !important;
-            border: none !important;
-            height: 1px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
-            min-height: 1px !important;
+        /* ביטול נוכחות ויזואלית ופיזית של הטור הראשון */
+        [data-testid="column"]:nth-of-type(1) {
+            display: none !important;
+            height: 0 !important;
+            overflow: hidden !important;
         }
-        div[data-testid="column"]:nth-of-type(1) {
-            width: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
+        [data-testid="column"]:nth-of-type(2) {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
         }
-        /* הקטנת פונטים ב-15% */
-        h2 { font-size: 1.3rem !important; }
-        .q-text { font-size: 1.05rem !important; font-weight: bold; color: #000; }
-        p, div { font-size: 0.95rem !important; }
-        
-        /* ביטול רווחים מיותרים */
-        div[data-testid="stHorizontalBlock"] { gap: 0 !important; }
+        /* הקטנת פונטים */
+        h2 { font-size: 1.2rem !important; }
+        .q-text { font-size: 1.1rem !important; }
+        .stMarkdown p { font-size: 1rem !important; }
+        /* צמצום רווחים בתחתית הבחינה */
+        .stButton button { width: 100% !important; padding: 0.2rem !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -84,11 +77,7 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # פונקציית עזר לטקסט כפתורים דינמי
-    is_mobile = False # ברירת מחדל, ה-CSS יטפל בנראות
-    btn_next_label = "הבא" if is_mobile else "לשאלה הבאה"
-    btn_prev_label = "הקודם" if is_mobile else "לשאלה הקודמת"
-
+    # טיימר (מוסתר בנייד דרך ה-CSS של העמודה)
     timer_html = f"""
     <div id="t-disp" style="text-align: center; background: #fff; border: 2px solid #333; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 1.5rem; color: #333; font-family: monospace;"></div>
     <script>
@@ -117,7 +106,7 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    label = str(idx) # בנייד זה יצבע בלבן ע"י ה-CSS
+                    label = str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
 
@@ -131,16 +120,18 @@ elif st.session_state.step == "exam_run":
             choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
             if choice is not None: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
             st.divider()
+            
+            # כפתורי ניווט - טקסט מקוצר בנייד
             bn, bp, bf = st.columns(3)
             with bn:
                 if st.session_state.current_q < 25:
-                    # בנייד ה-CSS יקטין את הפונט, כאן נשתמש בטקסט ארוך שיותאם ויזואלית
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
+                    # בשימוש ב-Media Queries ב-CSS ניתן להסתיר טקסט מסוים, אך כאן נשתמש בתווית קצרה יותר שתתאים לכולם או תותאם ב-CSS
+                    if st.button("הבא", key="next", disabled=(choice is None)):
                         logic.move_to_next(); st.rerun()
             with bp:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
+                if st.button("הקודם", key="prev", disabled=(st.session_state.current_q == 1)):
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
-                if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+                if 25 in st.session_state.answers_user: st.button("סיום", key="finish")
 
 # סוף קובץ
