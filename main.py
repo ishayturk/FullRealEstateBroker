@@ -1,7 +1,8 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V141 | Date: 23/02/2026 | 13:50
+# Version: V142 | Date: 23/02/2026 | 14:15
 import streamlit as st
 import logic
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
 user_name = st.query_params.get("user", "אורח")
@@ -20,7 +21,12 @@ st.markdown("""
     .nav-num.active { background-color: #007bff; color: white !important; font-weight: bold; border-color: #0056b3; }
     .nav-num.disabled { color: #ccc; cursor: default; border-color: #eee; pointer-events: none; }
 
-    /* --- 2. מגזר מחשב (Desktop - V113 Style) --- */
+    /* עיצוב כותרת ושעון */
+    .title-container { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 10px; }
+    .exam-title { flex-grow: 1; text-align: center; margin: 0; font-size: 1.8rem; font-weight: bold; }
+    .timer-wrapper { width: 120px; text-align: left; }
+
+    /* --- 2. מגזר מחשב (V113 Style) --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
@@ -31,7 +37,7 @@ st.markdown("""
         .nav-title { margin-top: 0px; margin-bottom: 10px; display: block; font-weight: bold; }
     }
 
-    /* --- 3. מגזר נייד (Mobile - Clean Start) --- */
+    /* --- 3. מגזר נייד (Mobile Only) --- */
     @media (max-width: 768px) {
         div[data-testid="column"]:nth-of-type(1) {
             display: none !important;
@@ -40,7 +46,9 @@ st.markdown("""
             padding: 0 !important;
         }
         div[data-testid="column"]:nth-of-type(2) { width: 100% !important; }
-        h2 { font-size: 1.2rem !important; }
+        .title-container { flex-direction: column-reverse; gap: 5px; }
+        .exam-title { font-size: 1.3rem !important; }
+        .timer-wrapper { width: 100%; text-align: center; }
         .q-text { font-size: 1.1rem !important; }
     }
     </style>
@@ -71,17 +79,34 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
                 logic.start_exam_logic(); st.rerun()
 
 elif st.session_state.step == "exam_run":
-    # ניווט דרך URL (למפת המספרים)
+    # ניווט דרך URL
     q_param = st.query_params.get("q")
     if q_param and int(q_param) != st.session_state.current_q:
         st.session_state.current_q = int(q_param)
         st.rerun()
 
+    rem_sec = logic.get_remaining_seconds()
+    timer_html = f"""
+    <div id="t-disp" style="text-align: center; font-weight: bold; font-size: 1.2rem; color: #333; font-family: monospace; border: 1px solid #ddd; border-radius: 5px; padding: 2px;"></div>
+    <script>
+    var s = {rem_sec};
+    function u() {{
+        var m = Math.floor(s / 60); var sec = s % 60;
+        var el = document.getElementById('t-disp');
+        if (el) {{
+            if (s <= 600) el.style.color = "red";
+            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+        }}
+        if (s > 0) s--;
+    }}
+    u(); setInterval(u, 1000);
+    </script>
+    """
+
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
         st.markdown('<p class="nav-title">מפת שאלות</p>', unsafe_allow_html=True)
-        # בניית מפת מספרים לחיצה
         html_grid = '<div class="nav-grid">'
         for i in range(1, 26):
             is_active = i in st.session_state.nav_active_questions
@@ -94,7 +119,15 @@ elif st.session_state.step == "exam_run":
         st.markdown(html_grid, unsafe_allow_html=True)
 
     with col_main:
-        st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
+        # כותרת ושעון בשורה אחת
+        st.markdown('<div class="title-container">', unsafe_allow_html=True)
+        t_col, m_col = st.columns([1, 4])
+        with t_col:
+            components.html(timer_html, height=40)
+        with m_col:
+            st.markdown('<h2 class="exam-title">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
