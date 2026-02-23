@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V218 | Date: 24/02/2026 | 02:50
+# Version: V217 | Date: 24/02/2026 | 02:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -45,7 +45,7 @@ current_step = st.session_state.get("step", "instructions")
 if current_step == "instructions":
     logic.ensure_question_exists(1)
     
-    # כותרת מתוקנת לפי דרישה
+    # כותרת מעודכנת לפי דרישתך: רישויי מתווכים
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
