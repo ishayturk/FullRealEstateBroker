@@ -1,25 +1,25 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: V212 | Date: 24/02/2026 | 01:15
+# Version: V213 | Date: 24/02/2026 | 01:30
 import streamlit as st
 import time
 import random
 
 def generate_question_from_engine(q_num):
-    # המנוע משתמש בעוגן 1213 ובלינקים המקצועיים
+    # מבוסס על מבנה V206
     pool = [
-        {"q": "מהו הדין במקרה בו מתווך פעל ללא הסכם בכתב אך היה הגורם היעיל המכריע בעסקה?", "correct": "המתווך אינו זכאי לדמי תיווך, שכן דרישת הכתב לפי חוק המתווכים היא קוגנטית ומהותית.", "distractors": ["הוא זכאי לשכר ראוי בלבד.", "הוא זכאי לדמי תיווך מלאים מכוח דיני עשיית עושר.", "בית המשפט יחייב את הלקוח ב-50% מהעמלה."]},
-        {"q": "תקופת הבלעדיות המרבית בדירת מגורים, במידה ולא הוסכם אחרת בנפרד, היא:", "correct": "שישה חודשים מיום ההזמנה.", "distractors": ["שנה אחת.", "שלושה חודשים.", "תשעה חודשים."]}
+        {"q": "שמעון המתווך החתים לקוח על בלעדיות ל-8 חודשים בדירת מגורים. בתוך תקופה זו נמכרה הדירה. האם הוא זכאי לעמלה?", "correct": "לא; תקופת הבלעדיות המקסימלית לדירת מגורים היא 6 חודשים.", "distractors": ["כן, כי חתמו על 8 חודשים.", "כן, אם ביצע פעולות שיווק.", "רק אם הוא היה הגורם היעיל."]},
+        {"q": "מתווך גילה פגם נסתר בנכס והמוכר אסר עליו לגלות זאת. מה הדין?", "correct": "חובת הגילוי לקונה גוברת על הוראת המוכר.", "distractors": ["עליו לשתוק.", "עליו לדווח למשטרה.", "עליו לבטל את ההסכם בלבד."]}
     ]
     data = pool[q_num % len(pool)]
-    options = [data["correct"]] + data["distractors"]
-    random.shuffle(options)
-    return {"question": data["q"], "options": options, "answer_index": options.index(data["correct"])}
+    opts = [data["correct"]] + data["distractors"]
+    random.shuffle(opts)
+    return {"question": data["q"], "options": opts, "answer_index": opts.index(data["correct"])}
 
 def initialize_exam_state():
     if "step" not in st.session_state: st.session_state.step = "instructions"
     if "exam_data" not in st.session_state: st.session_state.exam_data = {}
     if "answers_user" not in st.session_state: st.session_state.answers_user = {}
-    if "nav_active_questions" not in st.session_state: st.session_state.nav_active_questions = set()
+    if "nav_active_questions" not in st.session_state: st.session_state.nav_active_questions = {1}
     if "start_time" not in st.session_state: st.session_state.start_time = time.time()
     if "current_q" not in st.session_state: st.session_state.current_q = 1
     if "finish_button_visible" not in st.session_state: st.session_state.finish_button_visible = False
