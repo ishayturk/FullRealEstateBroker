@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V179 | Date: 23/02/2026 | 13:30
+# Version: V180 | Date: 23/02/2026 | 13:40
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -17,21 +17,31 @@ st.markdown("""
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
 
-    /* עיצוב כפתורי הניווט כספרות נקיות בלבד */
+    /* דריסה אגרסיבית של כפתורי הניווט - ספרות בלבד */
     div[data-testid="column"]:nth-of-type(1) button {
-        background: none !important;
+        background-color: transparent !important;
         border: none !important;
-        padding: 0 !important;
-        color: #333 !important;
-        text-decoration: none !important;
         box-shadow: none !important;
+        color: #333 !important;
+        padding: 0 !important;
         min-height: 0 !important;
-        width: auto !important;
+        width: 100% !important;
+        height: auto !important;
         font-size: 1.1rem !important;
-        margin: 0 auto !important;
-        display: block !important;
+        transition: none !important;
     }
     
+    /* ביטול אפקטים של מעבר עכבר ופוקוס */
+    div[data-testid="column"]:nth-of-type(1) button:hover, 
+    div[data-testid="column"]:nth-of-type(1) button:active, 
+    div[data-testid="column"]:nth-of-type(1) button:focus {
+        background-color: transparent !important;
+        color: #000 !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -119,7 +129,6 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    # הצגת מספר השאלה כספרה. הנוכחית ב-Bold.
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
