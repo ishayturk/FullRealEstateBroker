@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V236 | Date: 23/02/2026 | 21:55
+# Version: V237 | Date: 23/02/2026 | 22:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,9 +18,6 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
-        .exam-header-container { display: flex; align-items: center; justify-content: center; width: 100%; }
-        .exam-title-text { font-size: 2.2rem; font-weight: bold; color: #000; }
-        .clock-display { font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -29,17 +26,16 @@ st.markdown("""
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
         
-        /* תיקון כותרת ושעון לשורה אחת בנייד */
-        .exam-header-container { 
-            display: flex; 
-            flex-direction: row !important; 
-            align-items: center; 
-            justify-content: space-between; 
-            width: 100%;
-            padding: 0 5px;
+        /* תיקון ספציפי לכותרת והשעון בנייד בלבד */
+        .mobile-header-fix {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 10px !important;
         }
-        .exam-title-text { font-size: 1.1rem !important; font-weight: bold; color: #000; white-space: nowrap; }
-        .clock-display { font-size: 1.1rem !important; font-weight: bold; direction: ltr; margin-right: 10px; }
+        .mobile-header-fix h1 { font-size: 1.2rem !important; white-space: nowrap; margin: 0 !important; }
+        .mobile-header-fix div { font-size: 1.2rem !important; margin: 0 !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -86,11 +82,12 @@ if current_step == "instructions":
 
 elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
-    # שימוש ב-Classes שהוגדרו ב-CSS כדי לשלוט על הנראות בנייד
+    
+    # השארתי את ה-HTML המקורי של המחשב, והוספתי Class של Mobile בלבד
     header_html = f"""
-    <div class="exam-header-container" style="direction: rtl;">
-        <div class="exam-title-text">מבחן רישוי למתווכים</div>
-        <div id="clock-val" class="clock-display"></div>
+    <div class="mobile-header-fix" style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;">
+        <h1 style="font-size: 2.2rem; font-weight: bold; color: #000; margin: 0;">מבחן רישוי למתווכים</h1>
+        <div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div>
     </div>
     <script>
     var s = {rem_sec};
@@ -106,7 +103,7 @@ elif current_step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-    components.html(header_html, height=50)
+    components.html(header_html, height=70)
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
