@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V214 | Date: 24/02/2026 | 01:45
+# Version: V215 | Date: 24/02/2026 | 02:00
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -29,76 +29,120 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# אתחול בסיסי
 logic.initialize_exam_state()
 
-# סטריפ עליון - עוגן V38 (שורה אחת מתחת לקצה)
-st.write("")
-h_col1, h_col2, h_col3 = st.columns([1, 2, 1])
-with h_col3: st.markdown('<div style="text-align: right; font-weight: bold;">מתווך בקליק</div>', unsafe_allow_html=True)
-with h_col2: st.markdown(f'<div style="text-align: center; font-weight: bold;">{user_name}</div>', unsafe_allow_html=True)
-with h_col1: 
-    if st.button("חזרה", key="back_home"): pass
-
+# 1. סטריפ עליון (לפי גרסה V208)
+h1, h2, h3 = st.columns([2, 1, 2])
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-step = st.session_state.get("step", "instructions")
+# 2. ניהול שלבי הבחינה (שימוש ב-get למניעת AttributeError)
+current_step = st.session_state.get("step", "instructions")
 
-if step == "instructions":
+if current_step == "instructions":
+    # ייצור שאלה 1 ברקע
     logic.ensure_question_exists(1)
-    # עמוד הסבר - עוגן V38 בדיוק
-    st.markdown('<h1 style="text-align: center;">מבחן רשם המתווכים</h1>', unsafe_allow_html=True)
-    st.write("ברוכים הבאים למערכת סימולציית הבחינה של רשם המתווכים.")
-    st.write("המבחן מדמה את התנאים האמיתיים של הבחינה הממשלתית.")
-    st.markdown("### דגשים חשובים:")
-    st.write("* המבחן כולל 25 שאלות רב-ברירה.")
-    st.write("* משך הבחינה המומלץ הוא 90 דקות.")
-    st.write("* לכל שאלה תשובה אחת נכונה בלבד.")
-    st.write("")
     
-    agree = st.checkbox("אני מאשר כי קראתי את ההוראות")
-    is_q1_ready = 1 in st.session_state.exam_data
-    
-    # כפתור מעבר - אקטיבי רק אם סומן צ'קבוקס ושאלה 1 מוכנה
-    if st.button("עבור לבחינה", disabled=not (agree and is_q1_ready)):
-        st.session_state.step = "exam_run"
-        st.session_state.current_q = 1
-        st.session_state.nav_active_questions.add(1)
-        logic.ensure_question_exists(2)
-        st.rerun()
+    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    _, center_col, _ = st.columns([1, 1.2, 1])
+    with center_col:
+        # תוכן ההוראות המדויק מ-V208
+        instructions = [
+            "המבחן כולל 25 שאלות.", 
+            "זמן מוקצב: 90 דקות.", 
+            "מעבר לשאלה הבאה רק לאחר סימון תשובה.", 
+            "ניתן לחזור אחורה לשאלות שנחשפו.", 
+            "ציון עובר: 60.", 
+            "המקור: חוק המתווכים, תקנות האתיקה ודיני המקרקעין."
+        ]
+        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+        st.write("")
+        f_cols = st.columns([1, 1])
+        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
+        with f_cols[1]:
+            # כפתור התחלה - בדיקת מוכנות Buffer
+            is_q1_ready = 1 in st.session_state.exam_data
+            if st.button("התחל בחינה", disabled=not (agree and is_q1_ready)):
+                st.session_state.step = "exam_run"
+                st.session_state.current_q = 1
+                st.session_state.nav_active_questions.add(1)
+                logic.ensure_question_exists(2)
+                st.rerun()
 
-elif step == "exam_run":
+elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
-    components.html(f'<div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;"><div style="font-size: 2.2rem; font-weight: bold; color: #000;">מבחן רישוי למתווכים</div><div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div></div><script>var s={rem_sec};function u(){{var m=Math.floor(s/60);var sec=s%60;var el=document.getElementById("clock-val");if(el){{el.innerHTML=(m<10?"0":"")+m+":"+(sec<10?"0":"")+sec;if(s<=600)el.style.color="red"}}if(s>0)s--}}u();setInterval(u,1000)</script>', height=70)
+    
+    header_html = f"""
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;">
+        <div style="font-size: 2.2rem; font-weight: bold; color: #000;">מבחן רישוי למתווכים</div>
+        <div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div>
+    </div>
+    <script>
+    var s = {rem_sec};
+    function u() {{
+        var m = Math.floor(s / 60); var sec = s % 60;
+        var el = document.getElementById('clock-val');
+        if (el) {{
+            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+            if (s <= 600) el.style.color = "red";
+        }}
+        if (s > 0) s--;
+    }}
+    u(); setInterval(u, 1000);
+    </script>
+    """
+    components.html(header_html, height=70)
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
+    
     with col_main:
         st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
         idx = st.session_state.current_q
         q = st.session_state.exam_data.get(idx)
+        
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
             st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["question"]}</div>', unsafe_allow_html=True)
-            choice = st.radio("", q["options"], index=st.session_state.answers_user.get(idx), key=f"r_{idx}", label_visibility="collapsed")
+            
+            prev_ans = st.session_state.answers_user.get(idx)
+            choice = st.radio("", q["options"], index=prev_ans, key=f"r_{idx}", label_visibility="collapsed")
+            
             if choice is not None:
                 st.session_state.answers_user[idx] = q["options"].index(choice)
-                if idx == 25: st.session_state.finish_button_visible = True
+                if idx == 25:
+                    st.session_state.finish_button_visible = True
+            
             st.divider()
+            
             b_prev, b_next, b_finish = st.columns([1, 1, 1.2])
+            
             with b_prev:
                 if idx > 1:
                     if st.button("לשאלה הקודמת"):
-                        st.session_state.current_q -= 1; st.rerun()
+                        st.session_state.current_q -= 1
+                        st.rerun()
+            
             with b_next:
                 if idx < 25:
+                    is_answered = idx in st.session_state.answers_user
                     is_ready = (idx + 1) in st.session_state.exam_data
-                    if st.button("לשאלה הבאה", disabled=not (idx in st.session_state.answers_user and is_ready)):
+                    if st.button("לשאלה הבאה", disabled=not (is_answered and is_ready)):
                         st.session_state.current_q += 1
                         st.session_state.nav_active_questions.add(st.session_state.current_q)
-                        if idx <= 23: logic.ensure_question_exists(idx + 2)
+                        if idx <= 23:
+                            logic.ensure_question_exists(idx + 2)
                         st.rerun()
+                else:
+                    st.button("לשאלה הבאה", disabled=True)
+
             with b_finish:
-                if st.session_state.finish_button_visible and st.button("סיים בחינה", type="primary"):
-                    st.session_state.step = "feedback"; st.rerun()
+                if st.session_state.finish_button_visible:
+                    if st.button("סיים בחינה", type="primary"):
+                        st.session_state.step = "feedback"
+                        st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_nav:
@@ -108,7 +152,10 @@ elif step == "exam_run":
             for i in range(4):
                 n = r + i + 1
                 if n <= 25:
+                    is_active = n in st.session_state.nav_active_questions
                     label = f"**{n}**" if n == st.session_state.current_q else str(n)
-                    if cols[i].button(label, key=f"n_{n}", disabled=n not in st.session_state.nav_active_questions):
-                        st.session_state.current_q = n; st.rerun()
+                    if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
+                        st.session_state.current_q = n
+                        st.rerun()
+
 # סוף קובץ
