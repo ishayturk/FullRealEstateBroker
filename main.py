@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V174 | Date: 24/02/2026 | 01:40
+# Version: V175 | Date: 24/02/2026 | 01:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -65,15 +65,13 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # כותרת ושעון בתוך בלוק HTML אחד למניעת שבירת שורה
-    combined_html = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
+    # מיכל HTML רחב מעל הכל כדי לאפשר גודל מקסימלי
+    combined_header_full = f"""
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px;">
         <style>
-            /* מצב מחשב */
-            .t-title {{ font-size: 3.0rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 30px; }}
+            .t-title {{ font-size: 3.5rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; white-space: nowrap; }}
+            .t-clock {{ font-size: 2.5rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 40px; white-space: nowrap; }}
             
-            /* מצב נייד */
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
                 .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
@@ -97,6 +95,9 @@ elif st.session_state.step == "exam_run":
     </script>
     """
 
+    # הצגת הכותרת והשעון ברוחב מלא לפני העמודות
+    components.html(combined_header_full, height=100)
+
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
@@ -111,9 +112,6 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # רכיב HTML אחד שתופס את כל הרוחב ומונע שבירת שורה
-        components.html(combined_html, height=85)
-        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
