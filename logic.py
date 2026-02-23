@@ -1,27 +1,16 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: V241 | Date: 23/02/2026 | 23:15
+# Version: V216 | Date: 24/02/2026 | 02:20
 import streamlit as st
 import time
 import random
 
 def generate_question_from_engine(q_num):
-    """
-    מנוע ייצור שאלות מקצועי (C-01) - רשם המתווכים.
-    מייצר שאלות מבוססות חוק המתווכים, תקנות האתיקה ופסיקה.
-    """
-    topics_pool = [
-        {
-            "q": "מתווך במקרקעין סייע ללקוח בניסוח 'זיכרון דברים' מחייב בכתב. מהן ההשלכות המשפטיות?",
-            "correct": "המתווך עבר על איסור פעולה משפטית, ואינו זכאי לדמי תיווך אף אם היה הגורם היעיל.",
-            "distractors": ["הדבר מותר כל עוד המתווך לא גבה תשלום נוסף.", "המתווך זכאי לדמי תיווך, אך צפוי לקנס מנהלי.", "הפעולה חוקית במידה והלקוח חתם על ויתור."]
-        },
-        {
-            "q": "מי רשאי לעסוק בתיווך מקרקעין בישראל?", 
-            "correct": "רק מי שיש לו רישיון בתוקף לפי חוק המתווכים.", 
-            "distractors": ["כל אזרח מעל גיל 18.", "רק עורכי דין.", "מי שעבר קורס שיווק בלבד."]
-        }
+    # מנוע שאלות נקי משגיאות סינטקס
+    pool = [
+        {"q": "מהי דרישת הכתב לפי סעיף 9 לחוק המתווכים?", "correct": "דרישה מהותית - ללא הזמנה בכתב המתווכים לא יהיה זכאי לדמי תיווך.", "distractors": ["דרישה ראייתית בלבד.", "ניתן להסתפק בהסכמה בעל פה אם יש עדים.", "הדרישה חלה רק בבלעדיות."]},
+        {"q": "מי רשאי לעסוק בתיווך מקרקעין בישראל?", "correct": "רק מי שיש לו רישיון בתוקף לפי חוק המתווכים.", "distractors": ["כל אזרח מעל גיל 18.", "רק עורכי דין.", "מי שעבר קורס שיווק בלבד."]}
     ]
-    data = topics_pool[q_num % len(topics_pool)]
+    data = pool[q_num % len(pool)]
     opts = [data["correct"]] + data["distractors"]
     random.shuffle(opts)
     return {"question": data["q"], "options": opts, "answer_index": opts.index(data["correct"])}
@@ -42,5 +31,4 @@ def ensure_question_exists(q_num):
 def get_remaining_seconds():
     elapsed = time.time() - st.session_state.get("start_time", time.time())
     return max(0, int((90 * 60) - elapsed))
-
 # סוף קובץ
