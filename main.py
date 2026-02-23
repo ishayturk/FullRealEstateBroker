@@ -1,148 +1,112 @@
-# File: main.py
-# Version: V229
-# Date: 2026-02-23
-# Time: 19:55
-
+# Project: מתווך בקליק - מערכת בחינות | File: main.py
+# Version: V219 | Date: 23/02/2026 | 16:50
 import streamlit as st
+import logic
+import streamlit.components.v1 as components
 
-# הגדרות עמוד - עוגן 1213
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
+user_name = st.query_params.get("user", "אורח")
 
-# ---------------------------------------------------------
-# CSS Section - חלוקה ל-3 חלקים (General, Desktop, Mobile)
-# ---------------------------------------------------------
 st.markdown("""
     <style>
-    /* 1. General Section */
-    .main { direction: rtl; text-align: right; }
-    [data-testid="stHeader"] { display: none; }
-    .stRadio > label { font-weight: bold; }
+    /* --- SECTION: GENERAL --- */
+    * { direction: rtl; text-align: right; }
+    header, #MainMenu, footer { visibility: hidden; }
+    .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
+    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     
-    /* הסטריפ העליון - עיצוב V38 */
-    .top-strip {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background-color: #ffffff;
-        border-bottom: 1px solid #eeeeee;
-        margin-top: 10px;
+    /* --- SECTION: DESKTOP --- */
+    @media (min-width: 769px) {
+        .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
     }
-    .main-menu-link { color: #007bff; text-decoration: none; font-weight: bold; cursor: pointer; }
-    
-    /* 2. Desktop Section */
-    @media (min-width: 1024px) {
-        .main-content { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-    }
-    
-    /* 3. Mobile Section */
-    @media (max-width: 1023px) {
-        .main-content { padding: 0.5rem; }
+
+    /* --- SECTION: MOBILE --- */
+    @media (max-width: 768px) {
+        .block-container { padding-top: 0px !important; }
+        .mobile-up { margin-top: -90px !important; }
+        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# Registrar Engine - מנוע ייצור השאלות (C-01)
-# ---------------------------------------------------------
-def registrar_question_factory(q_num):
-    """ייצור שאלה מורכבת בזמן אמת - תיווך בלבד"""
-    topics_map = {
-        1: ("אתיקה - איסור פעולה משפטית", "מתווך שסייע בעריכת מסמך משפטי בניגוד לסעיף 12."),
-        2: ("חוק המתווכים - הגורם היעיל", "סוגיית הגורם היעיל בעסקה ללא בלעדיות."),
-    }
-    topic_data = topics_map.get(q_num, ("דיני תיווך", f"מקרה בוחן מורכב {q_num}"))
-    return {
-        "q_id": f"REG_{q_num}",
-        "topic": topic_data[0],
-        "question": f"{topic_data[1]} [תוכן השאלה ברמת רשם המתווכים]...",
-        "options": {"1": "תשובה א'", "2": "תשובה ב'", "3": "התשובה הנכונה", "4": "תשובה ד'"},
-        "correct": "3",
-        "explanation": "הסבר משפטי מפורט...",
-        "difficulty": "קשה"
-    }
+logic.initialize_exam_state()
 
-# ---------------------------------------------------------
-# Session State Init
-# ---------------------------------------------------------
-if 'current_step' not in st.session_state:
-    st.session_state.current_step = 'explanation'
-if 'questions_buffer' not in st.session_state:
-    st.session_state.questions_buffer = {}
-if 'active_questions' not in st.session_state:
-    st.session_state.active_questions = set()
-if 'current_question_idx' not in st.session_state:
-    st.session_state.current_question_idx = 1
-if 'user_name' not in st.session_state:
-    st.session_state.user_name = "ישראל ישראלי"
+# סטריפ עליון (V208)
+h1, h2, h3 = st.columns([2, 1, 2])
+with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# UI Components
-# ---------------------------------------------------------
-def render_top_strip():
-    """הסטריפ העליון עם הלינק 'לתפריט הראשי'"""
-    cols = st.columns([1, 2, 1])
-    with cols[0]:
-        st.markdown('<a href="#" class="main-menu-link">לתפריט הראשי</a>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown(f'<div style="text-align: center; font-size: 1.2rem; font-weight: bold;">{st.session_state.user_name}</div>', unsafe_allow_html=True)
-    with cols[2]:
-        st.markdown('<div style="text-align: left; font-weight: bold;">לוגו מתווך בקליק</div>', unsafe_allow_html=True)
-    st.markdown('<hr style="margin-top: 5px; margin-bottom: 20px;">', unsafe_allow_html=True)
+current_step = st.session_state.get("step", "instructions")
 
-def run_app():
-    render_top_strip()
-    
-    # שלב עמוד ההסבר
-    if st.session_state.current_step == 'explanation':
-        if 1 not in st.session_state.questions_buffer:
-            st.session_state.questions_buffer[1] = registrar_question_factory(1)
-            
-        st.title("הסבר על הבחינה")
-        st.write("ברוכים הבאים למערכת התרגול. יש לקרוא את ההוראות ולאשרן.")
-        
-        # צ'קבוקס ועימוד V38
-        confirmed = st.checkbox("קראתי את ההוראות ואני מוכן להתחיל בבחינה")
-        
-        if st.button("עבור לבחינה", disabled=not confirmed):
-            st.session_state.current_step = 'exam'
-            st.session_state.active_questions.add(1)
-            st.session_state.questions_buffer[2] = registrar_question_factory(2)
-            st.rerun()
-
-    # שלב המבחן
-    elif st.session_state.current_step == 'exam':
-        with st.sidebar:
-            st.subheader("ניווט")
-            sidebar_cols = st.columns(4)
-            for i in range(1, 26):
-                with sidebar_cols[(i-1)%4]:
-                    is_active = i in st.session_state.active_questions
-                    btn_label = f"**{i}**" if is_active else str(i)
-                    if st.button(btn_label, key=f"nav_{i}", disabled=not is_active):
-                        st.session_state.current_question_idx = i
-                        st.rerun()
-
-        q_idx = st.session_state.current_question_idx
-        q_data = st.session_state.questions_buffer[q_idx]
-        
-        st.info(f"נושא: {q_data['topic']}")
-        st.markdown(f"### שאלה {q_idx}")
-        st.write(q_data['question'])
-        st.radio("בחר תשובה:", list(q_data['options'].values()), key=f"ans_{q_idx}")
-
-        if st.button("הבא"):
-            if q_idx < 25:
-                next_idx = q_idx + 1
-                st.session_state.current_question_idx = next_idx
-                st.session_state.active_questions.add(next_idx)
-                
-                future_idx = next_idx + 1
-                if future_idx <= 25 and future_idx not in st.session_state.questions_buffer:
-                    st.session_state.questions_buffer[future_idx] = registrar_question_factory(future_idx)
+if current_step == "instructions":
+    logic.ensure_question_exists(1)
+    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
+    _, center_col, _ = st.columns([1, 1.2, 1])
+    with center_col:
+        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60.", "המקור: חוק המתווכים, תקנות האתיקה ודיני המקרקעין."]
+        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+        st.write("")
+        f_cols = st.columns([1, 1])
+        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
+        with f_cols[1]:
+            is_q1_ready = 1 in st.session_state.exam_data
+            if st.button("התחל בחינה", disabled=not (agree and is_q1_ready)):
+                st.session_state.step = "exam_run"
+                st.session_state.current_q = 1
+                st.session_state.nav_active_questions.add(1)
+                logic.ensure_question_exists(2)
                 st.rerun()
 
-if __name__ == "__main__":
-    run_app()
+elif current_step == "exam_run":
+    rem_sec = logic.get_remaining_seconds()
+    header_html = f'<div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;"><div style="font-size: 2.2rem; font-weight: bold; color: #000;">מבחן רישוי למתווכים</div><div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div></div><script>var s={rem_sec};function u(){{var m=Math.floor(s/60);var sec=s%60;var el=document.getElementById("clock-val");if(el){{el.innerHTML=(m<10?"0":"")+m+":"+(sec<10?"0":"")+sec;if(s<=600)el.style.color="red"}}if(s>0)s--}}u();setInterval(u,1000)</script>'
+    components.html(header_html, height=70)
 
+    col_main, col_nav = st.columns([2.5, 1], gap="medium")
+    with col_main:
+        st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
+        idx = st.session_state.current_q
+        q = st.session_state.exam_data.get(idx)
+        if q:
+            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["question"]}</div>', unsafe_allow_html=True)
+            choice = st.radio("", q["options"], index=st.session_state.answers_user.get(idx), key=f"r_{idx}", label_visibility="collapsed")
+            if choice is not None:
+                st.session_state.answers_user[idx] = q["options"].index(choice)
+                if idx == 25: st.session_state.finish_button_visible = True
+            st.divider()
+            b_p, b_n, b_f = st.columns([1, 1, 1.2])
+            with b_p:
+                if idx > 1 and st.button("לשאלה הקודמת"):
+                    st.session_state.current_q -= 1
+                    st.rerun()
+            with b_n:
+                if idx < 25:
+                    is_ans = idx in st.session_state.answers_user
+                    is_ready = (idx + 1) in st.session_state.exam_data
+                    if st.button("לשאלה הבאה", disabled=not (is_ans and is_ready)):
+                        st.session_state.current_q += 1
+                        st.session_state.nav_active_questions.add(st.session_state.current_q)
+                        if idx <= 23: logic.ensure_question_exists(idx + 2)
+                        st.rerun()
+            with b_f:
+                if st.session_state.get("finish_button_visible") and st.button("סיים בחינה", type="primary"):
+                    st.session_state.step = "feedback"
+                    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_nav:
+        st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                n = r + i + 1
+                if n <= 25:
+                    is_active = n in st.session_state.nav_active_questions
+                    label = f"**{n}**" if n == st.session_state.current_q else str(n)
+                    if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
+                        st.session_state.current_q = n
+                        st.rerun()
 # סוף קובץ
