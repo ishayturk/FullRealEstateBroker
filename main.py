@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V175 | Date: 24/02/2026 | 01:55
+# Version: V176 | Date: 23/02/2026 | 13:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -65,12 +65,12 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # מיכל HTML רחב מעל הכל כדי לאפשר גודל מקסימלי
-    combined_header_full = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px;">
+    # מיכל אחוד לכותרת ושעון
+    header_html = f"""
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            .t-title {{ font-size: 3.5rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; white-space: nowrap; }}
-            .t-clock {{ font-size: 2.5rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 40px; white-space: nowrap; }}
+            .t-title {{ font-size: 2.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 2.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 35px; }}
             
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
@@ -87,6 +87,7 @@ elif st.session_state.step == "exam_run":
         var el = document.getElementById('clock-val');
         if (el) {{
             if (s <= 600) el.style.color = "red";
+            else el.style.color = "#333";
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
         }}
         if (s > 0) s--;
@@ -95,8 +96,7 @@ elif st.session_state.step == "exam_run":
     </script>
     """
 
-    # הצגת הכותרת והשעון ברוחב מלא לפני העמודות
-    components.html(combined_header_full, height=100)
+    components.html(header_html, height=80)
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
