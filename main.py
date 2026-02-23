@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V191 | Date: 23/02/2026 | 17:50
+# Version: V192 | Date: 23/02/2026 | 18:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -17,26 +17,27 @@ st.markdown("""
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     
-    /* עיצוב כפתורי הניווט כספרות נקיות בלבד ללא מסגרת או רקע */
+    /* עיצוב אגרסיבי לספרות נקיות בלבד - ביטול כל מאפייני הכפתור של Streamlit */
     div[data-testid="column"]:nth-of-type(1) button {
-        background: none !important;
+        background-color: transparent !important;
         border: none !important;
-        padding: 0 !important;
-        color: #333 !important;
-        text-decoration: none !important;
         box-shadow: none !important;
+        color: #333 !important;
+        padding: 0 !important;
         min-height: 0 !important;
         width: auto !important;
+        line-height: 1 !important;
         font-size: 1.1rem !important;
         margin: 0 auto !important;
         display: block !important;
+        outline: none !important;
     }
-    div[data-testid="column"]:nth-of-type(1) button:hover {
-        color: #000 !important;
-        background: none !important;
-    }
+    div[data-testid="column"]:nth-of-type(1) button:hover, 
+    div[data-testid="column"]:nth-of-type(1) button:active, 
     div[data-testid="column"]:nth-of-type(1) button:focus {
-        background: none !important;
+        background-color: transparent !important;
+        color: #000 !important;
+        border: none !important;
         box-shadow: none !important;
     }
 
@@ -53,15 +54,12 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* מחיקת כותרת מפת השאלות בנייד */
         .nav-title { display: none !important; }
-        
         div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-            gap: 0rem !important;
+            gap: 0.2rem !important;
             margin-top: 0px !important;
-            padding-top: 0px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        .q-text { font-size: 1.2rem !important; font-weight: bold; line-height: 1.3; color: #000; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -120,7 +118,6 @@ elif st.session_state.step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-
     components.html(header_html, height=80)
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
@@ -132,7 +129,6 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
-                    # הצגת מספר השאלה כספרה. הנוכחית ב-Bold.
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
