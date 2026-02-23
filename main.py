@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V216 | Date: 24/02/2026 | 02:20
+# Version: V218 | Date: 24/02/2026 | 02:50
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -29,10 +29,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# אתחול בסיסי
+# אתחול
 logic.initialize_exam_state()
 
-# 1. סטריפ עליון (לפי גרסה V208)
+# 1. סטריפ עליון (V208)
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -45,10 +45,11 @@ current_step = st.session_state.get("step", "instructions")
 if current_step == "instructions":
     logic.ensure_question_exists(1)
     
-    # שחזור דף הסבר מדויק מ-V208
-    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
+    # כותרת מתוקנת לפי דרישה
+    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
+        # תוכן מ-V208
         instructions = [
             "המבחן כולל 25 שאלות.", 
             "זמן מוקצב: 90 דקות.", 
@@ -122,22 +123,4 @@ elif current_step == "exam_run":
                         st.rerun()
                 else: st.button("לשאלה הבאה", disabled=True)
             with b_f:
-                if st.session_state.get("finish_button_visible"):
-                    if st.button("סיים בחינה", type="primary"):
-                        st.session_state.step = "feedback"
-                        st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col_nav:
-        st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                n = r + i + 1
-                if n <= 25:
-                    is_active = n in st.session_state.nav_active_questions
-                    label = f"**{n}**" if n == st.session_state.current_q else str(n)
-                    if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
-                        st.session_state.current_q = n
-                        st.rerun()
-# סוף קובץ
+                if st.session
