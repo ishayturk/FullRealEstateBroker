@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V188 | Date: 23/02/2026 | 16:30
+# Version: V190 | Date: 23/02/2026 | 17:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -7,13 +7,13 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
 user_name = st.query_params.get("user", "אורח")
 
-# תיקון לוגיקת הניווט - מניעת חזרה לעמוד ההוראות בלחיצה על שאלה
+# תיקון לוגיקת הניווט - מניעת חזרה לעמוד ההוראות ושמירה על מצב בחינה
 nav_q = st.query_params.get("q")
 if nav_q and nav_q.isdigit():
     target_q = int(nav_q)
     if "nav_active_questions" in st.session_state and target_q in st.session_state.nav_active_questions:
         st.session_state.current_q = target_q
-        st.session_state.step = "exam_run" # וידוא השארות בתוך הבחינה
+        st.session_state.step = "exam_run"
     st.query_params.clear()
     st.query_params["user"] = user_name
     st.rerun()
@@ -32,15 +32,15 @@ st.markdown("""
         color: #333 !important;
         display: block;
         cursor: pointer;
-        font-weight: normal;
     }
     .nav-link-answered { font-weight: bold !important; color: #000 !important; }
-    .nav-link-disabled { color: #ccc !important; cursor: default; pointer-events: none; font-weight: 100 !important; }
+    .nav-link-disabled { color: #ccc !important; cursor: default; pointer-events: none; }
     
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
         .nav-link { text-align: center; font-size: 1.1rem !important; }
+        /* עיצוב העמודה האפורה רק בדסקטופ */
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
@@ -51,21 +51,26 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
+        /* הצבת העמודות זו לצד זו כדי שהשאלה תעלה למעלה */
         .exam-container [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             align-items: flex-start !important;
-            gap: 2px !important;
+            gap: 0px !important;
         }
+        /* עמודת ניווט לבנה וצרה מאוד */
         .exam-container div[data-testid="column"]:nth-of-type(1) {
             min-width: 1ch !important;
             width: 1ch !important;
             flex-basis: 1ch !important;
             padding: 0 !important;
+            background-color: transparent !important;
         }
-        .nav-link-mobile { color: white !important; font-size: 0.3rem !important; pointer-events: none !important; }
+        .nav-link-mobile { color: white !important; font-size: 0.1rem !important; }
         .nav-title { display: none !important; }
+
+        /* העלאת השאלה לקו של הכותרת */
         .exam-container div[data-testid="column"]:nth-of-type(2) {
             flex-grow: 1 !important;
             padding-top: 0 !important;
@@ -106,8 +111,8 @@ elif st.session_state.step == "exam_run":
     header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            .t-title {{ font-size: 2.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ font-size: 2.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 35px; }}
+            .t-title {{ font-size: 2.8rem; font-weight: bold; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 2.0rem; font-weight: bold; color: #333; margin-right: 35px; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
                 .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
@@ -146,12 +151,10 @@ elif st.session_state.step == "exam_run":
                     is_active = idx in st.session_state.nav_active_questions
                     state_class = "nav-link-answered" if is_answered else ("" if is_active else "nav-link-disabled")
                     
-                    desktop_html = f'<a href="?user={user_name}&q={idx}" target="_self" class="nav-link {state_class}">{idx}</a>'
-                    mobile_html = f'<span class="nav-link-mobile">{idx}</span>'
-                    
+                    # דסקטופ: לינק לחיץ | נייד: מספר לבן קטן
                     cols[i].markdown(f"""
-                        <div class="desktop-only">{desktop_html}</div>
-                        <div class="mobile-only" style="display:none;">{mobile_html}</div>
+                        <div class="desktop-only"><a href="?user={user_name}&q={idx}" target="_self" class="nav-link {state_class}">{idx}</a></div>
+                        <div class="mobile-only" style="display:none;"><span class="nav-link-mobile">{idx}</span></div>
                         <style>
                             @media (max-width: 768px) {{ .desktop-only {{ display: none; }} .mobile-only {{ display: block; }} }}
                             @media (min-width: 769px) {{ .mobile-only {{ display: none; }} .desktop-only {{ display: block; }} }}
