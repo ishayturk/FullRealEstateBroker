@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V163 | Date: 23/02/2026 | 22:25
+# Version: V165 | Date: 23/02/2026 | 22:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -25,6 +25,8 @@ st.markdown("""
             padding: 15px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        /* הסתרת רכיב ה-HTML של השעון בנייד כשנמצאים במחשב */
+        .mobile-only { display: none !important; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -35,6 +37,8 @@ st.markdown("""
             padding-top: 0px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        /* הסתרת כותרת המחשב כשנמצאים בנייד */
+        .desktop-only { display: none !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -65,22 +69,11 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # HTML מאוחד עם יישור Flex פשוט (שעון משמאל לכותרת במחשב)
-    combined_header_html = f"""
+    # רכיב HTML לנייד בלבד (V159)
+    mobile_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
-        <style>
-            /* עיצוב מחשב - תיקון יישור וגדלים */
-            .t-title {{ font-size: 2.0rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.6rem; font-weight: bold; color: #333; }}
-            
-            @media (max-width: 768px) {{
-                /* עיצוב נייד - ללא שינוי מ-V159 */
-                .t-title {{ font-size: 1.1rem !important; }}
-                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
-            }}
-        </style>
-        <div class="t-title">מבחן רישוי למתווכים</div>
-        <div id="clock-val" class="t-clock"></div>
+        <div style="font-size: 1.1rem; font-weight: bold; font-family: sans-serif; color: #000;">מבחן רישוי למתווכים</div>
+        <div id="clock-val" style="margin-right: 15px; font-family: monospace; font-size: 1.0rem; font-weight: bold; color: #333;"></div>
     </div>
     <script>
     var s = {rem_sec};
@@ -89,7 +82,6 @@ elif st.session_state.step == "exam_run":
         var el = document.getElementById('clock-val');
         if (el) {{
             if (s <= 600) el.style.color = "red";
-            else el.style.color = "#333";
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
         }}
         if (s > 0) s--;
@@ -112,7 +104,14 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        components.html(combined_header_html, height=60)
+        # כותרת מחשב (V113) - תוצג רק במחשב דרך CSS
+        st.markdown('<div class="desktop-only"><h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2></div>', unsafe_allow_html=True)
+        
+        # כותרת נייד (V159) - תוצג רק בנייד דרך CSS
+        st.markdown('<div class="mobile-only">', unsafe_allow_html=True)
+        components.html(mobile_header_html, height=35)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
