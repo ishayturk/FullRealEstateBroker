@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V205 | Date: 23/02/2026 | 23:35
+# Version: V206 | Date: 23/02/2026 | 23:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -19,13 +19,19 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
+        /* הזחה של כ-10 תווים פנימה עבור השאלה, הכותרת והתשובות */
+        .question-block {
+            padding-right: 60px !important;
+        }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
         .block-container { padding-top: 0px !important; }
-        .mobile-up { margin-top: -70px !important; }
+        /* צמצום מרווח בנייד ב-2 שורות נוספות לכיוון השעון */
+        .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
+        .question-block { padding-right: 0px !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -86,13 +92,16 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # היפוך עמודות: הבחינה (col_main) ראשונה בקוד כדי שתהיה ראשונה בנייד
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     
     with col_main:
-        st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
+        st.markdown('<div class="mobile-up question-block">', unsafe_allow_html=True)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
+            # הוספת השאלה הנוכחית לזיכרון הניווט באופן מיידי
+            if st.session_state.current_q not in st.session_state.nav_active_questions:
+                st.session_state.nav_active_questions.add(st.session_state.current_q)
+            
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text" style="font-size:1.25rem; font-weight:bold;">{q["question"]}</div>', unsafe_allow_html=True)
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
@@ -118,11 +127,11 @@ elif st.session_state.step == "exam_run":
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    is_answered = idx in st.session_state.nav_active_questions
+                    is_active = idx in st.session_state.nav_active_questions
                     is_current = (idx == st.session_state.current_q)
                     label = f"**{idx}**" if is_current else str(idx)
-                    # השאלה הנוכחית או שאלות שנענו - לחיצות
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not (is_answered or is_current)):
+                    # שאלה שנחשפה נשארת פעילה תמיד
+                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
 
 # סוף קובץ
