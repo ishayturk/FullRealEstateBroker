@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V158 | Date: 23/02/2026 | 19:35
+# Version: V159 | Date: 23/02/2026 | 21:20
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -23,7 +23,7 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
-        /* השאלה במחשב מקבלת גודל 1.25rem */
+        /* פונט שאלה מוגדר כ-1.25rem במחשב בכפייה */
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
@@ -32,7 +32,7 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
             gap: 0rem !important;
         }
-        /* השאלה בנייד נשארת בגודלה המקורי */
+        /* פונט שאלה בנייד נשאר כפי שהיה */
         .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
     </style>
@@ -40,7 +40,7 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון
+# 1. סטריפ עליון (V113)
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -64,15 +64,15 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # במחשב הכותרת והשעון מקבלים 2.0rem
+    # כותרת ושעון בגודל 2.0rem במחשב בכפייה
     combined_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap; overflow: hidden;">
         <style>
-            .t-title {{ font-size: 2.0rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 2.0rem; font-weight: bold; }}
+            .t-title {{ font-size: 2.0rem !important; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 2.0rem !important; font-weight: bold; }}
             @media (max-width: 768px) {{
-                .t-title {{ font-size: 1.1rem; }}
-                .t-clock {{ font-size: 1.0rem; margin-right: 15px; }}
+                .t-title {{ font-size: 1.1rem !important; }}
+                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px; }}
             }}
         </style>
         <div class="t-title">מבחן רישוי למתווכים</div>
