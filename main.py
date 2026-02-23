@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V150 | Date: 23/02/2026 | 17:15
+# Version: V151 | Date: 23/02/2026 | 17:35
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,6 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
+    /* --- 1. מגזר כללי ומחשב --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
@@ -24,7 +25,6 @@ st.markdown("""
         margin-bottom: 15px;
     }
 
-    /* יישור פריים הניווט */
     div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
         gap: 0rem !important;
         margin-top: 0px !important;
@@ -42,6 +42,25 @@ st.markdown("""
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+
+    /* עיצוב שורת הכותרת והשעון */
+    .exam-header-flex {
+        display: flex; 
+        flex-direction: row-reverse; 
+        align-items: center; 
+        justify-content: center; 
+        width: 100%; 
+        margin-bottom: 15px;
+        white-space: nowrap;
+    }
+    .header-title { margin: 0; font-weight: bold; font-size: 1.8rem; }
+    .header-clock { margin-right: 50px; font-family: monospace; font-size: 1.4rem; font-weight: bold; }
+
+    /* --- 2. מגזר נייד (תיקון כותרת בלבד) --- */
+    @media (max-width: 768px) {
+        .header-title { font-size: 1.1rem !important; }
+        .header-clock { font-size: 1rem !important; margin-right: 15px !important; }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -73,11 +92,11 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # שעון משמאל לכותרת עם מרווח גדול וצבע אדום בסיום
+    # HTML של הכותרת והשעון עם מחלקות CSS לשליטה רספונסיבית
     combined_header_html = f"""
-    <div style="display: flex; flex-direction: row-reverse; align-items: center; justify-content: center; width: 100%; margin-bottom: 15px;">
-        <h2 style="margin: 0; font-weight: bold; font-size: 1.8rem;">מבחן רישוי למתווכים</h2>
-        <div id="clock" style="margin-right: 50px; font-family: monospace; font-size: 1.4rem; font-weight: bold;"></div>
+    <div class="exam-header-flex">
+        <h2 class="header-title">מבחן רישוי למתווכים</h2>
+        <div id="clock" class="header-clock"></div>
     </div>
     <script>
     var s = {rem_sec};
