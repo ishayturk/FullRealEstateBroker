@@ -141,4 +141,33 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # בנייד, נזריק שעון נוסף שיופיע רק שם (ה-
+        # בנייד, נזריק שעון נוסף שיופיע רק שם (ה-CSS שולט בזה)
+        st.markdown(f'<div class="mobile-only">{timer_html}</div>', unsafe_allow_html=True)
+        
+        st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
+        
+        q = st.session_state.exam_data.get(st.session_state.current_q)
+        if q:
+            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
+            
+            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
+            choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
+            if choice is not None: 
+                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
+            
+            st.divider()
+            
+            bn, bp, bf = st.columns(3)
+            with bn:
+                if st.session_state.current_q < 25:
+                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
+                        logic.move_to_next(); st.rerun()
+            with bp:
+                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
+                    st.session_state.current_q -= 1; st.rerun()
+            with bf:
+                if 25 in st.session_state.answers_user:
+                    st.button("סיום בחינה", key="finish")
+
+# סוף קובץ
