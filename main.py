@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V194 | Date: 23/02/2026 | 18:30
+# Version: V197 | Date: 23/02/2026 | 19:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -16,7 +16,7 @@ st.markdown("""
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
     
-    /* ספרות נקיות בלבד לניווט */
+    /* עיצוב ספרות נקיות לניווט */
     div[data-testid="column"]:nth-of-type(1) button {
         background: none !important;
         border: none !important;
@@ -39,26 +39,32 @@ st.markdown("""
             padding: 5px 15px 15px 15px !important;
             margin-top: -15px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; color: #000; }
+        /* בדסקטופ מוודאים שהעמודות הן אחת ליד השנייה */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+        }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* דריסת מבנה העמודות - הופך את הכל לטור אחד */
+        /* רק בנייד - הפיכת הסדר: שאלה למעלה, ניווט למטה */
         [data-testid="stHorizontalBlock"] {
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
-        /* מחיקה מוחלטת של פריים הניווט בנייד */
         div[data-testid="column"]:nth-of-type(1) {
-            display: none !important;
-        }
-        /* העלאת השאלה (עמודה 2) לראש המסך */
-        div[data-testid="column"]:nth-of-type(2) {
+            order: 2 !important; /* מפת השאלות יורדת לסוף */
             width: 100% !important;
-            margin-top: -50px !important;
-            padding-top: 0 !important;
+            background-color: transparent !important;
+            padding: 10px 0 !important;
         }
-        .q-text { font-size: 1.2rem !important; font-weight: bold; line-height: 1.3; }
+        div[data-testid="column"]:nth-of-type(2) {
+            order: 1 !important; /* השאלה עולה להתחלה */
+            width: 100% !important;
+            margin-top: -55px !important; /* העלאה לראש המסך */
+        }
+        .nav-title { margin-top: 15px !important; text-align: center; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -119,7 +125,7 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # מבנה עמודות: בדסקטופ הן עובדות, בנייד ה-CSS הופך אותן לבלוק אחד ומסתיר את הראשונה
+    # מבנה ה-Columns של V177
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
@@ -138,7 +144,7 @@ elif st.session_state.step == "exam_run":
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="q-text" style="font-size:1.25rem; font-weight:bold;">{q["question"]}</div>', unsafe_allow_html=True)
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
             if choice is not None: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
