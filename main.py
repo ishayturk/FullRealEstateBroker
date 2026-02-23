@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V161 | Date: 23/02/2026 | 22:05
+# Version: V162 | Date: 23/02/2026 | 22:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,7 +24,6 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
-        /* השאלה במחשב - גודל קטן יותר מהכותרת */
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
@@ -35,7 +34,6 @@ st.markdown("""
             margin-top: 0px !important;
             padding-top: 0px !important;
         }
-        /* השאלה בנייד - נשמרת לפי V159 */
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
     </style>
@@ -43,7 +41,7 @@ st.markdown("""
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (V113)
+# 1. סטריפ עליון
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -67,18 +65,18 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # הגדרות HTML לכותרת ושעון - הפרדה מוחלטת בתוך ה-IFrame
+    # HTML מאוחד - עיצוב מחשב מבוסס V150, עיצוב נייד מוגן ב-Media Query
     combined_header_html = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap; overflow: hidden;">
+    <div style="direction: rtl; display: flex; flex-direction: row-reverse; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            /* כותרת גדולה במחשב (2.2rem) ושעון קטן יותר (1.8rem) */
-            .t-title {{ font-size: 2.2rem !important; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.8rem !important; font-weight: bold; }}
+            /* עיצוב מחשב (מבוסס V150) */
+            .t-title {{ font-size: 1.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ margin-right: 50px; font-family: monospace; font-size: 1.4rem; font-weight: bold; color: #333; }}
             
             @media (max-width: 768px) {{
-                /* שמירה על ערכי V159 לנייד */
+                /* עיצוב נייד (נשמר מ-V159/V161) */
                 .t-title {{ font-size: 1.1rem !important; }}
-                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px; }}
+                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
             }}
         </style>
         <div class="t-title">מבחן רישוי למתווכים</div>
@@ -114,8 +112,7 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # גובה מותאם לכותרת גדולה במחשב
-        components.html(combined_header_html, height=65)
+        components.html(combined_header_html, height=55)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
