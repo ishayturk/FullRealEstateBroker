@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V184 | Date: 23/02/2026 | 14:20
+# Version: V185 | Date: 23/02/2026 | 14:35
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
 user_name = st.query_params.get("user", "אורח")
 
-# בדיקת לחיצה על ספרת ניווט דרך URL
+# בדיקת לחיצה על ספרת ניווט דרך URL (רלוונטי רק לדסקטופ בגרסה זו)
 nav_q = st.query_params.get("q")
 if nav_q and nav_q.isdigit():
     target_q = int(nav_q)
@@ -33,16 +33,8 @@ st.markdown("""
         cursor: pointer;
         font-weight: normal;
     }
-    .nav-link-answered {
-        font-weight: bold !important;
-        color: #000 !important;
-    }
-    .nav-link-disabled {
-        color: #ccc !important;
-        cursor: default;
-        pointer-events: none;
-        font-weight: 100 !important;
-    }
+    .nav-link-answered { font-weight: bold !important; color: #000 !important; }
+    .nav-link-disabled { color: #ccc !important; cursor: default; pointer-events: none; font-weight: 100 !important; }
     
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
@@ -54,19 +46,40 @@ st.markdown("""
             padding: 5px 15px 15px 15px !important;
             margin-top: -15px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .nav-title { display: none !important; }
-        .nav-link { 
-            text-align: right !important; 
-            font-size: 0.3rem !important; 
-            padding-right: 2px !important;
-            width: 1ch !important;
+        /* כפיית מבנה של צד לצד ומניעת קריסה למטה */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-start !important;
+            gap: 5px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        
+        /* עמודת ניווט - בלתי נראית וצרה */
+        div[data-testid="column"]:nth-of-type(1) {
+            min-width: 1ch !important;
+            width: 1ch !important;
+            flex-basis: 1ch !important;
+        }
+        .nav-link-mobile {
+            color: white !important; /* בלתי נראה */
+            font-size: 0.3rem !important;
+            width: 1ch !important;
+            pointer-events: none !important;
+            user-select: none !important;
+        }
+        .nav-title { display: none !important; }
+
+        /* עמודת בחינה - הצמדה למעלה והתרחבות */
+        div[data-testid="column"]:nth-of-type(2) {
+            flex-grow: 1 !important;
+            margin-top: -20px !important; /* הצמדה למעלה */
+        }
+        .q-text { font-size: 1.1rem !important; font-weight: bold; line-height: 1.3; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -127,7 +140,6 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # החזרת יחס העמודות המקורי לדסקטופ
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
@@ -136,12 +148,24 @@ elif st.session_state.step == "exam_run":
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
                     is_answered = idx in st.session_state.answers_user
+                    is_active = idx in st.session_state.nav_active_questions
                     
+                    # בנייד: ספרות לבנות וסטטיות. בדסקטופ: קישורים רגילים.
                     state_class = "nav-link-answered" if is_answered else ("" if is_active else "nav-link-disabled")
-                    link_html = f'<a href="?user={user_name}&q={idx}" target="_self" class="nav-link {state_class}">{idx}</a>'
-                    cols[i].markdown(link_html, unsafe_allow_html=True)
+                    
+                    # HTML מותאם לפי פלטפורמה (CSS יטפל בתצוגה)
+                    desktop_link = f'<a href="?user={user_name}&q={idx}" target="_self" class="nav-link {state_class}">{idx}</a>'
+                    mobile_span = f'<span class="nav-link-mobile">{idx}</span>'
+                    
+                    st.markdown(f"""
+                        <div class="desktop-only">{desktop_link}</div>
+                        <div class="mobile-only" style="display:none;">{mobile_span}</div>
+                        <style>
+                            @media (max-width: 768px) {{ .desktop-only {{ display: none !important; }} .mobile-only {{ display: block !important; }} }}
+                            @media (min-width: 769px) {{ .mobile-only {{ display: none !important; }} .desktop-only {{ display: block !important; }} }}
+                        </style>
+                    """, unsafe_allow_html=True)
 
     with col_main:
         q = st.session_state.exam_data.get(st.session_state.current_q)
@@ -163,4 +187,4 @@ elif st.session_state.step == "exam_run":
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
 
-# סוף קובץ1
+# סוף קובץ
