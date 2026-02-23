@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V178 | Date: 23/02/2026 | 13:25
+# Version: V206 | Date: 23/02/2026 | 23:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,33 +15,23 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
-    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-    
+
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
-        div[data-testid="column"]:nth-of-type(1) {
-            background-color: #f1f3f5 !important;
-            border-radius: 15px;
-            padding: 5px 15px 15px 15px !important;
-            margin-top: -15px !important;
+        .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
+        /* הזחה של כ-10 תווים פנימה עבור השאלה, הכותרת והתשובות */
+        .question-block {
+            padding-right: 60px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* העלמה מוחלטת של עמודת הניווט */
-        div[data-testid="column"]:nth-of-type(1) {
-            display: none !important;
-            height: 0px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        /* הצמדת השאלה למעלה לכיוון השעון */
-        div[data-testid="column"]:nth-of-type(2) {
-            margin-top: -50px !important;
-        }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        .block-container { padding-top: 0px !important; }
+        /* צמצום מרווח בנייד ב-2 שורות נוספות לכיוון השעון */
+        .mobile-up { margin-top: -90px !important; }
+        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
+        .question-block { padding-right: 0px !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -63,9 +53,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.write("")
-        f_c1, f_c2 = st.columns([1, 1])
-        with f_c1: agree = st.checkbox("קראתי את ההוראות")
-        with f_c2:
+        f_cols = st.columns([1, 1])
+        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
+        with f_cols[1]:
             if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
                 logic.start_exam_logic(); st.rerun()
 
@@ -75,8 +65,8 @@ elif st.session_state.step == "exam_run":
     header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            .t-title {{ font-size: 2.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ font-size: 2.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 35px; }}
+            .t-title {{ font-size: 2.8rem; font-weight: bold; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 2.0rem; font-weight: bold; color: #333; margin-right: 35px; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
                 .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
@@ -100,28 +90,20 @@ elif st.session_state.step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-
     components.html(header_html, height=80)
 
-    # חלוקה לעמודות - בנייד העמודה הראשונה תוסתר ב-CSS
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
-    with col_nav:
-        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
-                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx; st.rerun()
-
+    col_main, col_nav = st.columns([2.5, 1], gap="medium")
+    
     with col_main:
+        st.markdown('<div class="mobile-up question-block">', unsafe_allow_html=True)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
+            # הוספת השאלה הנוכחית לזיכרון הניווט באופן מיידי
+            if st.session_state.current_q not in st.session_state.nav_active_questions:
+                st.session_state.nav_active_questions.add(st.session_state.current_q)
+            
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="q-text" style="font-size:1.25rem; font-weight:bold;">{q["question"]}</div>', unsafe_allow_html=True)
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
             if choice is not None: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
@@ -136,5 +118,20 @@ elif st.session_state.step == "exam_run":
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_nav:
+        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                idx = r + i + 1
+                if idx <= 25:
+                    is_active = idx in st.session_state.nav_active_questions
+                    is_current = (idx == st.session_state.current_q)
+                    label = f"**{idx}**" if is_current else str(idx)
+                    # שאלה שנחשפה נשארת פעילה תמיד
+                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
+                        st.session_state.current_q = idx; st.rerun()
 
 # סוף קובץ
