@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V148 | Date: 23/02/2026 | 16:45
+# Version: V149 | Date: 23/02/2026 | 17:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,37 +9,54 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
-    .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
-    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
+    
+    .block-container { 
+        max-width: 1100px !important; 
+        margin: 0 auto !important; 
+        padding-top: 0.5rem !important; 
+    }
+    
+    .header-box {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+    }
 
     /* יישור פריים הניווט */
-    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] { gap: 0rem !important; margin-top: 0px !important; padding-top: 0px !important; }
-
-    /* קונטיינר כותרת ושעון */
-    .exam-header-wrapper {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 20px;
+    div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
+        margin-top: 0px !important;
+        padding-top: 0px !important;
     }
-    .timer-text { font-size: 1.4rem; font-family: monospace; font-weight: bold; color: #333; }
-    .exam-title-main { margin: 0 !important; font-size: 1.8rem; font-weight: bold; }
 
-    /* --- 2. מגזר מחשב (Desktop) --- */
     @media (min-width: 769px) {
-        div[data-testid="column"]:nth-of-type(1) { background-color: #f1f3f5 !important; border-radius: 15px; padding: 15px !important; }
-        .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        div[data-testid="column"]:nth-of-type(1) {
+            background-color: #f1f3f5 !important;
+            border-radius: 15px;
+            padding: 15px !important;
+        }
     }
 
-    /* --- 3. מגזר נייד (Mobile) --- */
-    @media (max-width: 768px) {
-        .exam-header-wrapper { flex-direction: column; gap: 5px; text-align: center; }
-        .timer-text { font-size: 1.1rem; width: 100%; text-align: center; }
-        .exam-title-main { font-size: 1.4rem !important; width: 100%; text-align: center; }
+    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+    .stDivider { margin: 0.5rem 0 !important; }
+    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+    
+    /* עיצוב השעון כחלק מהכותרת */
+    .exam-title-inline {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+    .timer-span {
+        font-family: monospace;
+        font-size: 1.4rem;
+        margin-right: 25px; /* 3 רווחים בערך */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -51,14 +68,17 @@ h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
 with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
+
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
+# 2. תוכן
 if "step" not in st.session_state or st.session_state.step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מקרקעין</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
         instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
+        for i, txt in enumerate(instructions, 1):
+            st.write(f"{i}. {txt}")
         st.write("")
         f_c1, f_c2 = st.columns([1, 1])
         with f_c1: agree = st.checkbox("קראתי את ההוראות")
@@ -68,15 +88,21 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
-    timer_html = f"""
-    <div id="t-val" class="timer-text"></div>
+    
+    # הזרקת השעון כחלק מהכותרת עם לוגיקת צבע אדום ב-10 דקות אחרונות
+    combined_header_html = f"""
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin:0; display: inline-block; vertical-align: middle;">מבחן רישוי למתווכים</h2>
+        <span id="clock" style="margin-right: 30px; font-family: monospace; font-size: 1.4rem; font-weight: bold; vertical-align: middle;"></span>
+    </div>
     <script>
     var s = {rem_sec};
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('t-val');
+        var el = document.getElementById('clock');
         if (el) {{
             if (s <= 600) el.style.color = "red";
+            else el.style.color = "#333";
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
         }}
         if (s > 0) s--;
@@ -86,6 +112,7 @@ elif st.session_state.step == "exam_run":
     """
 
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -99,13 +126,7 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # שורת כותרת ושעון
-        st.markdown('<div class="exam-header-wrapper">', unsafe_allow_html=True)
-        st.markdown('<div style="flex: 1; text-align: left;">', unsafe_allow_html=True)
-        components.html(timer_html, height=40)
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('<h2 class="exam-title-main">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        components.html(combined_header_html, height=50)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
@@ -113,8 +134,11 @@ elif st.session_state.step == "exam_run":
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
-            if choice is not None: st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
+            if choice is not None: 
+                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
+            
             st.divider()
+            
             bn, bp, bf = st.columns(3)
             with bn:
                 if st.session_state.current_q < 25:
@@ -124,6 +148,7 @@ elif st.session_state.step == "exam_run":
                 if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
-                if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+                if 25 in st.session_state.answers_user:
+                    st.button("סיום בחינה", key="finish")
 
 # סוף קובץ
