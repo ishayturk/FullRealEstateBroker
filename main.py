@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V204 | Date: 23/02/2026 | 22:30
+# Version: V205 | Date: 23/02/2026 | 23:35
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,16 +24,7 @@ st.markdown("""
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
         .block-container { padding-top: 0px !important; }
-        
-        /* היפוך סדר בנייד בלבד: שאלה למעלה, ניווט למטה */
-        .main-exam-layout [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: column-reverse !important;
-        }
-        
-        .mobile-up {
-            margin-top: -75px !important;
-        }
+        .mobile-up { margin-top: -70px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
     }
     </style>
@@ -56,9 +47,9 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
         instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה רק לשאלות שנענו.", "ציון עובר: 60.", "חל איסור על שימוש בחומר עזר."]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.write("")
-        f_c1, f_c2 = st.columns([1, 1])
-        with f_c1: agree = st.checkbox("קראתי את ההוראות")
-        with f_c2:
+        f_cols = st.columns([1, 1])
+        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
+        with f_cols[1]:
             if st.button("התחל בחינה", disabled=not (agree and logic.is_first_question_ready())):
                 logic.start_exam_logic(); st.rerun()
 
@@ -95,23 +86,9 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # עטיפה לצורך היפוך בנייד
-    st.markdown('<div class="main-exam-layout">', unsafe_allow_html=True)
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    # היפוך עמודות: הבחינה (col_main) ראשונה בקוד כדי שתהיה ראשונה בנייד
+    col_main, col_nav = st.columns([2.5, 1], gap="medium")
     
-    with col_nav:
-        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_answered = idx in st.session_state.nav_active_questions
-                    is_current = (idx == st.session_state.current_q)
-                    label = f"**{idx}**" if is_current else str(idx)
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not (is_answered or is_current)):
-                        st.session_state.current_q = idx; st.rerun()
-
     with col_main:
         st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
         q = st.session_state.exam_data.get(st.session_state.current_q)
@@ -133,6 +110,19 @@ elif st.session_state.step == "exam_run":
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_nav:
+        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                idx = r + i + 1
+                if idx <= 25:
+                    is_answered = idx in st.session_state.nav_active_questions
+                    is_current = (idx == st.session_state.current_q)
+                    label = f"**{idx}**" if is_current else str(idx)
+                    # השאלה הנוכחית או שאלות שנענו - לחיצות
+                    if cols[i].button(label, key=f"n_{idx}", disabled=not (is_answered or is_current)):
+                        st.session_state.current_q = idx; st.rerun()
 
 # סוף קובץ
