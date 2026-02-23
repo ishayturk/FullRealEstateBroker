@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V149 | Date: 23/02/2026 | 17:05
+# Version: V150 | Date: 23/02/2026 | 17:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -42,22 +42,6 @@ st.markdown("""
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-    
-    /* עיצוב השעון כחלק מהכותרת */
-    .exam-title-inline {
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-    }
-    .timer-span {
-        font-family: monospace;
-        font-size: 1.4rem;
-        margin-right: 25px; /* 3 רווחים בערך */
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -89,11 +73,11 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # הזרקת השעון כחלק מהכותרת עם לוגיקת צבע אדום ב-10 דקות אחרונות
+    # שעון משמאל לכותרת עם מרווח גדול וצבע אדום בסיום
     combined_header_html = f"""
-    <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="margin:0; display: inline-block; vertical-align: middle;">מבחן רישוי למתווכים</h2>
-        <span id="clock" style="margin-right: 30px; font-family: monospace; font-size: 1.4rem; font-weight: bold; vertical-align: middle;"></span>
+    <div style="display: flex; flex-direction: row-reverse; align-items: center; justify-content: center; width: 100%; margin-bottom: 15px;">
+        <h2 style="margin: 0; font-weight: bold; font-size: 1.8rem;">מבחן רישוי למתווכים</h2>
+        <div id="clock" style="margin-right: 50px; font-family: monospace; font-size: 1.4rem; font-weight: bold;"></div>
     </div>
     <script>
     var s = {rem_sec};
