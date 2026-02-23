@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V243 | Date: 23/02/2026 | 23:58
+# Version: V244 | Date: 23/02/2026 | 23:59
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,6 +18,8 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
+        /* מרכז את אזור השאלה והתשובות כ-8% מהצד */
+        .question-area { padding-right: 8%; padding-left: 8%; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -25,8 +27,6 @@ st.markdown("""
         .block-container { padding-top: 0px !important; }
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
-        
-        /* תיקון רוחב וכיווץ כותרת ושעון */
         iframe { width: 100% !important; height: 50px !important; }
     }
     </style>
@@ -35,14 +35,13 @@ st.markdown("""
 # אתחול
 logic.initialize_exam_state()
 
-# 1. סטריפ עליון (V208)
+# 1. סטריפ עליון
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
 with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
 st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
 
-# 2. ניהול שלבי הבחינה
 current_step = st.session_state.get("step", "instructions")
 
 if current_step == "instructions":
@@ -50,7 +49,7 @@ if current_step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60.", "המקור: חוק המתווכים, תקנות האתיקה ודיני המקרקעין."]
+        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60."]
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.write("")
         f_cols = st.columns([1, 1])
@@ -62,7 +61,6 @@ if current_step == "instructions":
 
 elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
-    # שימוש ב-Media Query פנימי בתוך ה-HTML כדי להבטיח התאמה מושלמת
     header_html = f"""
     <style>
         .wrapper {{
@@ -72,9 +70,9 @@ elif current_step == "exam_run":
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
         
         @media (max-width: 768px) {{
-            .wrapper {{ justify-content: space-between !important; padding: 0 5px; }}
+            .wrapper {{ justify-content: center !important; gap: 15px !important; }}
             .t-text {{ font-size: 1.1rem !important; }}
-            .c-text {{ font-size: 1.1rem !important; margin-right: 10px !important; }}
+            .c-text {{ font-size: 1.1rem !important; margin-right: 0 !important; }}
         }}
     </style>
     <div class="wrapper">
@@ -99,7 +97,7 @@ elif current_step == "exam_run":
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
-        st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
+        st.markdown('<div class="mobile-up question-area">', unsafe_allow_html=True)
         idx = st.session_state.current_q
         q = st.session_state.exam_data.get(idx)
         if q:
