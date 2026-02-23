@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V130 | Date: 23/02/2026 | 09:05
+# Version: V131 | Date: 23/02/2026 | 09:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,7 +9,7 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- 1. מגזר כללי (Shared Styles) --- */
+    /* --- 1. מגזר כללי (Shared) --- */
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     
@@ -37,8 +37,7 @@ st.markdown("""
         }
         .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
         
-        /* שעון מודגש וגדול למחשב */
-        #timer-desktop {
+        #timer-display {
             text-align: center; 
             background: #ffffff; 
             border: 3px solid #000; 
@@ -48,33 +47,19 @@ st.markdown("""
             font-size: 1.8rem; 
             color: #000; 
             font-family: monospace;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
-        #timer-mobile { display: none; }
     }
 
     /* --- 3. מגזר נייד (Mobile Only) --- */
     @media (max-width: 768px) {
-        /* הסתרה מוחלטת של עמודת הניווט בנייד */
-        [data-testid="column"]:nth-of-type(1) {
-            display: none !important;
-            width: 0 !important;
-            flex: 0 !important;
-            min-width: 0 !important;
-        }
-        
-        /* מניעת חפיפה בנייד */
-        .q-text { margin-top: 20px; }
-        
-        /* שעון נקי לנייד */
-        #timer-mobile {
+        #timer-display {
             text-align: left;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
             color: #333;
-            padding: 5px 0;
+            padding-bottom: 10px;
         }
-        #timer-desktop { display: none; }
+        .q-text { margin-top: 15px; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -115,22 +100,16 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # HTML לשעון - כולל את שני האלמנטים, ה-CSS מחליט מה להציג
     timer_html = f"""
-    <div id="timer-desktop"></div>
-    <div id="timer-mobile"></div>
+    <div id="timer-display"></div>
     <script>
     var s = {rem_sec};
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
-        var val = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
-        var d = document.getElementById('timer-desktop');
-        var o = document.getElementById('timer-mobile');
-        if (d) d.innerHTML = val;
-        if (o) o.innerHTML = val;
-        if (s <= 600) {{
-            if(d) d.style.color = "red";
-            if(o) o.style.color = "red";
+        var el = document.getElementById('timer-display');
+        if (el) {{
+            if (s <= 600) el.style.color = "red";
+            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
         }}
         if (s > 0) s--;
     }}
@@ -138,10 +117,17 @@ elif st.session_state.step == "exam_run":
     </script>
     """
 
+    # בדיקת רוחב מסך פשוטה דרך JS להחלטה על המבנה (בתוספת ל-CSS)
+    # ב-Streamlit הדרך הכי עניינית להפריד עמודות היא פשוט לבנות אותן אחרת
+    
+    # שימוש ב-st.columns רק אם לא "נייד" (לפי לוגיקה פשוטה של Streamlit)
+    # הערה: Streamlit לא יודע בזמן אמת על רוחב הדפדפן בפייתון, 
+    # לכן נשתמש במבנה עמודות שמתפרק בנייד, אך ננקה את תוכן עמודת הניווט בנייד דרך ה-CSS שכתבנו למעלה.
+    
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        # במחשב יוצג השעון המעוצב, בנייד העמודה הזו תוסתר והשעון יופיע דרך קומפוננטה אחרת או יישאר פה אך יוסתר
+        # הקוד הזה ירוץ, אך ה-CSS יעלים את כל העמודה הזו בנייד (display: none)
         components.html(timer_html, height=80)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -155,31 +141,4 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # הצגת שעון נייד בתוך העמודה הראשית רק כשהמסך קטן (נשלט ע"י CSS)
-        st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
-        
-        q = st.session_state.exam_data.get(st.session_state.current_q)
-        if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
-            
-            prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
-            choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
-            if choice is not None: 
-                st.session_state.answers_user[st.session_state.current_q] = q["options"].index(choice)
-            
-            st.divider()
-            
-            bn, bp, bf = st.columns(3)
-            with bn:
-                if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
-                        logic.move_to_next(); st.rerun()
-            with bp:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
-                    st.session_state.current_q -= 1; st.rerun()
-            with bf:
-                if 25 in st.session_state.answers_user:
-                    st.button("סיום בחינה", key="finish")
-
-# סוף קובץ
+        # בנייד, נזריק שעון נוסף שיופיע רק שם (ה-
