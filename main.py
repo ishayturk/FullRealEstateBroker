@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V197 | Date: 23/02/2026 | 19:30
+# Version: V198 | Date: 23/02/2026 | 19:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -16,8 +16,8 @@ st.markdown("""
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
     
-    /* עיצוב ספרות נקיות לניווט */
-    div[data-testid="column"]:nth-of-type(1) button {
+    /* כפתורים כספרות נקיות */
+    div[data-testid="column"] button {
         background: none !important;
         border: none !important;
         padding: 0 !important;
@@ -26,45 +26,32 @@ st.markdown("""
         min-height: 0 !important;
         width: auto !important;
         font-size: 1.1rem !important;
-        margin: 0 auto !important;
         display: block !important;
     }
 
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
-        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
-        div[data-testid="column"]:nth-of-type(1) {
+        /* החזרת הסדר בדסקטופ: ניווט (2) לימין, שאלה (1) לשמאל */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row-reverse !important;
+        }
+        div[data-testid="column"]:nth-of-type(2) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
             padding: 5px 15px 15px 15px !important;
             margin-top: -15px !important;
         }
-        /* בדסקטופ מוודאים שהעמודות הן אחת ליד השנייה */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-        }
+        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* רק בנייד - הפיכת הסדר: שאלה למעלה, ניווט למטה */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: column !important;
-        }
+        /* בנייד הסדר נשאר כפי שנכתב בקוד - שאלה ראשונה */
         div[data-testid="column"]:nth-of-type(1) {
-            order: 2 !important; /* מפת השאלות יורדת לסוף */
-            width: 100% !important;
-            background-color: transparent !important;
-            padding: 10px 0 !important;
+            margin-top: -55px !important;
         }
-        div[data-testid="column"]:nth-of-type(2) {
-            order: 1 !important; /* השאלה עולה להתחלה */
-            width: 100% !important;
-            margin-top: -55px !important; /* העלאה לראש המסך */
-        }
-        .nav-title { margin-top: 15px !important; text-align: center; }
+        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -125,21 +112,9 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # מבנה ה-Columns של V177
-    col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    # הפיכת סדר העמודות בקוד: הבחינה (col_main) נכתבת ראשונה
+    col_main, col_nav = st.columns([2.5, 1], gap="medium")
     
-    with col_nav:
-        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                idx = r + i + 1
-                if idx <= 25:
-                    is_active = idx in st.session_state.nav_active_questions
-                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
-                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
-                        st.session_state.current_q = idx; st.rerun()
-
     with col_main:
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
@@ -159,5 +134,17 @@ elif st.session_state.step == "exam_run":
                     st.session_state.current_q -= 1; st.rerun()
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
+
+    with col_nav:
+        st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                idx = r + i + 1
+                if idx <= 25:
+                    is_active = idx in st.session_state.nav_active_questions
+                    label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
+                    if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
+                        st.session_state.current_q = idx; st.rerun()
 
 # סוף קובץ
