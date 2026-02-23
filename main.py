@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V129 | Date: 23/02/2026 | 08:55
+# Version: V130 | Date: 23/02/2026 | 09:05
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -28,7 +28,7 @@ st.markdown("""
     .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
 
-    /* --- 2. מגזר מחשב (Desktop Only - min-width: 769px) --- */
+    /* --- 2. מגזר מחשב (Desktop Only) --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
@@ -37,38 +37,44 @@ st.markdown("""
         }
         .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
         
-        #timer-container {
-            text-align: center; background: #fff; border: 2px solid #333; 
-            padding: 8px; border-radius: 8px; font-weight: bold; 
-            font-size: 1.5rem; color: #333; font-family: monospace;
+        /* שעון מודגש וגדול למחשב */
+        #timer-desktop {
+            text-align: center; 
+            background: #ffffff; 
+            border: 3px solid #000; 
+            padding: 12px; 
+            border-radius: 10px; 
+            font-weight: 900; 
+            font-size: 1.8rem; 
+            color: #000; 
+            font-family: monospace;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
+        #timer-mobile { display: none; }
     }
 
-    /* --- 3. מגזר נייד (Mobile Only - max-width: 768px) --- */
+    /* --- 3. מגזר נייד (Mobile Only) --- */
     @media (max-width: 768px) {
-        /* הסתרת פריים הניווט בנייד */
-        .nav-title, div[key^="n_"], [data-testid="column"]:nth-of-type(1) .stMarkdown {
+        /* הסתרה מוחלטת של עמודת הניווט בנייד */
+        [data-testid="column"]:nth-of-type(1) {
             display: none !important;
+            width: 0 !important;
+            flex: 0 !important;
+            min-width: 0 !important;
         }
         
-        /* ביטול נוכחות העמודה הראשונה בנייד */
-        div[data-testid="column"]:nth-of-type(1) {
-            display: none !important;
-        }
-
-        /* מניעת חפיפה של השאלה על הכותרת */
-        .q-text { margin-top: 25px; }
+        /* מניעת חפיפה בנייד */
+        .q-text { margin-top: 20px; }
         
-        /* שעון נייד - טקסט נקי, ללא מסגרת, מוצמד לשמאל */
-        #timer-container {
-            border: none !important;
-            background: none !important;
-            font-size: 1.2rem !important;
-            padding: 0 !important;
-            text-align: left !important;
-            color: #333;
+        /* שעון נקי לנייד */
+        #timer-mobile {
+            text-align: left;
+            font-size: 1.3rem;
             font-weight: bold;
+            color: #333;
+            padding: 5px 0;
         }
+        #timer-desktop { display: none; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -109,17 +115,22 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # HTML לשעון - העיצוב נשלט ע"י ה-CSS למעלה דרך ה-ID timer-container
+    # HTML לשעון - כולל את שני האלמנטים, ה-CSS מחליט מה להציג
     timer_html = f"""
-    <div id="timer-container"></div>
+    <div id="timer-desktop"></div>
+    <div id="timer-mobile"></div>
     <script>
     var s = {rem_sec};
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('timer-container');
-        if (el) {{
-            if (s <= 600) el.style.color = "red";
-            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+        var val = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+        var d = document.getElementById('timer-desktop');
+        var o = document.getElementById('timer-mobile');
+        if (d) d.innerHTML = val;
+        if (o) o.innerHTML = val;
+        if (s <= 600) {{
+            if(d) d.style.color = "red";
+            if(o) o.style.color = "red";
         }}
         if (s > 0) s--;
     }}
@@ -130,7 +141,8 @@ elif st.session_state.step == "exam_run":
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        components.html(timer_html, height=70)
+        # במחשב יוצג השעון המעוצב, בנייד העמודה הזו תוסתר והשעון יופיע דרך קומפוננטה אחרת או יישאר פה אך יוסתר
+        components.html(timer_html, height=80)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
@@ -143,6 +155,7 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
+        # הצגת שעון נייד בתוך העמודה הראשית רק כשהמסך קטן (נשלט ע"י CSS)
         st.markdown('<h2 style="text-align: center; margin-top: 0; padding-top: 0;">מבחן רישוי למתווכים</h2>', unsafe_allow_html=True)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
