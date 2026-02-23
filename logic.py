@@ -1,34 +1,19 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: V219 | Date: 23/02/2026 | 16:50
+# Version: V216 | Date: 24/02/2026 | 02:20
 import streamlit as st
 import time
-import json
-import os
-
-# העוגן 1213 והלוגיקה של המבחן (מבוסס פרוטוקול C-01)
-def load_exam_questions():
-    # לוגיקה לטעינת שאלות מתוך exams_data כפי שסוכם
-    # כרגע מדמה שליפה מהעוגן 1213
-    try:
-        # כאן תבוא הלוגיקה של שליפת הקובץ test_[event]...json
-        pass
-    except:
-        pass
+import random
 
 def generate_question_from_engine(q_num):
-    # שחזור הלוגיקה לפיה השאלה נגזרת מהעוגן 1213
-    # לצורך תקינות הקוד, אני משתמש במבנה נתונים שמתבסס על תוכן העוגן
-    anchor_data = [
-        {"q": "לפי חוק המתווכים, מהו התנאי המהותי לזכאות לדמי תיווך?", "a": "הזמנה בכתב חתומה על ידי הלקוח.", "d": ["הסכמה בעל פה.", "פרסום הנכס בעיתון.", "שיחה טלפונית עם המוכר."]},
-        {"q": "מהו הגורם היעיל לפי הפסיקה?", "a": "המתווך שהיה הגורם המרכזי שהביא להתקשרות הצדדים בעסקה.", "d": ["המתווך הראשון שהראה את הנכס.", "המתווך שדרש את העמלה הנמוכה ביותר.", "המתווך שפרסם את המודעה הכי הרבה זמן."]}
+    # מנוע שאלות נקי משגיאות סינטקס
+    pool = [
+        {"q": "מהי דרישת הכתב לפי סעיף 9 לחוק המתווכים?", "correct": "דרישה מהותית - ללא הזמנה בכתב המתווכים לא יהיה זכאי לדמי תיווך.", "distractors": ["דרישה ראייתית בלבד.", "ניתן להסתפק בהסכמה בעל פה אם יש עדים.", "הדרישה חלה רק בבלעדיות."]},
+        {"q": "מי רשאי לעסוק בתיווך מקרקעין בישראל?", "correct": "רק מי שיש לו רישיון בתוקף לפי חוק המתווכים.", "distractors": ["כל אזרח מעל גיל 18.", "רק עורכי דין.", "מי שעבר קורס שיווק בלבד."]}
     ]
-    data = anchor_data[q_num % len(anchor_data)]
-    options = [data["a"]] + data["d"]
-    # כאן נשמרת הלוגיקה של ערבוב האופציות
-    import random
-    random.seed(q_num + 1213) # שימוש בעוגן כ-seed
-    random.shuffle(options)
-    return {"question": data["q"], "options": options, "answer_index": options.index(data["a"])}
+    data = pool[q_num % len(pool)]
+    opts = [data["correct"]] + data["distractors"]
+    random.shuffle(opts)
+    return {"question": data["q"], "options": opts, "answer_index": opts.index(data["correct"])}
 
 def initialize_exam_state():
     if "step" not in st.session_state: st.session_state.step = "instructions"
