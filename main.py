@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V178 | Date: 23/02/2026 | 13:25
+# Version: V179 | Date: 23/02/2026 | 13:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -16,6 +16,21 @@ st.markdown("""
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
+
+    /* עיצוב כפתורי הניווט כספרות נקיות בלבד */
+    div[data-testid="column"]:nth-of-type(1) button {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        color: #333 !important;
+        text-decoration: none !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        width: auto !important;
+        font-size: 1.1rem !important;
+        margin: 0 auto !important;
+        display: block !important;
+    }
     
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
@@ -30,16 +45,8 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* העלמה מוחלטת של עמודת הניווט */
-        div[data-testid="column"]:nth-of-type(1) {
-            display: none !important;
-            height: 0px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        /* הצמדת השאלה למעלה לכיוון השעון */
-        div[data-testid="column"]:nth-of-type(2) {
-            margin-top: -50px !important;
+        div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
+            gap: 0.5rem !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
@@ -103,7 +110,6 @@ elif st.session_state.step == "exam_run":
 
     components.html(header_html, height=80)
 
-    # חלוקה לעמודות - בנייד העמודה הראשונה תוסתר ב-CSS
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
@@ -113,6 +119,7 @@ elif st.session_state.step == "exam_run":
                 idx = r + i + 1
                 if idx <= 25:
                     is_active = idx in st.session_state.nav_active_questions
+                    # הצגת מספר השאלה כספרה. הנוכחית ב-Bold.
                     label = f"**{idx}**" if idx == st.session_state.current_q else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not is_active):
                         st.session_state.current_q = idx; st.rerun()
