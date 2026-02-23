@@ -1,23 +1,19 @@
 # Project: מתווך בקליק - מערכת בחינות | File: logic.py
-# Version: V215 | Date: 24/02/2026 | 02:00
+# Version: V216 | Date: 24/02/2026 | 02:20
 import streamlit as st
 import time
 import random
 
 def generate_question_from_engine(q_num):
-    # מנוע ייצור שאלות דינמי
+    # מנוע שאלות נקי משגיאות סינטקס
     pool = [
-        {"q": "מהי תקופת הבלעדיות המקסימלית בדירת מגורים לפי חוק המתווכים?", "correct": "שישה חודשים.", "distractors": ["שנה אחת.", "שלושה חודשים.", "אין הגבלה בחוק."]},
-        {"q": "האם מתווך רשאי לבצע פעולות משפטיות עבור לקוחו?", "correct": "לא; חל איסור מוחלט על מתווך לערוך מסמכים בעלי אופי משפטי.", "distractors": ["כן, אם הוא עו"ד במקצועו.", "רק אם קיבל אישור מהלקוח בכתב.", "כן, אך רק זיכרון דברים."]}
+        {"q": "מהי דרישת הכתב לפי סעיף 9 לחוק המתווכים?", "correct": "דרישה מהותית - ללא הזמנה בכתב המתווכים לא יהיה זכאי לדמי תיווך.", "distractors": ["דרישה ראייתית בלבד.", "ניתן להסתפק בהסכמה בעל פה אם יש עדים.", "הדרישה חלה רק בבלעדיות."]},
+        {"q": "מי רשאי לעסוק בתיווך מקרקעין בישראל?", "correct": "רק מי שיש לו רישיון בתוקף לפי חוק המתווכים.", "distractors": ["כל אזרח מעל גיל 18.", "רק עורכי דין.", "מי שעבר קורס שיווק בלבד."]}
     ]
     data = pool[q_num % len(pool)]
-    options = [data["correct"]] + data["distractors"]
-    random.shuffle(options)
-    return {
-        "question": f"שאלה {q_num}: " + data["q"],
-        "options": options,
-        "answer_index": options.index(data["correct"])
-    }
+    opts = [data["correct"]] + data["distractors"]
+    random.shuffle(opts)
+    return {"question": data["q"], "options": opts, "answer_index": opts.index(data["correct"])}
 
 def initialize_exam_state():
     if "step" not in st.session_state: st.session_state.step = "instructions"
@@ -33,8 +29,6 @@ def ensure_question_exists(q_num):
         st.session_state.exam_data[q_num] = generate_question_from_engine(q_num)
 
 def get_remaining_seconds():
-    elapsed = time.time() - st.session_state.start_time
-    remaining = (90 * 60) - elapsed
-    return max(0, int(remaining))
-
+    elapsed = time.time() - st.session_state.get("start_time", time.time())
+    return max(0, int((90 * 60) - elapsed))
 # סוף קובץ
