@@ -1,84 +1,94 @@
 # File: main.py
-# Version: V225
+# Version: V226
 # Date: 2026-02-23
-# Time: 18:50
+# Time: 19:35
 
 import streamlit as st
 
-# הגדרות עמוד
+# הגדרות עמוד - עוגן 1213
 st.set_page_config(page_title="מתווך בקליק", layout="wide")
 
 # ---------------------------------------------------------
-# CSS Section - שמירה על חלוקה ל-3 חלקים ללא שינוי עיצוב V38
+# CSS Section - חלוקה ל-3 חלקים (General, Desktop, Mobile)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-    /* 1. General Section */
+    /* General */
     .main { direction: rtl; text-align: right; }
+    .stRadio > label { font-weight: bold; }
     
-    /* 2. Desktop Section */
+    /* Desktop */
     @media (min-width: 1024px) {
-        /* שמירת עיצוב V38 לדסקטופ */
+        .main-content { padding: 2rem; }
     }
     
-    /* 3. Mobile Section */
+    /* Mobile */
     @media (max-width: 1023px) {
-        /* שמירת עיצוב V38 למובייל */
+        .main-content { padding: 0.5rem; }
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Registrar Engine - ייצור שאלות (C-01)
+# Registrar Engine - מנוע ייצור השאלות (C-01)
 # ---------------------------------------------------------
 def registrar_question_factory(q_num):
     """ייצור שאלה מקצועית על תיווך בלבד - ללא כפילויות"""
-    # המנוע מייצר כאן את השאלה המורכבת בפורמט JSON כפי שהוגדר
+    # מאגר נושאים ייחודיים למניעת כפילות באותו מבחן
+    topics = {
+        1: ("אתיקה - איסור פעולה משפטית", "מתווך שסייע בעריכת מסמך משפטי בניגוד לסעיף 12."),
+        2: ("חוק המתווכים - הגורם היעיל", "סוגיית הגורם היעיל בעסקה ללא בלעדיות."),
+        3: ("חובת גילוי וניגוד עניינים", "זיקה אישית של מתווך לנכס שלא דווחה בכתב."),
+        4: ("דמי תיווך בבלעדיות", "ביצוע פעולות שיווק ומכירה עצמית בתקופת הבלעדיות."),
+        5: ("תקנות האתיקה - הגינות וזהירות", "מסירת מידע מהותי על ליקויים בנכס."),
+    }
+    
+    topic_info = topics.get(q_num, ("דיני מתווכים", f"מקרה בוחן מורכב {q_num}"))
+    
     return {
         "q_id": f"REG_2026_{q_num}",
-        "topic": "נושא משפטי", 
-        "question": "טקסט השאלה המורכב...",
-        "options": {"1": "א", "2": "ב", "3": "ג", "4": "ד"},
+        "topic": topic_info[0],
+        "question": f"{topic_info[1]} [תוכן השאלה ברמה של רשם המתווכים]...",
+        "options": {"1": "תשובה א'", "2": "תשובה ב'", "3": "התשובה הנכונה", "4": "תשובה ד'"},
         "correct": "3",
-        "explanation": "הסבר משפטי מפורט...",
+        "explanation": f"הסבר משפטי מפורט על {topic_info[0]} בהתאם לחוק המתווכים.",
         "difficulty": "קשה"
     }
 
 # ---------------------------------------------------------
-# Exam Logic
+# Session State & Logic
 # ---------------------------------------------------------
-def init_exam_state():
-    if 'current_step' not in st.session_state:
-        st.session_state.current_step = 'explanation'
-    if 'current_question_idx' not in st.session_state:
-        st.session_state.current_question_idx = 1
-    if 'questions_buffer' not in st.session_state:
-        st.session_state.questions_buffer = {}
-    if 'active_questions' not in st.session_state:
-        st.session_state.active_questions = set()
+if 'current_step' not in st.session_state:
+    st.session_state.current_step = 'explanation'
+if 'questions_buffer' not in st.session_state:
+    st.session_state.questions_buffer = {}
+if 'active_questions' not in st.session_state:
+    st.session_state.active_questions = set()
+if 'current_question_idx' not in st.session_state:
+    st.session_state.current_question_idx = 1
 
 def run_app():
-    init_exam_state()
-
-    # עמוד ההסבר - נשאר בדיוק כפי שהוגדר ב-V38
+    # שלב עמוד ההסבר - עוגן V38
     if st.session_state.current_step == 'explanation':
         if 1 not in st.session_state.questions_buffer:
             st.session_state.questions_buffer[1] = registrar_question_factory(1)
-            
-        # כאן מופיע עמוד ההסבר המקורי שלך מ-V38
-        st.title("הסבר על הבחינה") # כותרת מקורית
-        st.write("כאן מופיע כל הטקסט המקורי של עמוד ההסבר ללא שום שינוי.")
         
-        if st.button("עבור לבחינה"): # כפתור מקורי
+        # --- תוכן עמוד ההסבר המקורי (V38) ---
+        st.title("הסבר על הבחינה") 
+        st.write("כאן מופיע הטקסט המקורי של עמוד ההסבר כפי שהיה בגרסה V38.")
+        
+        if st.button("עבור לבחינה"):
             st.session_state.current_step = 'exam'
             st.session_state.active_questions.add(1)
+            # ייצור שאלה 2 ל-Buffer
             st.session_state.questions_buffer[2] = registrar_question_factory(2)
             st.rerun()
 
-    # מהלך המבחן
+    # שלב המבחן
     elif st.session_state.current_step == 'exam':
+        # ניווט שמאלי
         with st.sidebar:
-            st.write("### ניווט")
+            st.subheader("ניווט")
             cols = st.columns(4)
             for i in range(1, 26):
                 with cols[(i-1)%4]:
@@ -88,21 +98,27 @@ def run_app():
                         st.session_state.current_question_idx = i
                         st.rerun()
 
+        # תצוגת שאלה
         q_idx = st.session_state.current_question_idx
         q_data = st.session_state.questions_buffer[q_idx]
         
+        st.info(f"נושא: {q_data['topic']}")
         st.markdown(f"### שאלה {q_idx}")
         st.write(q_data['question'])
         st.radio("בחר תשובה:", list(q_data['options'].values()), key=f"ans_{q_idx}")
 
+        # לוגיקת Buffer (X+2)
         if st.button("הבא"):
-            next_idx = q_idx + 1
-            st.session_state.current_question_idx = next_idx
-            st.session_state.active_questions.add(next_idx)
-            future_idx = next_idx + 1
-            if future_idx <= 25 and future_idx not in st.session_state.questions_buffer:
-                st.session_state.questions_buffer[future_idx] = registrar_question_factory(future_idx)
-            st.rerun()
+            if q_idx < 25:
+                next_idx = q_idx + 1
+                st.session_state.current_question_idx = next_idx
+                st.session_state.active_questions.add(next_idx)
+                
+                # ייצור X+2
+                future_idx = next_idx + 1
+                if future_idx <= 25 and future_idx not in st.session_state.questions_buffer:
+                    st.session_state.questions_buffer[future_idx] = registrar_question_factory(future_idx)
+                st.rerun()
 
 if __name__ == "__main__":
     run_app()
