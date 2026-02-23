@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V192 | Date: 23/02/2026 | 18:05
+# Version: V194 | Date: 23/02/2026 | 18:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -15,51 +15,50 @@ st.markdown("""
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
     .stDivider { margin: 0.5rem 0 !important; }
-    .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     
-    /* עיצוב אגרסיבי לספרות נקיות בלבד - ביטול כל מאפייני הכפתור של Streamlit */
+    /* ספרות נקיות בלבד לניווט */
     div[data-testid="column"]:nth-of-type(1) button {
-        background-color: transparent !important;
+        background: none !important;
         border: none !important;
-        box-shadow: none !important;
-        color: #333 !important;
         padding: 0 !important;
+        color: #333 !important;
+        box-shadow: none !important;
         min-height: 0 !important;
         width: auto !important;
-        line-height: 1 !important;
         font-size: 1.1rem !important;
         margin: 0 auto !important;
         display: block !important;
-        outline: none !important;
-    }
-    div[data-testid="column"]:nth-of-type(1) button:hover, 
-    div[data-testid="column"]:nth-of-type(1) button:active, 
-    div[data-testid="column"]:nth-of-type(1) button:focus {
-        background-color: transparent !important;
-        color: #000 !important;
-        border: none !important;
-        box-shadow: none !important;
     }
 
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
+        .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
             padding: 5px 15px 15px 15px !important;
             margin-top: -15px !important;
         }
-        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
+        .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .nav-title { display: none !important; }
-        div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-            gap: 0.2rem !important;
-            margin-top: 0px !important;
+        /* דריסת מבנה העמודות - הופך את הכל לטור אחד */
+        [data-testid="stHorizontalBlock"] {
+            display: block !important;
         }
-        .q-text { font-size: 1.2rem !important; font-weight: bold; line-height: 1.3; color: #000; }
+        /* מחיקה מוחלטת של פריים הניווט בנייד */
+        div[data-testid="column"]:nth-of-type(1) {
+            display: none !important;
+        }
+        /* העלאת השאלה (עמודה 2) לראש המסך */
+        div[data-testid="column"]:nth-of-type(2) {
+            width: 100% !important;
+            margin-top: -50px !important;
+            padding-top: 0 !important;
+        }
+        .q-text { font-size: 1.2rem !important; font-weight: bold; line-height: 1.3; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -93,8 +92,8 @@ elif st.session_state.step == "exam_run":
     header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            .t-title {{ font-size: 2.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ font-size: 2.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 35px; }}
+            .t-title {{ font-size: 2.8rem; font-weight: bold; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 2.0rem; font-weight: bold; color: #333; margin-right: 35px; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem !important; }}
                 .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
@@ -120,7 +119,9 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
+    # מבנה עמודות: בדסקטופ הן עובדות, בנייד ה-CSS הופך אותן לבלוק אחד ומסתיר את הראשונה
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
+    
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
