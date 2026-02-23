@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V202 | Date: 23/02/2026 | 21:40
+# Version: V204 | Date: 23/02/2026 | 22:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,22 +18,23 @@ st.markdown("""
 
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
-        .nav-column-style {
-            background-color: #f1f3f5 !important;
-            border-radius: 15px;
-            padding: 0px 15px 15px 15px !important; /* איפוס padding-top לביטול הסטריפ האפור */
-            margin-top: 0px !important;
-        }
-        .nav-title { display: block; padding-top: 10px; margin-bottom: 10px; font-weight: bold; }
+        .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
         .block-container { padding-top: 0px !important; }
+        
+        /* היפוך סדר בנייד בלבד: שאלה למעלה, ניווט למטה */
+        .main-exam-layout [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: column-reverse !important;
+        }
+        
         .mobile-up {
             margin-top: -75px !important;
         }
-        .nav-title { margin-top: 20px !important; text-align: center; display: block; }
+        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -94,24 +95,22 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
+    # עטיפה לצורך היפוך בנייד
+    st.markdown('<div class="main-exam-layout">', unsafe_allow_html=True)
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     
     with col_nav:
-        st.markdown('<div class="nav-column-style">', unsafe_allow_html=True)
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 idx = r + i + 1
                 if idx <= 25:
-                    # שינוי לוגי: הכפתור פעיל אם השאלה נענתה או אם זו השאלה הנוכחית
                     is_answered = idx in st.session_state.nav_active_questions
                     is_current = (idx == st.session_state.current_q)
-                    
                     label = f"**{idx}**" if is_current else str(idx)
                     if cols[i].button(label, key=f"n_{idx}", disabled=not (is_answered or is_current)):
                         st.session_state.current_q = idx; st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col_main:
         st.markdown('<div class="mobile-up">', unsafe_allow_html=True)
@@ -134,5 +133,6 @@ elif st.session_state.step == "exam_run":
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
         st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # סוף קובץ
