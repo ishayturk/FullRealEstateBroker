@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V183 | Date: 23/02/2026 | 14:15
+# Version: V184 | Date: 23/02/2026 | 14:20
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -60,19 +60,13 @@ st.markdown("""
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
         .nav-title { display: none !important; }
-        /* ספרות בגודל 3 (מזערי) מיושרות לימין */
         .nav-link { 
             text-align: right !important; 
             font-size: 0.3rem !important; 
             padding-right: 2px !important;
-            width: 1ch !important; /* רוחב של תו אחד */
+            width: 1ch !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-        /* מניעת דחיקה של התוכן */
-        div[data-testid="column"]:nth-of-type(1) {
-            min-width: 2ch !important;
-            width: 2ch !important;
-        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -133,7 +127,8 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    col_nav, col_main = st.columns([0.1, 2.5], gap="small") # צמצום משמעותי לעמודת הניווט
+    # החזרת יחס העמודות המקורי לדסקטופ
+    col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
         for r in range(0, 25, 4):
@@ -168,4 +163,4 @@ elif st.session_state.step == "exam_run":
             with bf:
                 if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
 
-# סוף קובץ
+# סוף קובץ1
