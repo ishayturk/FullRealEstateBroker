@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V153 | Date: 23/02/2026 | 18:15
+# Version: V154 | Date: 23/02/2026 | 18:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -62,10 +62,10 @@ elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
     combined_header_html = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap; overflow: hidden;">
         <style>
-            .t-title {{ font-size: 1.8rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.4rem; font-weight: bold; }}
+            .t-title {{ font-size: 2.2rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.6rem; font-weight: bold; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem; }}
                 .t-clock {{ font-size: 1.0rem; margin-right: 15px; }}
@@ -104,10 +104,10 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        components.html(combined_header_html, height=60)
+        components.html(combined_header_html, height=45)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
             st.markdown(f'<div class="q-text">{q["question"]}</div>', unsafe_allow_html=True)
             prev_ans = st.session_state.answers_user.get(st.session_state.current_q)
             choice = st.radio("", q["options"], index=prev_ans, key=f"r_{st.session_state.current_q}", label_visibility="collapsed")
