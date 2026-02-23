@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V217 | Date: 24/02/2026 | 02:45
+# Version: V242 | Date: 23/02/2026 | 23:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -25,6 +25,14 @@ st.markdown("""
         .block-container { padding-top: 0px !important; }
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
+        
+        /* תיקון כותרת ושעון בנייד לשורה אחת - הקטנת ה-iframe */
+        iframe[title="streamlit.components.v1.components.html"] {
+            transform: scale(0.65);
+            transform-origin: top right;
+            margin-bottom: -25px;
+            width: 153% !important; /* פיצוי על ה-scale */
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -45,11 +53,9 @@ current_step = st.session_state.get("step", "instructions")
 if current_step == "instructions":
     logic.ensure_question_exists(1)
     
-    # כותרת מעודכנת לפי דרישתך: רישויי מתווכים
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
-        # תוכן מ-V208
         instructions = [
             "המבחן כולל 25 שאלות.", 
             "זמן מוקצב: 90 דקות.", 
@@ -74,7 +80,7 @@ if current_step == "instructions":
 elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     header_html = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;">
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <div style="font-size: 2.2rem; font-weight: bold; color: #000;">מבחן רישוי למתווכים</div>
         <div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div>
     </div>
