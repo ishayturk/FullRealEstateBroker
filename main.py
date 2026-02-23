@@ -123,4 +123,22 @@ elif current_step == "exam_run":
                         st.rerun()
                 else: st.button("לשאלה הבאה", disabled=True)
             with b_f:
-                if st.session
+                if st.session_state.get("finish_button_visible"):
+                    if st.button("סיים בחינה", type="primary"):
+                        st.session_state.step = "feedback"
+                        st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_nav:
+        st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
+        for r in range(0, 25, 4):
+            cols = st.columns(4)
+            for i in range(4):
+                n = r + i + 1
+                if n <= 25:
+                    is_active = n in st.session_state.nav_active_questions
+                    label = f"**{n}**" if n == st.session_state.current_q else str(n)
+                    if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
+                        st.session_state.current_q = n
+                        st.rerun()
+# סוף קובץ
