@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V172 | Date: 24/02/2026 | 00:20
+# Version: V174 | Date: 24/02/2026 | 01:40
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -17,16 +17,6 @@ st.markdown("""
     .stDivider { margin: 0.5rem 0 !important; }
     .nav-title { margin-top: -10px !important; margin-bottom: 5px !important; display: block; }
     
-    /* מיכל גמיש לכותרת ושעון */
-    .header-flex-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 25px; /* מרווח של "3 רווחים" */
-        flex-wrap: wrap;
-        margin-bottom: 10px;
-    }
-
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         div[data-testid="column"]:nth-of-type(1) {
@@ -35,7 +25,6 @@ st.markdown("""
             padding: 15px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-        .dynamic-title { font-size: 2.2rem !important; font-weight: bold; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -46,8 +35,6 @@ st.markdown("""
             padding-top: 0px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
-        .dynamic-title { font-size: 1.25rem !important; font-weight: bold; }
-        .header-flex-container { gap: 10px; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -78,17 +65,28 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # שעון בלבד ב-HTML
-    clock_html = f"""
-    <div id="clock-val" style="direction: ltr; font-family: monospace; font-weight: bold; color: #333; text-align: center;"></div>
+    # כותרת ושעון בתוך בלוק HTML אחד למניעת שבירת שורה
+    combined_html = f"""
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
+        <style>
+            /* מצב מחשב */
+            .t-title {{ font-size: 3.0rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 30px; }}
+            
+            /* מצב נייד */
+            @media (max-width: 768px) {{
+                .t-title {{ font-size: 1.1rem !important; }}
+                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
+            }}
+        </style>
+        <div class="t-title">מבחן רישוי למתווכים</div>
+        <div id="clock-val" class="t-clock" style="direction: ltr;"></div>
+    </div>
     <script>
     var s = {rem_sec};
-    var isMobile = window.innerWidth <= 768;
-    var el = document.getElementById('clock-val');
-    el.style.fontSize = isMobile ? '1.1rem' : '1.8rem';
-    
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
+        var el = document.getElementById('clock-val');
         if (el) {{
             if (s <= 600) el.style.color = "red";
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
@@ -113,11 +111,8 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # כותרת ושעון משולבים ב-Flexbox חיצוני
-        st.markdown('<div class="header-flex-container">', unsafe_allow_html=True)
-        st.markdown('<div class="dynamic-title">מבחן רישוי למתווכים</div>', unsafe_allow_html=True)
-        components.html(clock_html, height=45, width=100)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # רכיב HTML אחד שתופס את כל הרוחב ומונע שבירת שורה
+        components.html(combined_html, height=85)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
