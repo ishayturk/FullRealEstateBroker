@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V217 | Date: 24/02/2026 | 02:45
+# Version: V236 | Date: 23/02/2026 | 21:55
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -18,6 +18,9 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
+        .exam-header-container { display: flex; align-items: center; justify-content: center; width: 100%; }
+        .exam-title-text { font-size: 2.2rem; font-weight: bold; color: #000; }
+        .clock-display { font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -25,6 +28,18 @@ st.markdown("""
         .block-container { padding-top: 0px !important; }
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
+        
+        /* תיקון כותרת ושעון לשורה אחת בנייד */
+        .exam-header-container { 
+            display: flex; 
+            flex-direction: row !important; 
+            align-items: center; 
+            justify-content: space-between; 
+            width: 100%;
+            padding: 0 5px;
+        }
+        .exam-title-text { font-size: 1.1rem !important; font-weight: bold; color: #000; white-space: nowrap; }
+        .clock-display { font-size: 1.1rem !important; font-weight: bold; direction: ltr; margin-right: 10px; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -45,11 +60,9 @@ current_step = st.session_state.get("step", "instructions")
 if current_step == "instructions":
     logic.ensure_question_exists(1)
     
-    # כותרת מעודכנת לפי דרישתך: רישויי מתווכים
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
-        # תוכן מ-V208
         instructions = [
             "המבחן כולל 25 שאלות.", 
             "זמן מוקצב: 90 דקות.", 
@@ -73,10 +86,11 @@ if current_step == "instructions":
 
 elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
+    # שימוש ב-Classes שהוגדרו ב-CSS כדי לשלוט על הנראות בנייד
     header_html = f"""
-    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;">
-        <div style="font-size: 2.2rem; font-weight: bold; color: #000;">מבחן רישוי למתווכים</div>
-        <div id="clock-val" style="font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr;"></div>
+    <div class="exam-header-container" style="direction: rtl;">
+        <div class="exam-title-text">מבחן רישוי למתווכים</div>
+        <div id="clock-val" class="clock-display"></div>
     </div>
     <script>
     var s = {rem_sec};
@@ -92,7 +106,7 @@ elif current_step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-    components.html(header_html, height=70)
+    components.html(header_html, height=50)
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
