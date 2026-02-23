@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V152 | Date: 23/02/2026 | 17:55
+# Version: V153 | Date: 23/02/2026 | 18:15
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -24,31 +24,10 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
-        .header-container { 
-            display: flex; 
-            flex-direction: row-reverse; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
-        }
-        .title-txt { font-size: 1.8rem; font-weight: bold; margin: 0; }
-        .clock-txt { margin-right: 50px; font-family: monospace; font-size: 1.4rem; font-weight: bold; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .header-container { 
-            display: flex; 
-            flex-direction: row-reverse; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%;
-            white-space: nowrap;
-        }
-        /* הקטנה ב-20% נוספים מהגרסה הקודמת */
-        .title-txt { font-size: 0.8rem !important; font-weight: bold; margin: 0; }
-        .clock-txt { font-size: 0.7rem !important; margin-right: 10px !important; font-family: monospace; font-weight: bold; }
-        
         div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
             gap: 0rem !important;
         }
@@ -82,11 +61,19 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # הזרקת HTML עם מחלקות המושפעות מה-Media Queries
+    # הזרקת HTML עם עיצוב פנימי מלא למניעת השפעות חיצוניות
     combined_header_html = f"""
-    <div class="header-container" style="direction: rtl;">
-        <div class="title-txt">מבחן רישוי למתווכים</div>
-        <div id="clock-val" class="clock-txt"></div>
+    <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
+        <style>
+            .t-title {{ font-size: 1.8rem; font-weight: bold; font-family: sans-serif; color: #000; }}
+            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.4rem; font-weight: bold; }}
+            @media (max-width: 768px) {{
+                .t-title {{ font-size: 1.1rem; }}
+                .t-clock {{ font-size: 1.0rem; margin-right: 15px; }}
+            }}
+        </style>
+        <div class="t-title">מבחן רישוי למתווכים</div>
+        <div id="clock-val" class="t-clock"></div>
     </div>
     <script>
     var s = {rem_sec};
@@ -118,7 +105,7 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        components.html(combined_header_html, height=50)
+        components.html(combined_header_html, height=60)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 5px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
@@ -129,13 +116,3 @@ elif st.session_state.step == "exam_run":
             st.divider()
             bn, bp, bf = st.columns(3)
             with bn:
-                if st.session_state.current_q < 25:
-                    if st.button("לשאלה הבאה", disabled=(choice is None), key="next"):
-                        logic.move_to_next(); st.rerun()
-            with bp:
-                if st.button("לשאלה הקודמת", disabled=(st.session_state.current_q == 1), key="prev"):
-                    st.session_state.current_q -= 1; st.rerun()
-            with bf:
-                if 25 in st.session_state.answers_user: st.button("סיום בחינה", key="finish")
-
-# סוף קובץ
