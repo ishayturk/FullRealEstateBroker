@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V177 | Date: 23/02/2026 | 13:15
+# Version: V178 | Date: 23/02/2026 | 13:25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -22,18 +22,24 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) {
             background-color: #f1f3f5 !important;
             border-radius: 15px;
-            padding: 5px 15px 15px 15px !important; /* צמצום פדינג עליון מ-15 ל-5 */
-            margin-top: -15px !important; /* משיכה למעלה של כל הבלוק */
+            padding: 5px 15px 15px 15px !important;
+            margin-top: -15px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
-            gap: 0rem !important;
-            margin-top: 0px !important;
-            padding-top: 0px !important;
+        /* העלמה מוחלטת של עמודת הניווט */
+        div[data-testid="column"]:nth-of-type(1) {
+            display: none !important;
+            height: 0px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* הצמדת השאלה למעלה לכיוון השעון */
+        div[data-testid="column"]:nth-of-type(2) {
+            margin-top: -50px !important;
         }
         .q-text { font-size: 1.25rem !important; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
@@ -97,6 +103,7 @@ elif st.session_state.step == "exam_run":
 
     components.html(header_html, height=80)
 
+    # חלוקה לעמודות - בנייד העמודה הראשונה תוסתר ב-CSS
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
         st.markdown('<b class="nav-title">מפת שאלות:</b>', unsafe_allow_html=True)
