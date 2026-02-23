@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V154 | Date: 23/02/2026 | 18:30
+# Version: V155 | Date: 23/02/2026 | 18:45
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,7 +14,6 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-    .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     .stDivider { margin: 0.5rem 0 !important; }
 
     /* --- SECTION: DESKTOP --- */
@@ -24,6 +23,8 @@ st.markdown("""
             border-radius: 15px;
             padding: 15px !important;
         }
+        /* השאלה מקבלת את הפונט הגדול של הכותרת */
+        .q-text { font-size: 2.2rem !important; font-weight: bold; line-height: 1.2; margin-bottom: 10px; color: #000; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -31,13 +32,15 @@ st.markdown("""
         div[data-testid="column"]:nth-of-type(1) [data-testid="stVerticalBlock"] {
             gap: 0rem !important;
         }
+        /* בנייד השאלה נשארת בגודלה המקורי */
+        .q-text { font-size: 1.25rem; font-weight: bold; line-height: 1.4; margin-bottom: 10px; color: #000; }
     }
     </style>
 """, unsafe_allow_html=True)
 
 logic.initialize_exam()
 
-# 1. סטריפ עליון (V113)
+# 1. סטריפ עליון
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
 with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
@@ -61,11 +64,12 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
+    # הכותרת והשעון מקבלים את הגודל המקורי של השאלה (1.25rem) במחשב
     combined_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap; overflow: hidden;">
         <style>
-            .t-title {{ font-size: 2.2rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.6rem; font-weight: bold; }}
+            .t-title {{ font-size: 1.25rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ margin-right: 40px; font-family: monospace; font-size: 1.25rem; font-weight: bold; }}
             @media (max-width: 768px) {{
                 .t-title {{ font-size: 1.1rem; }}
                 .t-clock {{ font-size: 1.0rem; margin-right: 15px; }}
@@ -104,7 +108,7 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        components.html(combined_header_html, height=45)
+        components.html(combined_header_html, height=40)
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {st.session_state.current_q}</p>', unsafe_allow_html=True)
