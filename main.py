@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V170 | Date: 23/02/2026 | 23:55
+# Version: V171 | Date: 23/02/2026 | 23:59
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -65,18 +65,18 @@ if "step" not in st.session_state or st.session_state.step == "instructions":
 elif st.session_state.step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     
-    # HTML אחוד - גודל משתנה לפי Media Query בתוך ה-HTML
+    # HTML חכם - משנה גדלים פנימית לפי רוחב המסך
     combined_header_html = f"""
     <div style="direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
         <style>
-            /* מצב מחשב - גדול */
-            .t-title {{ font-size: 2.2rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
-            .t-clock {{ font-size: 1.8rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 30px; }}
+            /* בסיס - ערכי נייד (V159) */
+            .t-title {{ font-size: 1.1rem; font-weight: bold; font-family: sans-serif; color: #000; margin: 0; }}
+            .t-clock {{ font-size: 1.0rem; font-weight: bold; font-family: monospace; color: #333; margin-right: 15px; }}
             
-            /* מצב נייד - קטן (ערכי V159) */
-            @media (max-width: 768px) {{
-                .t-title {{ font-size: 1.1rem !important; }}
-                .t-clock {{ font-size: 1.0rem !important; margin-right: 15px !important; }}
+            /* דריסה למחשב - ערכי V113 מורחבים */
+            @media (min-width: 769px) {{
+                .t-title {{ font-size: 2.2rem !important; }}
+                .t-clock {{ font-size: 1.8rem !important; margin-right: 40px !important; }}
             }}
         </style>
         <div class="t-title">מבחן רישוי למתווכים</div>
@@ -112,8 +112,8 @@ elif st.session_state.step == "exam_run":
                         st.session_state.current_q = idx; st.rerun()
 
     with col_main:
-        # רכיב יחיד שמטפל בשני המצבים
-        components.html(combined_header_html, height=65)
+        # רכיב HTML יחיד שמתאים את עצמו
+        components.html(combined_header_html, height=70)
         
         q = st.session_state.exam_data.get(st.session_state.current_q)
         if q:
