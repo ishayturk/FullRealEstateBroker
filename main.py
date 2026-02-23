@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V187 | Date: 23/02/2026 | 16:10
+# Version: V188 | Date: 23/02/2026 | 16:30
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -7,12 +7,13 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
 user_name = st.query_params.get("user", "אורח")
 
-# בדיקת לחיצה על ספרת ניווט דרך URL
+# תיקון לוגיקת הניווט - מניעת חזרה לעמוד ההוראות בלחיצה על שאלה
 nav_q = st.query_params.get("q")
 if nav_q and nav_q.isdigit():
     target_q = int(nav_q)
     if "nav_active_questions" in st.session_state and target_q in st.session_state.nav_active_questions:
         st.session_state.current_q = target_q
+        st.session_state.step = "exam_run" # וידוא השארות בתוך הבחינה
     st.query_params.clear()
     st.query_params["user"] = user_name
     st.rerun()
@@ -50,7 +51,6 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        /* החלת Flexbox רק על בלוק הבחינה כדי לא להרוס את עמוד ההסבר */
         .exam-container [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
@@ -58,8 +58,6 @@ st.markdown("""
             align-items: flex-start !important;
             gap: 2px !important;
         }
-        
-        /* עמודת ניווט בלתי נראית */
         .exam-container div[data-testid="column"]:nth-of-type(1) {
             min-width: 1ch !important;
             width: 1ch !important;
@@ -68,16 +66,12 @@ st.markdown("""
         }
         .nav-link-mobile { color: white !important; font-size: 0.3rem !important; pointer-events: none !important; }
         .nav-title { display: none !important; }
-
-        /* הצמדת השאלה לכותרת הבחינה */
         .exam-container div[data-testid="column"]:nth-of-type(2) {
             flex-grow: 1 !important;
             padding-top: 0 !important;
-            margin-top: -45px !important; /* העלאה לכיוון הכותרת */
+            margin-top: -45px !important;
         }
         .q-text { font-size: 1.1rem !important; font-weight: bold; line-height: 1.3; }
-        
-        /* תיקון מרווח שנוצר מרכיב ה-HTML של השעון */
         iframe[title="streamlit.components.v1.html"] { margin-bottom: -30px !important; }
     }
     </style>
@@ -139,7 +133,6 @@ elif st.session_state.step == "exam_run":
     """
     components.html(header_html, height=80)
 
-    # עטיפת אזור הבחינה בקלאס ייעודי לבידוד CSS
     st.markdown('<div class="exam-container">', unsafe_allow_html=True)
     col_nav, col_main = st.columns([1, 2.5], gap="medium")
     with col_nav:
