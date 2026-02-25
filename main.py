@@ -1,6 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
 # Version: V244 | Date: 23/02/2026 | 23:59
-# Claude 01 | Fix: single space between checkbox and its label
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -19,6 +18,7 @@ st.markdown("""
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
+        /* מרכז את אזור השאלה והתשובות כ-8% מהצד */
         .question-area { padding-right: 8%; padding-left: 8%; }
     }
 
@@ -53,7 +53,7 @@ if current_step == "instructions":
         for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
         st.write("")
         f_cols = st.columns([1, 1])
-        with f_cols[0]: agree = st.checkbox(" קראתי את ההוראות")
+        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
         with f_cols[1]:
             if st.button("התחל בחינה", disabled=not (agree and 1 in st.session_state.exam_data)):
                 st.session_state.step = "exam_run"; st.session_state.current_q = 1
