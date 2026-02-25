@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 02 | Mobile: single-line header below nav button, above exam title
+# Claude 03 | Fix desktop header, mobile header visibility, spacing
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -13,42 +13,36 @@ st.markdown("""
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
-    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
+    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
 
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
         .question-area { padding-right: 8%; padding-left: 8%; }
-        .mobile-header { display: none; }
+        .mobile-header { display: none !important; }
     }
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .block-container { padding-top: 0px !important; }
-        .mobile-up { margin-top: -90px !important; }
-        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
+        .block-container { padding-top: 60px !important; }
+        .mobile-up { margin-top: 0px !important; }
+        .nav-title { margin-top: 10px !important; text-align: center; display: block; }
         iframe { width: 100% !important; height: 50px !important; }
         .desktop-header { display: none !important; }
         .mobile-header {
-            display: flex;
+            display: flex !important;
             flex-direction: row;
             justify-content: center;
             align-items: center;
             gap: 0;
             width: fit-content;
-            margin: 6px auto 6px auto;
+            margin: 4px auto 4px auto;
             font-size: 1.1rem;
             font-weight: bold;
-        }
-        .mobile-header-title {
-            white-space: nowrap;
         }
         .mobile-header-spacer {
             display: inline-block;
             width: 3em;
-        }
-        .mobile-header-user {
-            white-space: nowrap;
         }
     }
     </style>
@@ -60,20 +54,19 @@ logic.initialize_exam_state()
 # סטריפ עליון — מחשב
 st.markdown(f"""
     <div class="desktop-header">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:5px; border-bottom:1px solid #eee; margin-bottom:15px;">
             <div style="font-weight:bold; font-size:1.1rem;">🏠 מתווך בקליק</div>
             <div style="font-weight:bold;">👤 {user_name}</div>
         </div>
     </div>
-    <div class="header-box"></div>
 """, unsafe_allow_html=True)
 
-# סטריפ עליון — נייד (שורה אחת מרכוזית)
+# סטריפ עליון — נייד
 st.markdown(f"""
     <div class="mobile-header">
-        <div class="mobile-header-title">🏠 מתווך בקליק</div>
+        <div style="white-space:nowrap;">🏠 מתווך בקליק</div>
         <div class="mobile-header-spacer"></div>
-        <div class="mobile-header-user">👤 {user_name}</div>
+        <div style="white-space:nowrap;">👤 {user_name}</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -99,13 +92,14 @@ elif current_step == "exam_run":
     header_html = f"""
     <style>
         .wrapper {{
-            direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; 
+            direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;
+            margin-top: 4px; margin-bottom: 4px;
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
-        
+
         @media (max-width: 768px) {{
-            .wrapper {{ justify-content: center !important; gap: 15px !important; }}
+            .wrapper {{ justify-content: center !important; gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
             .c-text {{ font-size: 1rem !important; margin-right: 0 !important; }}
         }}
@@ -128,11 +122,11 @@ elif current_step == "exam_run":
     u(); setInterval(u, 1000);
     </script>
     """
-    components.html(header_html, height=60)
+    components.html(header_html, height=50)
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
-        st.markdown('<div class="mobile-up question-area">', unsafe_allow_html=True)
+        st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
         idx = st.session_state.current_q
         q = st.session_state.exam_data.get(idx)
         if q:
