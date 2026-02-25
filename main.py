@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 03 | Fix desktop header, mobile header visibility, spacing
+# Claude 04 | Restore original desktop header, keep Claude 03 mobile
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -51,15 +51,12 @@ st.markdown("""
 # אתחול
 logic.initialize_exam_state()
 
-# סטריפ עליון — מחשב
-st.markdown(f"""
-    <div class="desktop-header">
-        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:5px; border-bottom:1px solid #eee; margin-bottom:15px;">
-            <div style="font-weight:bold; font-size:1.1rem;">🏠 מתווך בקליק</div>
-            <div style="font-weight:bold;">👤 {user_name}</div>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+# סטריפ עליון — מחשב (מקורי)
+h1, h2, h3 = st.columns([2, 1, 2])
+with h1: st.markdown(f'<div class="desktop-header" style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
+with h2: st.markdown('<div class="desktop-header" style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
+with h3: st.markdown(f'<div class="desktop-header" style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-box desktop-header"></div>', unsafe_allow_html=True)
 
 # סטריפ עליון — נייד
 st.markdown(f"""
