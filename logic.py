@@ -1,135 +1,34 @@
-# Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V244 | Date: 23/02/2026 | 23:59
+# Project: מתווך בקליק - מערכת בחינות | File: logic.py
+# Version: V216 | Date: 24/02/2026 | 02:20
 import streamlit as st
-import logic
-import streamlit.components.v1 as components
+import time
+import random
 
-st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
-user_name = st.query_params.get("user", "אורח")
+def generate_question_from_engine(q_num):
+    # מנוע שאלות נקי משגיאות סינטקס
+    pool = [
+        {"q": "מהי דרישת הכתב לפי סעיף 9 לחוק המתווכים?", "correct": "דרישה מהותית - ללא הזמנה בכתב המתווכים לא יהיה זכאי לדמי תיווך.", "distractors": ["דרישה ראייתית בלבד.", "ניתן להסתפק בהסכמה בעל פה אם יש עדים.", "הדרישה חלה רק בבלעדיות."]},
+        {"q": "מי רשאי לעסוק בתיווך מקרקעין בישראל?", "correct": "רק מי שיש לו רישיון בתוקף לפי חוק המתווכים.", "distractors": ["כל אזרח מעל גיל 18.", "רק עורכי דין.", "מי שעבר קורס שיווק בלבד."]}
+    ]
+    data = pool[q_num % len(pool)]
+    opts = [data["correct"]] + data["distractors"]
+    random.shuffle(opts)
+    return {"question": data["q"], "options": opts, "answer_index": opts.index(data["correct"])}
 
-st.markdown("""
-    <style>
-    /* --- SECTION: GENERAL --- */
-    * { direction: rtl; text-align: right; }
-    header, #MainMenu, footer { visibility: hidden; }
-    .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
-    .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-    
-    /* --- SECTION: DESKTOP --- */
-    @media (min-width: 769px) {
-        .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
-        /* מרכז את אזור השאלה והתשובות כ-8% מהצד */
-        .question-area { padding-right: 8%; padding-left: 8%; }
-    }
+def initialize_exam_state():
+    if "step" not in st.session_state: st.session_state.step = "instructions"
+    if "exam_data" not in st.session_state: st.session_state.exam_data = {}
+    if "answers_user" not in st.session_state: st.session_state.answers_user = {}
+    if "nav_active_questions" not in st.session_state: st.session_state.nav_active_questions = set()
+    if "start_time" not in st.session_state: st.session_state.start_time = time.time()
+    if "current_q" not in st.session_state: st.session_state.current_q = 1
+    if "finish_button_visible" not in st.session_state: st.session_state.finish_button_visible = False
 
-    /* --- SECTION: MOBILE --- */
-    @media (max-width: 768px) {
-        .block-container { padding-top: 0px !important; }
-        .mobile-up { margin-top: -90px !important; }
-        .nav-title { margin-top: 25px !important; text-align: center; display: block; }
-        iframe { width: 100% !important; height: 50px !important; }
-    }
-    </style>
-""", unsafe_allow_html=True)
+def ensure_question_exists(q_num):
+    if q_num <= 25 and q_num not in st.session_state.exam_data:
+        st.session_state.exam_data[q_num] = generate_question_from_engine(q_num)
 
-# אתחול
-logic.initialize_exam_state()
-
-# 1. סטריפ עליון
-h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
-st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
-
-current_step = st.session_state.get("step", "instructions")
-
-if current_step == "instructions":
-    logic.ensure_question_exists(1)
-    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישויי מתווכים</h2>', unsafe_allow_html=True)
-    _, center_col, _ = st.columns([1, 1.2, 1])
-    with center_col:
-        instructions = ["המבחן כולל 25 שאלות.", "זמן מוקצב: 90 דקות.", "מעבר לשאלה הבאה רק לאחר סימון תשובה.", "ניתן לחזור אחורה לשאלות שנחשפו.", "ציון עובר: 60."]
-        for i, txt in enumerate(instructions, 1): st.write(f"{i}. {txt}")
-        st.write("")
-        f_cols = st.columns([1, 1])
-        with f_cols[0]: agree = st.checkbox("קראתי את ההוראות")
-        with f_cols[1]:
-            if st.button("התחל בחינה", disabled=not (agree and 1 in st.session_state.exam_data)):
-                st.session_state.step = "exam_run"; st.session_state.current_q = 1
-                st.session_state.nav_active_questions.add(1); logic.ensure_question_exists(2); st.rerun()
-
-elif current_step == "exam_run":
-    rem_sec = logic.get_remaining_seconds()
-    header_html = f"""
-    <style>
-        .wrapper {{
-            direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%; 
-        }}
-        .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
-        .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
-        
-        @media (max-width: 768px) {{
-            .wrapper {{ justify-content: center !important; gap: 15px !important; }}
-            .t-text {{ font-size: 1.1rem !important; }}
-            .c-text {{ font-size: 1.1rem !important; margin-right: 0 !important; }}
-        }}
-    </style>
-    <div class="wrapper">
-        <div class="t-text">מבחן רישוי למתווכים</div>
-        <div id="clock-val" class="c-text"></div>
-    </div>
-    <script>
-    var s = {rem_sec};
-    function u() {{
-        var m = Math.floor(s / 60); var sec = s % 60;
-        var el = document.getElementById('clock-val');
-        if (el) {{
-            el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
-            if (s <= 600) el.style.color = "red";
-        }}
-        if (s > 0) s--;
-    }}
-    u(); setInterval(u, 1000);
-    </script>
-    """
-    components.html(header_html, height=60)
-
-    col_main, col_nav = st.columns([2.5, 1], gap="medium")
-    with col_main:
-        st.markdown('<div class="mobile-up question-area">', unsafe_allow_html=True)
-        idx = st.session_state.current_q
-        q = st.session_state.exam_data.get(idx)
-        if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["question"]}</div>', unsafe_allow_html=True)
-            choice = st.radio("", q["options"], index=st.session_state.answers_user.get(idx), key=f"r_{idx}", label_visibility="collapsed")
-            if choice is not None:
-                st.session_state.answers_user[idx] = q["options"].index(choice)
-                if idx == 25: st.session_state.finish_button_visible = True
-            st.divider()
-            b_p, b_n, b_f = st.columns([1, 1, 1.2])
-            with b_p:
-                if idx > 1 and st.button("לשאלה הקודמת"): st.session_state.current_q -= 1; st.rerun()
-            with b_n:
-                if idx < 25:
-                    if st.button("לשאלה הבאה", disabled=not (idx in st.session_state.answers_user and (idx+1) in st.session_state.exam_data)):
-                        st.session_state.current_q += 1; st.session_state.nav_active_questions.add(st.session_state.current_q)
-                        if idx <= 23: logic.ensure_question_exists(idx + 2)
-                        st.rerun()
-            with b_f:
-                if st.session_state.get("finish_button_visible") and st.button("סיים בחינה", type="primary"):
-                    st.session_state.step = "feedback"; st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col_nav:
-        st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
-        for r in range(0, 25, 4):
-            cols = st.columns(4)
-            for i in range(4):
-                n = r + i + 1
-                if n <= 25:
-                    is_active = n in st.session_state.nav_active_questions
-                    if cols[i].button(f"**{n}**" if n == st.session_state.current_q else str(n), key=f"n_{n}", disabled=not is_active):
-                        st.session_state.current_q = n; st.rerun()
+def get_remaining_seconds():
+    elapsed = time.time() - st.session_state.get("start_time", time.time())
+    return max(0, int((90 * 60) - elapsed))
 # סוף קובץ
