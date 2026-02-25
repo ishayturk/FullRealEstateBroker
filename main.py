@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Version: V244 | Date: 23/02/2026 | 23:59
+# Claude 02 | Mobile: single-line header below nav button, above exam title
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -14,12 +14,12 @@ st.markdown("""
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
     .header-box { border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 15px; }
-    
+
     /* --- SECTION: DESKTOP --- */
     @media (min-width: 769px) {
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
-        /* מרכז את אזור השאלה והתשובות כ-8% מהצד */
         .question-area { padding-right: 8%; padding-left: 8%; }
+        .mobile-header { display: none; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -28,6 +28,28 @@ st.markdown("""
         .mobile-up { margin-top: -90px !important; }
         .nav-title { margin-top: 25px !important; text-align: center; display: block; }
         iframe { width: 100% !important; height: 50px !important; }
+        .desktop-header { display: none !important; }
+        .mobile-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            width: fit-content;
+            margin: 6px auto 6px auto;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .mobile-header-title {
+            white-space: nowrap;
+        }
+        .mobile-header-spacer {
+            display: inline-block;
+            width: 3em;
+        }
+        .mobile-header-user {
+            white-space: nowrap;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -35,12 +57,25 @@ st.markdown("""
 # אתחול
 logic.initialize_exam_state()
 
-# 1. סטריפ עליון
-h1, h2, h3 = st.columns([2, 1, 2])
-with h1: st.markdown(f'<div style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
-with h2: st.markdown('<div style="text-align: center; color: #eee;">|</div>', unsafe_allow_html=True)
-with h3: st.markdown(f'<div style="text-align: right; font-weight: bold;">👤 {user_name}</div>', unsafe_allow_html=True)
-st.markdown('<div class="header-box"></div>', unsafe_allow_html=True)
+# סטריפ עליון — מחשב
+st.markdown(f"""
+    <div class="desktop-header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:bold; font-size:1.1rem;">🏠 מתווך בקליק</div>
+            <div style="font-weight:bold;">👤 {user_name}</div>
+        </div>
+    </div>
+    <div class="header-box"></div>
+""", unsafe_allow_html=True)
+
+# סטריפ עליון — נייד (שורה אחת מרכוזית)
+st.markdown(f"""
+    <div class="mobile-header">
+        <div class="mobile-header-title">🏠 מתווך בקליק</div>
+        <div class="mobile-header-spacer"></div>
+        <div class="mobile-header-user">👤 {user_name}</div>
+    </div>
+""", unsafe_allow_html=True)
 
 current_step = st.session_state.get("step", "instructions")
 
@@ -71,8 +106,8 @@ elif current_step == "exam_run":
         
         @media (max-width: 768px) {{
             .wrapper {{ justify-content: center !important; gap: 15px !important; }}
-            .t-text {{ font-size: 1.1rem !important; }}
-            .c-text {{ font-size: 1.1rem !important; margin-right: 0 !important; }}
+            .t-text {{ font-size: 1rem !important; }}
+            .c-text {{ font-size: 1rem !important; margin-right: 0 !important; }}
         }}
     </style>
     <div class="wrapper">
