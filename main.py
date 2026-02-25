@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 04 | Restore original desktop header, keep Claude 03 mobile
+# Claude 05 | Button layout: swap prev/next desktop, mobile same row short labels, finish below
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -134,18 +134,38 @@ elif current_step == "exam_run":
                 st.session_state.answers_user[idx] = q["options"].index(choice)
                 if idx == 25: st.session_state.finish_button_visible = True
             st.divider()
-            b_p, b_n, b_f = st.columns([1, 1, 1.2])
-            with b_p:
-                if idx > 1 and st.button("לשאלה הקודמת"): st.session_state.current_q -= 1; st.rerun()
+
+            # מחשב: הבאה מימין, קודמת קצת משמאל, סיים קצת יותר משמאל
+            # נייד: הבאה מימין, קודמת משמאל באותה שורה — שורה נפרדת לסיים
+            is_mobile_css = """
+                <style>
+                @media (max-width: 768px) {
+                    [data-testid="column"]:has(button[kind="secondary"]) button { font-size: 0.85rem !important; }
+                }
+                </style>
+            """
+            st.markdown(is_mobile_css, unsafe_allow_html=True)
+
+            # שורה 1: קודמת (שמאל במחשב=עמודה ראשונה) / הבאה (ימין=עמודה שנייה)
+            # בנייד שני הכפתורים באותה שורה
+            b_n, b_p, b_f = st.columns([1, 1, 1.2])
             with b_n:
+                # "לשאלה הבאה" — ימין (עמודה ראשונה ב-RTL)
                 if idx < 25:
-                    if st.button("לשאלה הבאה", disabled=not (idx in st.session_state.answers_user and (idx+1) in st.session_state.exam_data)):
+                    next_label = "הבאה" if st.session_state.get("_is_mobile") else "לשאלה הבאה"
+                    if st.button("לשאלה הבאה", key="btn_next", disabled=not (idx in st.session_state.answers_user and (idx+1) in st.session_state.exam_data)):
                         st.session_state.current_q += 1; st.session_state.nav_active_questions.add(st.session_state.current_q)
                         if idx <= 23: logic.ensure_question_exists(idx + 2)
                         st.rerun()
+            with b_p:
+                # "לשאלה הקודמת" — שמאל
+                if idx > 1:
+                    if st.button("לשאלה הקודמת", key="btn_prev"):
+                        st.session_state.current_q -= 1; st.rerun()
             with b_f:
-                if st.session_state.get("finish_button_visible") and st.button("סיים בחינה", type="primary"):
+                if st.session_state.get("finish_button_visible") and st.button("**סיים בחינה**", type="primary"):
                     st.session_state.step = "feedback"; st.rerun()
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col_nav:
