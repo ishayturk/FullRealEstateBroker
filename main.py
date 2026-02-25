@@ -57,7 +57,7 @@ st.markdown("""
 logic.initialize_exam_state()
 
 # --- טעינת בחינה בפעם הראשונה ---
-if not st.session_state.test_path:
+if not st.session_state.get("test_path"):
     logic.load_exam()
     logic.ensure_question_exists(1)
 
