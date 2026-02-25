@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 05 | Button layout: swap prev/next desktop, mobile same row short labels, finish below
+# Claude 06 | Mobile: short button labels via CSS
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -44,6 +44,17 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
+        /* כפתור הבאה בנייד */
+        [data-testid="stButton"][id="btn_next"] button,
+        button[kind="secondary"][data-testid="baseButton-secondary"]:first-of-type {
+            font-size: 0.9rem !important;
+        }
+        /* שינוי טקסט כפתורים בנייד */
+        #btn_next button p::after { content: ""; }
+        #btn_next button p { font-size: 0; }
+        #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
+        #btn_prev button p { font-size: 0; }
+        #btn_prev button p::before { content: "הקודמת"; font-size: 1rem; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -135,30 +146,14 @@ elif current_step == "exam_run":
                 if idx == 25: st.session_state.finish_button_visible = True
             st.divider()
 
-            # מחשב: הבאה מימין, קודמת קצת משמאל, סיים קצת יותר משמאל
-            # נייד: הבאה מימין, קודמת משמאל באותה שורה — שורה נפרדת לסיים
-            is_mobile_css = """
-                <style>
-                @media (max-width: 768px) {
-                    [data-testid="column"]:has(button[kind="secondary"]) button { font-size: 0.85rem !important; }
-                }
-                </style>
-            """
-            st.markdown(is_mobile_css, unsafe_allow_html=True)
-
-            # שורה 1: קודמת (שמאל במחשב=עמודה ראשונה) / הבאה (ימין=עמודה שנייה)
-            # בנייד שני הכפתורים באותה שורה
             b_n, b_p, b_f = st.columns([1, 1, 1.2])
             with b_n:
-                # "לשאלה הבאה" — ימין (עמודה ראשונה ב-RTL)
                 if idx < 25:
-                    next_label = "הבאה" if st.session_state.get("_is_mobile") else "לשאלה הבאה"
                     if st.button("לשאלה הבאה", key="btn_next", disabled=not (idx in st.session_state.answers_user and (idx+1) in st.session_state.exam_data)):
                         st.session_state.current_q += 1; st.session_state.nav_active_questions.add(st.session_state.current_q)
                         if idx <= 23: logic.ensure_question_exists(idx + 2)
                         st.rerun()
             with b_p:
-                # "לשאלה הקודמת" — שמאל
                 if idx > 1:
                     if st.button("לשאלה הקודמת", key="btn_prev"):
                         st.session_state.current_q -= 1; st.rerun()
