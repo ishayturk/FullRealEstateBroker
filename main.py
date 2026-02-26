@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 36 | Mobile header larger, instructions with spaces
+# Claude 36b | Restore numbered instructions with spaces, move header up
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -27,7 +27,7 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .block-container { padding-top: 40px !important; }
+        .block-container { padding-top: 30px !important; }
         .mobile-up { margin-top: 0px !important; }
         .nav-title { margin-top: 10px !important; text-align: center; display: block; }
         iframe { width: 100% !important; height: 80px !important; }
@@ -102,14 +102,14 @@ if current_step == "instructions":
         with center_col:
             st.markdown('<div class="instructions-wrap">', unsafe_allow_html=True)
             instructions = [
-                "  המבחן כולל 25 שאלות.",
-                "  זמן מוקצב: 90 דקות.",
-                "  מעבר לשאלה הבאה רק לאחר סימון תשובה.",
-                "  ניתן לחזור אחורה לשאלות שנחשפו.",
-                "  ציון עובר: 60.",
+                "המבחן כולל 25 שאלות.",
+                "זמן מוקצב: 90 דקות.",
+                "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
+                "ניתן לחזור אחורה לשאלות שנחשפו.",
+                "ציון עובר: 60.",
             ]
-            for txt in instructions:
-                st.write(txt)
+            for i, txt in enumerate(instructions, 1):
+                st.markdown(f"&nbsp;&nbsp;{i}. {txt}", unsafe_allow_html=True)
             st.write("")
             f_cols = st.columns([1, 1])
             with f_cols[0]:
