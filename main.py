@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 26 | Single iframe, timeout message inside clock frame
+# Claude 28 | timeout redirect, question area replaced, nav disabled
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -89,7 +89,6 @@ if st.query_params.get("finish") == "1":
 
 # ===== דף הוראות =====
 if current_step == "instructions":
-    components.html("<script>localStorage.removeItem('exam_timed_out');</script>", height=0)
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
@@ -130,7 +129,6 @@ elif current_step == "exam_run":
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
-        #timeout-msg {{ display:none; direction:rtl; color:#cc0000; font-weight:bold; font-size:0.95rem; margin-top:4px; text-align:center; }}
         @media (max-width: 768px) {{
             .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
@@ -141,38 +139,8 @@ elif current_step == "exam_run":
         <div class="t-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="c-text"></div>
     </div>
-    <div id="timeout-msg">זמן הבחינה תם — אנא לחץ על סיים בחינה</div>
     <script>
     var s = {rem_sec};
-    var timedOut = false;
-
-    function applyTimeout() {{
-        if (timedOut) return;
-        timedOut = true;
-        document.getElementById('timeout-msg').style.display = 'block';
-        try {{
-            var frames = parent.document.querySelectorAll('iframe');
-            frames.forEach(function(f) {{
-                if (f.contentWindow === window) f.style.height = '80px';
-            }});
-        }} catch(e) {{}}
-        try {{
-            var pd = parent.document;
-            pd.querySelectorAll('button').forEach(function(b) {{
-                var txt = b.innerText.trim();
-                if (txt === 'לשאלה הבאה' || txt === 'לשאלה הקודמת') {{
-                    b.disabled = true;
-                    b.style.opacity = '0.4';
-                }}
-                if (txt === 'סיים בחינה') {{
-                    b.disabled = false;
-                    b.style.opacity = '1';
-                }}
-            }});
-            pd.querySelectorAll('input[type=radio]').forEach(function(r) {{ r.disabled = true; }});
-        }} catch(e) {{}}
-    }}
-
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
         var el = document.getElementById('clock-val');
@@ -180,7 +148,10 @@ elif current_step == "exam_run":
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
             if (s <= 600) el.style.color = "red";
         }}
-        if (s <= 0) {{ applyTimeout(); return; }}
+        if (s <= 0) {{
+            parent.location.href = parent.location.pathname + '?timeout=1';
+            return;
+        }}
         s--;
     }}
     u(); setInterval(u, 1000);
@@ -188,16 +159,21 @@ elif current_step == "exam_run":
     """
     components.html(header_html, height=50)
 
-    is_time_up = logic.get_remaining_seconds() == 0
+    is_time_up = st.query_params.get("timeout") == "1" or logic.get_remaining_seconds() == 0
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
-        st.markdown('<div id="question-area" class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
+        st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
 
-        idx = st.session_state.current_q
-        q = st.session_state.exam_questions.get(idx)
-
-        if q:
+        if is_time_up:
+            st.markdown('<p style="color:#888; font-weight:bold; font-size:1.1rem; margin-bottom:8px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size:0.9rem; margin-bottom:20px;">נא ללחוץ על סיים בחינה להצגת תוצאותיך</p>', unsafe_allow_html=True)
+            if st.button("**סיים בחינה**", type="primary", key="btn_finish_timeout"):
+                st.session_state.step = "feedback"
+                st.rerun()
+        else:
+            idx = st.session_state.current_q
+            q = st.session_state.exam_questions.get(idx)
             st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
             st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
 
@@ -251,7 +227,7 @@ elif current_step == "exam_run":
             for i in range(4):
                 n = r + i + 1
                 if n <= 25:
-                    is_active = n in st.session_state.nav_active_questions
+                    is_active = (n in st.session_state.nav_active_questions) and not is_time_up
                     label = f"**{n}**" if n == st.session_state.current_q else str(n)
                     if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
                         st.session_state.current_q = n
