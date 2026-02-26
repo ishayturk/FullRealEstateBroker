@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 25 | localStorage timeout, JS handles buttons in real time
+# Claude 26 | Single iframe, timeout message inside clock frame
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -130,6 +130,7 @@ elif current_step == "exam_run":
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
+        #timeout-msg {{ display:none; direction:rtl; color:#cc0000; font-weight:bold; font-size:0.95rem; margin-top:4px; text-align:center; }}
         @media (max-width: 768px) {{
             .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
@@ -140,8 +141,38 @@ elif current_step == "exam_run":
         <div class="t-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="c-text"></div>
     </div>
+    <div id="timeout-msg">זמן הבחינה תם — אנא לחץ על סיים בחינה</div>
     <script>
     var s = {rem_sec};
+    var timedOut = false;
+
+    function applyTimeout() {{
+        if (timedOut) return;
+        timedOut = true;
+        document.getElementById('timeout-msg').style.display = 'block';
+        try {{
+            var frames = parent.document.querySelectorAll('iframe');
+            frames.forEach(function(f) {{
+                if (f.contentWindow === window) f.style.height = '80px';
+            }});
+        }} catch(e) {{}}
+        try {{
+            var pd = parent.document;
+            pd.querySelectorAll('button').forEach(function(b) {{
+                var txt = b.innerText.trim();
+                if (txt === 'לשאלה הבאה' || txt === 'לשאלה הקודמת') {{
+                    b.disabled = true;
+                    b.style.opacity = '0.4';
+                }}
+                if (txt === 'סיים בחינה') {{
+                    b.disabled = false;
+                    b.style.opacity = '1';
+                }}
+            }});
+            pd.querySelectorAll('input[type=radio]').forEach(function(r) {{ r.disabled = true; }});
+        }} catch(e) {{}}
+    }}
+
     function u() {{
         var m = Math.floor(s / 60); var sec = s % 60;
         var el = document.getElementById('clock-val');
@@ -149,70 +180,13 @@ elif current_step == "exam_run":
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
             if (s <= 600) el.style.color = "red";
         }}
-        if (s <= 0) {{
-            localStorage.setItem('exam_timed_out', '1');
-            return;
-        }}
+        if (s <= 0) {{ applyTimeout(); return; }}
         s--;
     }}
     u(); setInterval(u, 1000);
     </script>
     """
     components.html(header_html, height=50)
-
-    # מאזין שמטפל בכפתורים ישירות כשנגמר הזמן
-    listener_html = """
-    <script>
-    (function() {
-        function applyTimeout() {
-            var pd = parent.document;
-            // מצא את כל הכפתורים
-            var btns = pd.querySelectorAll('button');
-            var finishBtn = null;
-            btns.forEach(function(b) {
-                var txt = b.innerText.trim();
-                if (txt === 'סיים בחינה') {
-                    finishBtn = b;
-                }
-            });
-            // נטרל הבאה והקודמת
-            btns.forEach(function(b) {
-                var txt = b.innerText.trim();
-                if (txt === 'לשאלה הבאה' || txt === 'לשאלה הקודמת') {
-                    b.disabled = true;
-                    b.style.opacity = '0.4';
-                }
-            });
-            // הפעל סיים בחינה
-            if (finishBtn) {
-                finishBtn.disabled = false;
-                finishBtn.style.opacity = '1';
-            }
-            // הצג הודעה
-            var msg = pd.getElementById('timeout-overlay');
-            if (!msg) {
-                msg = pd.createElement('div');
-                msg.id = 'timeout-overlay';
-                msg.style.cssText = 'direction:rtl; color:#cc0000; font-weight:bold; font-size:0.95rem; margin: 6px 0 4px 0;';
-                msg.innerText = 'זמן הבחינה תם — אנא לחץ על סיים בחינה';
-                if (finishBtn) {
-                    finishBtn.parentNode.insertBefore(msg, finishBtn);
-                }
-            }
-            // נטרל רדיו
-            pd.querySelectorAll('input[type=radio]').forEach(function(r) { r.disabled = true; });
-        }
-
-        function check() {
-            if (localStorage.getItem('exam_timed_out') === '1') {
-                applyTimeout();
-            }
-        }
-        setInterval(check, 500);
-    })();
-    </script>
-    """
-    components.html(listener_html, height=0)
 
     is_time_up = logic.get_remaining_seconds() == 0
 
