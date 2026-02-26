@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 34 | New exam to instructions, 2 exam limit, responsive feedback title
+# Claude 34c | Fix exams limit in instructions page
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -90,34 +90,39 @@ if st.query_params.get("finish") == "1":
 
 # ===== דף הוראות =====
 if current_step == "instructions":
-    st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
-    _, center_col, _ = st.columns([1, 1.2, 1])
-    with center_col:
-        instructions = [
-            "המבחן כולל 25 שאלות.",
-            "זמן מוקצב: 90 דקות.",
-            "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
-            "ניתן לחזור אחורה לשאלות שנחשפו.",
-            "ציון עובר: 60.",
-        ]
-        for i, txt in enumerate(instructions, 1):
-            st.write(f"{i}. {txt}")
-        st.write("")
-        f_cols = st.columns([1, 1])
-        with f_cols[0]:
-            agree = st.checkbox("קראתי את ההוראות")
-        with f_cols[1]:
-            q1_ready = st.session_state.get("q1_ready", False)
-            start_disabled = not (agree and q1_ready)
-            if st.button("התחל בחינה", disabled=start_disabled):
-                import time
-                st.session_state.step = "exam_run"
-                st.session_state.current_q = 1
-                st.session_state.nav_active_questions.add(1)
-                st.session_state.exam_start_time = time.time()
-                st.session_state.exams_done_session = st.session_state.get("exams_done_session", 0) + 1
-                logic.ensure_question_exists(2)
-                st.rerun()
+    exams_done = st.session_state.get("exams_done_session", 0)
+    if exams_done >= 2:
+        st.markdown('<h2 style="text-align:center;">סיימת את מכסת הבחינות לסשן זה</h2>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#888;">עשית 2 בחינות — היכנס מחדש לאפליקציה לבחינות נוספות.</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
+        _, center_col, _ = st.columns([1, 1.2, 1])
+        with center_col:
+            instructions = [
+                "המבחן כולל 25 שאלות.",
+                "זמן מוקצב: 90 דקות.",
+                "מעבר לשאלה הבאה רק לאחר סימון תשובה.",
+                "ניתן לחזור אחורה לשאלות שנחשפו.",
+                "ציון עובר: 60.",
+            ]
+            for i, txt in enumerate(instructions, 1):
+                st.write(f"{i}. {txt}")
+            st.write("")
+            f_cols = st.columns([1, 1])
+            with f_cols[0]:
+                agree = st.checkbox("קראתי את ההוראות")
+            with f_cols[1]:
+                q1_ready = st.session_state.get("q1_ready", False)
+                start_disabled = not (agree and q1_ready)
+                if st.button("התחל בחינה", disabled=start_disabled):
+                    import time
+                    st.session_state.step = "exam_run"
+                    st.session_state.current_q = 1
+                    st.session_state.nav_active_questions.add(1)
+                    st.session_state.exam_start_time = time.time()
+                    st.session_state.exams_done_session = st.session_state.get("exams_done_session", 0) + 1
+                    logic.ensure_question_exists(2)
+                    st.rerun()
 
 # ===== מהלך הבחינה =====
 elif current_step == "exam_run":
