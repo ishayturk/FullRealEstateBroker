@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 30 | Timeout msg in clock iframe, prev button only active on timeout
+# Claude 31 | New feedback design
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -248,44 +248,47 @@ elif current_step == "feedback":
     score = logic.get_total_score()
     correct_count = sum(1 for n in range(1, 26) if logic.get_points(n) == 4)
     score_color = "#1a7a1a" if score >= 60 else "#cc0000"
+    pass_text = "עבר" if score >= 60 else "נכשל"
+    pass_color = "#1a7a1a" if score >= 60 else "#cc0000"
 
-    st.markdown(f"""
-        <div style="border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 16px;">
-            <p style="font-size:1rem; margin:0;">
-                ענית על <strong>{correct_count}</strong> שאלות נכון.
-                ציונך הוא: <strong style="color:{score_color}; font-size:1.2rem;">{score}</strong>
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
+    # מציאת שאלה ראשונה שלא נענה
+    first_unanswered = None
     for n in range(1, 26):
-        q = st.session_state.exam_questions.get(n)
-        if not q:
-            continue
-        user = st.session_state.user_answers.get(n, {})
-        user_label = user.get("label", None)
-        correct_label = q.get("correct_label", "")
-        correct_text = q.get("options", {}).get(correct_label, "")
+        if n not in st.session_state.user_answers:
+            first_unanswered = n
+            break
 
-        if user_label is None:
-            # לא נענה
-            st.markdown(f"""
-                <div style="background:#f5f5f5; border-radius:8px; padding:12px; margin-bottom:10px;">
-                    <p style="font-weight:bold; margin-bottom:6px;">⬜ שאלה {n} — {q['text']}</p>
-                    <p style="margin:2px 0; color:#888;">לא נענה</p>
-                    <p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>
-                </div>
-            """, unsafe_allow_html=True)
-        else:
+    st.markdown(f'<h2 style="margin-bottom:4px;">משוב בחינת רישיון תיווך</h2>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-size:0.95rem; margin-bottom:4px;">ענית נכון על <strong>{correct_count}</strong> שאלות &nbsp;|&nbsp; ציונך: <strong>{score}</strong></p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-size:1.1rem; font-weight:bold; color:{pass_color}; margin-bottom:16px;">{pass_text}</p>', unsafe_allow_html=True)
+
+    if first_unanswered:
+        st.markdown(f'<p style="color:#888; font-size:0.9rem; margin-bottom:12px;">משאלה {first_unanswered} והלאה לא ענית על השאלות — הציון על שאלות אלו הוא 0</p>', unsafe_allow_html=True)
+
+    # שאלות שענה נכון
+    correct_questions = [n for n in range(1, 26) if n in st.session_state.user_answers and logic.get_points(n) == 4]
+    if correct_questions:
+        st.markdown('<h3 style="margin-top:16px; margin-bottom:8px;">שאלות שענית נכון</h3>', unsafe_allow_html=True)
+        for n in correct_questions:
+            st.markdown(f'<p style="margin:2px 0;">שאלה {n} &nbsp;<span style="color:#1a7a1a; font-weight:bold;">✓</span></p>', unsafe_allow_html=True)
+
+    # שאלות שענה לא נכון
+    wrong_questions = [n for n in range(1, 26) if n in st.session_state.user_answers and logic.get_points(n) == 0]
+    if wrong_questions:
+        st.markdown('<h3 style="margin-top:16px; margin-bottom:8px;">שאלות שענית לא נכון</h3>', unsafe_allow_html=True)
+        for n in wrong_questions:
+            q = st.session_state.exam_questions.get(n)
+            if not q:
+                continue
+            user_label = st.session_state.user_answers.get(n, {}).get("label", "")
             user_text = q.get("options", {}).get(user_label, "")
-            is_correct = logic.get_points(n) == 4
-            mark = "✅" if is_correct else "❌"
-            bg = "#f0fff0" if is_correct else "#fff0f0"
+            correct_label = q.get("correct_label", "")
+            correct_text = q.get("options", {}).get(correct_label, "")
             st.markdown(f"""
-                <div style="background:{bg}; border-radius:8px; padding:12px; margin-bottom:10px;">
-                    <p style="font-weight:bold; margin-bottom:6px;">{mark} שאלה {n} — {q['text']}</p>
-                    <p style="margin:2px 0;">תשובתך: {user_label}. {user_text}</p>
-                    {"" if is_correct else f'<p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>'}
+                <div style="margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #eee;">
+                    <p style="font-weight:bold; margin-bottom:4px;">שאלה {n} &nbsp;<span style="color:#cc0000;">✗</span></p>
+                    <p style="margin:2px 0;">ענית: {user_text}</p>
+                    <p style="margin:2px 0;">תשובה נכונה: {correct_text}</p>
                 </div>
             """, unsafe_allow_html=True)
 
