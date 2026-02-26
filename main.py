@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 20 | Unanswered questions shown in feedback
+# Claude 21 | Finish button always visible on time up
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -238,8 +238,9 @@ elif current_step == "exam_run":
                             st.session_state.current_q -= 1
                             st.rerun()
                 with b_f:
-                    if st.session_state.get("finish_button_visible"):
-                        if st.button("**סיים בחינה**", type="primary"):
+                    show_finish = is_time_up or st.session_state.get("finish_button_visible")
+                    if show_finish:
+                        if st.button("**סיים בחינה**", type="primary", key="btn_finish"):
                             st.session_state.step = "feedback"
                             st.rerun()
             else:
