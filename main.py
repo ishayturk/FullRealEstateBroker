@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 18 | localStorage timeout communication
+# Claude 19 | Expand iframe on timeout, disable buttons via parent.document
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -82,6 +82,11 @@ st.markdown(f"""
 
 current_step = st.session_state.get("step", "instructions")
 
+# זיהוי לחיצת סיים בחינה מה-iframe
+if st.query_params.get("finish") == "1":
+    st.session_state.step = "feedback"
+    st.rerun()
+
 # ===== דף הוראות =====
 if current_step == "instructions":
     components.html("<script>localStorage.removeItem('exam_timeout');</script>", height=0)
@@ -118,12 +123,14 @@ elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     header_html = f"""
     <style>
+        body {{ margin:0; padding:0; overflow:hidden; }}
         .wrapper {{
             direction: rtl; display: flex; align-items: center; justify-content: center; width: 100%;
             margin-top: 4px; margin-bottom: 4px;
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
+        #timeout-msg {{ display:none; direction:rtl; text-align:right; padding: 8px 0; }}
         @media (max-width: 768px) {{
             .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
@@ -133,6 +140,14 @@ elif current_step == "exam_run":
     <div class="wrapper">
         <div class="t-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="c-text"></div>
+    </div>
+    <div id="timeout-msg">
+        <span style="font-size:0.9rem; font-weight:bold; color:#cc0000;">זמן הבחינה תם — אנא לחץ על הכפתור</span>
+        &nbsp;
+        <button onclick="parent.location.href=parent.location.pathname+'?finish=1'"
+            style="background:#ff4b4b; color:white; border:none; padding:6px 18px; border-radius:6px; font-size:0.9rem; cursor:pointer; font-weight:bold;">
+            סיים בחינה
+        </button>
     </div>
     <script>
     var s = {rem_sec};
@@ -144,7 +159,20 @@ elif current_step == "exam_run":
             if (s <= 600) el.style.color = "red";
         }}
         if (s <= 0) {{
-            parent.localStorage.setItem('exam_timeout', '1');
+            document.getElementById('timeout-msg').style.display = 'block';
+            // הרחב את ה-iframe
+            try {{
+                var frames = parent.document.querySelectorAll('iframe');
+                frames.forEach(function(f) {{
+                    if (f.contentWindow === window) f.style.height = '90px';
+                }});
+            }} catch(e) {{}}
+            // נטרל כפתורים ורדיו בדף הראשי
+            try {{
+                parent.document.querySelectorAll('button, input[type=radio]').forEach(function(el) {{
+                    el.disabled = true;
+                }});
+            }} catch(e) {{}}
             return;
         }}
         s--;
@@ -153,34 +181,6 @@ elif current_step == "exam_run":
     </script>
     """
     components.html(header_html, height=50)
-
-    # מאזין לפג זמן מה-iframe
-    listener_html = """
-    <script>
-    (function() {
-        function checkTimeout() {
-            if (localStorage.getItem('exam_timeout') === '1') {
-                var qa = parent.document.getElementById('question-area');
-                if (qa) {
-                    qa.innerHTML = '<div style="text-align:center; padding:40px;">' +
-                        '<p style="color:#cc0000; font-size:1.4rem; font-weight:bold;">זמן הבחינה תם</p>' +
-                        '<p style="font-size:1rem; margin-bottom:20px;">נא ללחוץ על סיים בחינה</p>' +
-                        '<button onclick="localStorage.setItem(\'exam_goto_feedback\',\'1\'); window.location.href=window.location.pathname+\'?finish=1\';" ' +
-                        'style="background:#ff4b4b; color:white; border:none; padding:10px 24px; border-radius:6px; font-size:1rem; cursor:pointer; font-weight:bold;">סיים בחינה</button>' +
-                        '</div>';
-                }
-                // השבת כל אינטרקציות
-                var inputs = parent.document.querySelectorAll('input, button');
-                inputs.forEach(function(el) {
-                    if (!el.closest('#question-area')) el.disabled = true;
-                });
-            }
-        }
-        setInterval(checkTimeout, 500);
-    })();
-    </script>
-    """
-    components.html(listener_html, height=0)
 
     is_time_up = st.query_params.get("timeout") == "1" or st.session_state.get("timed_out", False)
     if is_time_up:
