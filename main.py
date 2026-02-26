@@ -57,9 +57,9 @@ st.markdown("""
 logic.initialize_exam_state()
 
 # --- טעינת בחינה בפעם הראשונה ---
-if not st.session_state.get("test_path"):
+if not st.session_state.get("exam_file"):
     logic.load_exam()
-    logic.ensure_question_exists(1)
+    st.rerun()
 
 # --- סטריפ עליון מחשב ---
 h1, h2, h3 = st.columns([2, 1, 2])
