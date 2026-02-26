@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 23 | Finish button outside is_time_up block
+# Claude 24 | Finish button always visible, enabled on time up or q25
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -160,13 +160,13 @@ elif current_step == "exam_run":
         }}
         if (s <= 0) {{
             document.getElementById('timeout-msg').style.display = 'block';
-            // הרחב את ה-iframe
             try {{
                 var frames = parent.document.querySelectorAll('iframe');
                 frames.forEach(function(f) {{
                     if (f.contentWindow === window) f.style.height = '90px';
                 }});
             }} catch(e) {{}}
+            parent.location.href = parent.location.pathname + '?timeout=1';
             return;
         }}
         s--;
@@ -176,25 +176,19 @@ elif current_step == "exam_run":
     """
     components.html(header_html, height=50)
 
-    is_time_up = st.query_params.get("timeout") == "1" or st.session_state.get("timed_out", False)
-    if is_time_up:
-        st.session_state.timed_out = True
+    is_time_up = st.query_params.get("timeout") == "1" or logic.get_remaining_seconds() == 0
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
         st.markdown('<div id="question-area" class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
 
-        if is_time_up:
-            st.markdown('<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">נא ללחוץ על סיים בחינה</div>', unsafe_allow_html=True)
-            if st.button("**סיים בחינה**", type="primary", key="btn_finish_timeout"):
-                st.session_state.step = "feedback"
-                st.rerun()
-        else:
-            idx = st.session_state.current_q
-            q = st.session_state.exam_questions.get(idx)
+        idx = st.session_state.current_q
+        q = st.session_state.exam_questions.get(idx)
 
-            if q:
+        if q:
+            if is_time_up:
+                st.markdown('<p style="color:#cc0000; font-weight:bold; font-size:1.1rem; margin-bottom:8px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
+            else:
                 st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
                 st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
 
@@ -213,31 +207,31 @@ elif current_step == "exam_run":
                     if idx == 25:
                         st.session_state.finish_button_visible = True
 
-                st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
 
-                b_n, b_p, b_f = st.columns([1, 1, 1.2])
-                with b_n:
-                    if idx < 25:
-                        next_ready = (idx + 1) in st.session_state.exam_questions
-                        has_answer = idx in st.session_state.user_answers
-                        if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
-                            st.session_state.current_q += 1
-                            st.session_state.nav_active_questions.add(st.session_state.current_q)
-                            if idx <= 23:
-                                logic.ensure_question_exists(idx + 2)
-                            st.rerun()
-                with b_p:
-                    if idx > 1:
-                        if st.button("לשאלה הקודמת", key="btn_prev"):
-                            st.session_state.current_q -= 1
-                            st.rerun()
-                with b_f:
-                    if st.session_state.get("finish_button_visible"):
-                        if st.button("**סיים בחינה**", type="primary", key="btn_finish"):
-                            st.session_state.step = "feedback"
-                            st.rerun()
-            else:
-                st.info("טוען שאלה...")
+            b_n, b_p, b_f = st.columns([1, 1, 1.2])
+            with b_n:
+                if idx < 25 and not is_time_up:
+                    next_ready = (idx + 1) in st.session_state.exam_questions
+                    has_answer = idx in st.session_state.user_answers
+                    if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
+                        st.session_state.current_q += 1
+                        st.session_state.nav_active_questions.add(st.session_state.current_q)
+                        if idx <= 23:
+                            logic.ensure_question_exists(idx + 2)
+                        st.rerun()
+            with b_p:
+                if idx > 1 and not is_time_up:
+                    if st.button("לשאלה הקודמת", key="btn_prev"):
+                        st.session_state.current_q -= 1
+                        st.rerun()
+            with b_f:
+                finish_enabled = is_time_up or st.session_state.get("finish_button_visible", False)
+                if st.button("**סיים בחינה**", type="primary", key="btn_finish", disabled=not finish_enabled):
+                    st.session_state.step = "feedback"
+                    st.rerun()
+        else:
+            st.info("טוען שאלה...")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
