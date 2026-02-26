@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 37 | Mobile nav 4 per row CSS fix
+# Claude 37b | Revert nav CSS
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -47,17 +47,8 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
-        /* ניווט שאלות בנייד - 4 בשורה */
-        [data-testid="column"] [data-testid="stButton"] button {
-            padding: 0.2rem 0.1rem !important;
-            font-size: 0.75rem !important;
-            min-height: 2rem !important;
-            height: 2rem !important;
-        }
-        div[data-testid="stHorizontalBlock"] {
-            flex-wrap: nowrap !important;
-            gap: 2px !important;
-        }
+        /* הזזת תוכן הוראות שמאלה */
+        .instructions-wrap { padding-right: 0 !important; padding-left: 2rem !important; }
         /* שינוי טקסט כפתורים בנייד */
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
