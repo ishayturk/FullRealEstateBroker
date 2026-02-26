@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 29b | Restore s-- in clock
+# Claude 30 | Timeout msg in clock iframe, prev button only active on timeout
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -129,16 +129,19 @@ elif current_step == "exam_run":
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
+        #timeout-msg {{ display:none; direction:rtl; color:#cc0000; font-weight:bold; font-size:0.8rem; text-align:center; margin-top:2px; }}
         @media (max-width: 768px) {{
             .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
             .c-text {{ font-size: 1rem !important; margin-right: 0 !important; }}
+            #timeout-msg {{ font-size:0.7rem !important; }}
         }}
     </style>
     <div class="wrapper">
         <div class="t-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="c-text"></div>
     </div>
+    <div id="timeout-msg">זמן הבחינה הסתיים — לחץ על כפתור לשאלה הקודמת</div>
     <script>
     var s = {rem_sec};
     function u() {{
@@ -149,6 +152,13 @@ elif current_step == "exam_run":
             if (s <= 600) el.style.color = "red";
         }}
         if (s <= 0) {{
+            document.getElementById('timeout-msg').style.display = 'block';
+            try {{
+                var frames = parent.document.querySelectorAll('iframe');
+                frames.forEach(function(f) {{
+                    if (f.contentWindow === window) f.style.height = '75px';
+                }});
+            }} catch(e) {{}}
             parent.location.href = parent.location.pathname + '?timeout=1';
             return;
         }}
@@ -166,8 +176,7 @@ elif current_step == "exam_run":
         st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
 
         if is_time_up:
-            st.markdown('<p style="color:#888; font-weight:bold; font-size:1.1rem; margin-bottom:8px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
-            st.markdown('<p style="font-size:0.9rem; margin-bottom:20px;">נא ללחוץ על סיים בחינה להצגת תוצאותיך</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size:0.9rem; margin-bottom:20px;">זמן הבחינה הסתיים — ליצירת משוב אנא לחץ על סיים בחינה</p>', unsafe_allow_html=True)
             if st.button("**סיים בחינה**", type="primary", key="btn_finish_timeout"):
                 st.session_state.step = "feedback"
                 st.rerun()
@@ -176,7 +185,7 @@ elif current_step == "exam_run":
             q = st.session_state.exam_questions.get(idx)
             if q:
                 st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
-                st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px; direction:rtl; unicode-bidi:embed;">{q["text"]}</div>', unsafe_allow_html=True)
 
                 options_dict = q.get("options", {})
                 options_labels = list(options_dict.keys())
@@ -185,9 +194,9 @@ elif current_step == "exam_run":
                 existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
                 existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
-                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
+                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed", disabled=is_time_up)
 
-                if chosen is not None:
+                if chosen is not None and not is_time_up:
                     chosen_label = options_labels[options_list.index(chosen)]
                     logic.record_answer(idx, chosen_label)
                     if idx == 25:
@@ -200,7 +209,7 @@ elif current_step == "exam_run":
                     if idx < 25:
                         next_ready = (idx + 1) in st.session_state.exam_questions
                         has_answer = idx in st.session_state.user_answers
-                        if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
+                        if st.button("לשאלה הבאה", key="btn_next", disabled=is_time_up or not (has_answer and next_ready)):
                             st.session_state.current_q += 1
                             st.session_state.nav_active_questions.add(st.session_state.current_q)
                             if idx <= 23:
