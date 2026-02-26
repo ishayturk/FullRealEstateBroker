@@ -45,7 +45,6 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
-        /* שינוי טקסט כפתורים בנייד */
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
         #btn_prev button p { font-size: 0; }
@@ -60,7 +59,6 @@ logic.initialize_exam_state()
 # --- טעינת בחינה בפעם הראשונה ---
 if not st.session_state.get("exam_file"):
     logic.load_exam()
-    st.rerun()
 
 # --- סטריפ עליון מחשב ---
 h1, h2, h3 = st.columns([2, 1, 2])
@@ -161,7 +159,6 @@ elif current_step == "exam_run":
             options_labels = list(options_dict.keys())
             options_list = [f"{k}. {v}" for k, v in options_dict.items()]
 
-            # קבלת תשובה קיימת
             existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
             existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
@@ -239,9 +236,9 @@ elif current_step == "feedback":
                 st.markdown(f"**תשובה נכונה:** {correct_label}. {correct_text}")
     st.divider()
     if st.button("בחינה חדשה"):
-        for key in ["step","current_q","exam_questions","answer_key","user_answers",
+        for key in ["step","current_q","exam_questions","user_answers",
                     "nav_active_questions","finish_button_visible","exam_start_time",
-                    "test_path","ans_path","q1_ready"]:
+                    "exam_file","_exam_raw","q1_ready"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
