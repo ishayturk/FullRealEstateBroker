@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 11 | Test timer 1 min + time_up step
+# Claude 12 | Timeout via URL param
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -81,6 +81,11 @@ st.markdown(f"""
 
 current_step = st.session_state.get("step", "instructions")
 
+# זיהוי פג זמן דרך פרמטר
+if st.query_params.get("timeout") == "1" and current_step == "exam_run":
+    st.session_state.step = "time_up"
+    current_step = "time_up"
+
 # בדיקת פג זמן
 if current_step == "exam_run" and logic.get_remaining_seconds() == 0:
     st.session_state.step = "time_up"
@@ -146,7 +151,7 @@ elif current_step == "exam_run":
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
             if (s <= 600) el.style.color = "red";
         }}
-        if (s <= 0) {{ window.location.reload(); return; }}
+        if (s <= 0) {{ window.location.href = window.location.pathname + '?timeout=1'; return; }}
         s--;
     }}
     u(); setInterval(u, 1000);
