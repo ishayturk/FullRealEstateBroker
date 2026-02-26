@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 15 | Time up shown inside question area
+# Claude 16 | Time up replaces question content only
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -159,14 +159,11 @@ elif current_step == "exam_run":
         st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
 
         if st.session_state.get("step") == "time_up":
-            st.markdown('<h2 style="color:#cc0000; text-align:center;">נסיון נסיון</h2>', unsafe_allow_html=True)
-            st.markdown('<p style="text-align:center; font-size:1.2rem;">זמן הבחינה תם</p>', unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            _, c, _ = st.columns([1, 1, 1])
-            with c:
-                if st.button("**סיים בחינה**", type="primary"):
-                    st.session_state.step = "feedback"
-                    st.rerun()
+            st.markdown('<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">נא ללחוץ על סיים בחינה</div>', unsafe_allow_html=True)
+            if st.button("**סיים בחינה**", type="primary"):
+                st.session_state.step = "feedback"
+                st.rerun()
         else:
             idx = st.session_state.current_q
             q = st.session_state.exam_questions.get(idx)
