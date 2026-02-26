@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 24 | Finish button always visible, enabled on time up or q25
+# Claude 25 | localStorage timeout, JS handles buttons in real time
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -89,7 +89,7 @@ if st.query_params.get("finish") == "1":
 
 # ===== דף הוראות =====
 if current_step == "instructions":
-    components.html("<script>localStorage.removeItem('exam_timeout');</script>", height=0)
+    components.html("<script>localStorage.removeItem('exam_timed_out');</script>", height=0)
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 1.2, 1])
     with center_col:
@@ -130,7 +130,6 @@ elif current_step == "exam_run":
         }}
         .t-text {{ font-size: 2.2rem; font-weight: bold; color: #000; white-space: nowrap; }}
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
-        #timeout-msg {{ display:none; direction:rtl; text-align:right; padding: 8px 0; }}
         @media (max-width: 768px) {{
             .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
             .t-text {{ font-size: 1rem !important; }}
@@ -140,14 +139,6 @@ elif current_step == "exam_run":
     <div class="wrapper">
         <div class="t-text">מבחן רישוי למתווכים</div>
         <div id="clock-val" class="c-text"></div>
-    </div>
-    <div id="timeout-msg">
-        <span style="font-size:0.9rem; font-weight:bold; color:#cc0000;">זמן הבחינה תם — אנא לחץ על הכפתור</span>
-        &nbsp;
-        <button onclick="parent.location.href=parent.location.pathname+'?finish=1'"
-            style="background:#ff4b4b; color:white; border:none; padding:6px 18px; border-radius:6px; font-size:0.9rem; cursor:pointer; font-weight:bold;">
-            סיים בחינה
-        </button>
     </div>
     <script>
     var s = {rem_sec};
@@ -159,14 +150,7 @@ elif current_step == "exam_run":
             if (s <= 600) el.style.color = "red";
         }}
         if (s <= 0) {{
-            document.getElementById('timeout-msg').style.display = 'block';
-            try {{
-                var frames = parent.document.querySelectorAll('iframe');
-                frames.forEach(function(f) {{
-                    if (f.contentWindow === window) f.style.height = '90px';
-                }});
-            }} catch(e) {{}}
-            parent.location.href = parent.location.pathname + '?timeout=1';
+            localStorage.setItem('exam_timed_out', '1');
             return;
         }}
         s--;
@@ -176,7 +160,61 @@ elif current_step == "exam_run":
     """
     components.html(header_html, height=50)
 
-    is_time_up = st.query_params.get("timeout") == "1" or logic.get_remaining_seconds() == 0
+    # מאזין שמטפל בכפתורים ישירות כשנגמר הזמן
+    listener_html = """
+    <script>
+    (function() {
+        function applyTimeout() {
+            var pd = parent.document;
+            // מצא את כל הכפתורים
+            var btns = pd.querySelectorAll('button');
+            var finishBtn = null;
+            btns.forEach(function(b) {
+                var txt = b.innerText.trim();
+                if (txt === 'סיים בחינה') {
+                    finishBtn = b;
+                }
+            });
+            // נטרל הבאה והקודמת
+            btns.forEach(function(b) {
+                var txt = b.innerText.trim();
+                if (txt === 'לשאלה הבאה' || txt === 'לשאלה הקודמת') {
+                    b.disabled = true;
+                    b.style.opacity = '0.4';
+                }
+            });
+            // הפעל סיים בחינה
+            if (finishBtn) {
+                finishBtn.disabled = false;
+                finishBtn.style.opacity = '1';
+            }
+            // הצג הודעה
+            var msg = pd.getElementById('timeout-overlay');
+            if (!msg) {
+                msg = pd.createElement('div');
+                msg.id = 'timeout-overlay';
+                msg.style.cssText = 'direction:rtl; color:#cc0000; font-weight:bold; font-size:0.95rem; margin: 6px 0 4px 0;';
+                msg.innerText = 'זמן הבחינה תם — אנא לחץ על סיים בחינה';
+                if (finishBtn) {
+                    finishBtn.parentNode.insertBefore(msg, finishBtn);
+                }
+            }
+            // נטרל רדיו
+            pd.querySelectorAll('input[type=radio]').forEach(function(r) { r.disabled = true; });
+        }
+
+        function check() {
+            if (localStorage.getItem('exam_timed_out') === '1') {
+                applyTimeout();
+            }
+        }
+        setInterval(check, 500);
+    })();
+    </script>
+    """
+    components.html(listener_html, height=0)
+
+    is_time_up = logic.get_remaining_seconds() == 0
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
@@ -186,43 +224,40 @@ elif current_step == "exam_run":
         q = st.session_state.exam_questions.get(idx)
 
         if q:
-            if is_time_up:
-                st.markdown('<p style="color:#cc0000; font-weight:bold; font-size:1.1rem; margin-bottom:8px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
-                st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
 
-                options_dict = q.get("options", {})
-                options_labels = list(options_dict.keys())
-                options_list = [f"{k}. {v}" for k, v in options_dict.items()]
+            options_dict = q.get("options", {})
+            options_labels = list(options_dict.keys())
+            options_list = [f"{k}. {v}" for k, v in options_dict.items()]
 
-                existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
-                existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
+            existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
+            existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
-                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
+            chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
 
-                if chosen is not None:
-                    chosen_label = options_labels[options_list.index(chosen)]
-                    logic.record_answer(idx, chosen_label)
-                    if idx == 25:
-                        st.session_state.finish_button_visible = True
+            if chosen is not None and not is_time_up:
+                chosen_label = options_labels[options_list.index(chosen)]
+                logic.record_answer(idx, chosen_label)
+                if idx == 25:
+                    st.session_state.finish_button_visible = True
 
             st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
 
             b_n, b_p, b_f = st.columns([1, 1, 1.2])
             with b_n:
-                if idx < 25 and not is_time_up:
+                if idx < 25:
                     next_ready = (idx + 1) in st.session_state.exam_questions
                     has_answer = idx in st.session_state.user_answers
-                    if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
+                    if st.button("לשאלה הבאה", key="btn_next", disabled=is_time_up or not (has_answer and next_ready)):
                         st.session_state.current_q += 1
                         st.session_state.nav_active_questions.add(st.session_state.current_q)
                         if idx <= 23:
                             logic.ensure_question_exists(idx + 2)
                         st.rerun()
             with b_p:
-                if idx > 1 and not is_time_up:
-                    if st.button("לשאלה הקודמת", key="btn_prev"):
+                if idx > 1:
+                    if st.button("לשאלה הקודמת", key="btn_prev", disabled=is_time_up):
                         st.session_state.current_q -= 1
                         st.rerun()
             with b_f:
