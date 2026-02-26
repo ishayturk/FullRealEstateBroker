@@ -153,8 +153,8 @@ elif current_step == "exam_run":
         q = st.session_state.exam_questions.get(idx)
 
         if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
+            st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
 
             options_dict = q.get("options", {})
             options_labels = list(options_dict.keys())
