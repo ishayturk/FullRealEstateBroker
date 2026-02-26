@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 32 | Fix RTL display with bidi marks
+# Claude 34 | New exam to instructions, 2 exam limit, responsive feedback title
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -9,7 +9,8 @@ user_name = st.query_params.get("user", "אורח")
 
 st.markdown("""
     <style>
-    /* --- SECTION: GENERAL --- */
+    /* --- SECTION: RADIO RTL --- */
+    [data-testid="stRadio"] label { direction: rtl !important; text-align: right !important; unicode-bidi: embed !important; }
     * { direction: rtl; text-align: right; }
     header, #MainMenu, footer { visibility: hidden; }
     .block-container { max-width: 1100px !important; margin: 0 auto !important; padding-top: 0.5rem !important; }
@@ -114,6 +115,7 @@ if current_step == "instructions":
                 st.session_state.current_q = 1
                 st.session_state.nav_active_questions.add(1)
                 st.session_state.exam_start_time = time.time()
+                st.session_state.exams_done_session = st.session_state.get("exams_done_session", 0) + 1
                 logic.ensure_question_exists(2)
                 st.rerun()
 
@@ -189,7 +191,7 @@ elif current_step == "exam_run":
 
                 options_dict = q.get("options", {})
                 options_labels = list(options_dict.keys())
-                options_list = [f"\u202b{k}. {v}\u202c" for k, v in options_dict.items()]
+                options_list = [f"{k}. {v}" for k, v in options_dict.items()]
 
                 existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
                 existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
@@ -258,7 +260,7 @@ elif current_step == "feedback":
             first_unanswered = n
             break
 
-    st.markdown(f'<h2 style="margin-bottom:4px;">משוב בחינת רישיון תיווך</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="margin-bottom:4px; font-size:clamp(1.2rem, 4vw, 1.8rem);">משוב בחינת רישיון תיווך</h2>', unsafe_allow_html=True)
     st.markdown(f'<p style="font-size:0.95rem; margin-bottom:4px;">ענית נכון על <strong>{correct_count}</strong> שאלות &nbsp;|&nbsp; ציונך: <strong>{score}</strong></p>', unsafe_allow_html=True)
     st.markdown(f'<p style="font-size:1.1rem; font-weight:bold; color:{pass_color}; margin-bottom:16px;">{pass_text}</p>', unsafe_allow_html=True)
 
@@ -293,11 +295,17 @@ elif current_step == "feedback":
             """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("בחינה חדשה"):
-        for key in ["step","current_q","exam_questions","user_answers",
-                    "nav_active_questions","finish_button_visible","exam_start_time",
-                    "exam_file","_exam_raw","q1_ready","timed_out"]:
-            if key in st.session_state:
-                del st.session_state[key]
-        st.rerun()
+
+    exams_done = st.session_state.get("exams_done_session", 0)
+    if exams_done >= 2:
+        st.markdown('<p style="color:#888; font-size:0.9rem;">עשית 2 בחינות בסשן זה — היכנס מחדש לאפליקציה לבחינות נוספות.</p>', unsafe_allow_html=True)
+    else:
+        if st.button("בחינה חדשה"):
+            for key in ["step","current_q","exam_questions","user_answers",
+                        "nav_active_questions","finish_button_visible","exam_start_time",
+                        "exam_file","_exam_raw","q1_ready","timed_out"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.session_state.step = "instructions"
+            st.rerun()
 # סוף קובץ
