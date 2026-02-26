@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 21 | Finish button always visible on time up
+# Claude 23 | Finish button outside is_time_up block
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -167,12 +167,6 @@ elif current_step == "exam_run":
                     if (f.contentWindow === window) f.style.height = '90px';
                 }});
             }} catch(e) {{}}
-            // נטרל כפתורים ורדיו בדף הראשי
-            try {{
-                parent.document.querySelectorAll('button, input[type=radio]').forEach(function(el) {{
-                    el.disabled = true;
-                }});
-            }} catch(e) {{}}
             return;
         }}
         s--;
@@ -193,7 +187,7 @@ elif current_step == "exam_run":
         if is_time_up:
             st.markdown('<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">נא ללחוץ על סיים בחינה</div>', unsafe_allow_html=True)
-            if st.button("**סיים בחינה**", type="primary"):
+            if st.button("**סיים בחינה**", type="primary", key="btn_finish_timeout"):
                 st.session_state.step = "feedback"
                 st.rerun()
         else:
@@ -211,9 +205,9 @@ elif current_step == "exam_run":
                 existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
                 existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
-                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed", disabled=is_time_up)
+                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
 
-                if chosen is not None and not is_time_up:
+                if chosen is not None:
                     chosen_label = options_labels[options_list.index(chosen)]
                     logic.record_answer(idx, chosen_label)
                     if idx == 25:
@@ -226,7 +220,7 @@ elif current_step == "exam_run":
                     if idx < 25:
                         next_ready = (idx + 1) in st.session_state.exam_questions
                         has_answer = idx in st.session_state.user_answers
-                        if st.button("לשאלה הבאה", key="btn_next", disabled=is_time_up or not (has_answer and next_ready)):
+                        if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
                             st.session_state.current_q += 1
                             st.session_state.nav_active_questions.add(st.session_state.current_q)
                             if idx <= 23:
@@ -234,12 +228,11 @@ elif current_step == "exam_run":
                             st.rerun()
                 with b_p:
                     if idx > 1:
-                        if st.button("לשאלה הקודמת", key="btn_prev", disabled=is_time_up):
+                        if st.button("לשאלה הקודמת", key="btn_prev"):
                             st.session_state.current_q -= 1
                             st.rerun()
                 with b_f:
-                    show_finish = is_time_up or st.session_state.get("finish_button_visible")
-                    if show_finish:
+                    if st.session_state.get("finish_button_visible"):
                         if st.button("**סיים בחינה**", type="primary", key="btn_finish"):
                             st.session_state.step = "feedback"
                             st.rerun()
