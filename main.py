@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 07 | Connected to new exam engine (logic.py)
+# Claude 08 | Nav column shifted left on desktop
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -20,6 +20,7 @@ st.markdown("""
         .nav-title { display: block; margin-bottom: 10px; font-weight: bold; }
         .question-area { padding-right: 8%; padding-left: 8%; }
         .mobile-header { display: none !important; }
+        [data-testid="column"]:last-child { margin-left: -6ch !important; }
     }
 
     /* --- SECTION: MOBILE --- */
