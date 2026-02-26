@@ -99,7 +99,7 @@ def get_total_score():
 # --- SECTION: TIMER ---
 def get_remaining_seconds():
     if not st.session_state.exam_start_time:
-        return 60
+        return 5400
     elapsed = time.time() - st.session_state.exam_start_time
-    return max(0, int(60 - elapsed))
+    return max(0, int(5400 - elapsed))
 # סוף קובץ
