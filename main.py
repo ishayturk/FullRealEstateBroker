@@ -99,8 +99,6 @@ if current_step == "instructions":
             agree = st.checkbox("קראתי את ההוראות")
         with f_cols[1]:
             q1_ready = st.session_state.get("q1_ready", False)
-            if not q1_ready:
-                st.caption("טוען שאלה ראשונה...")
             start_disabled = not (agree and q1_ready)
             if st.button("התחל בחינה", disabled=start_disabled):
                 import time
