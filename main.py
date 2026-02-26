@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 36b | Restore numbered instructions with spaces, move header up
+# Claude 37 | Mobile nav 4 per row CSS fix
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -47,8 +47,17 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
-        /* הזזת תוכן הוראות שמאלה */
-        .instructions-wrap { padding-right: 0 !important; padding-left: 2rem !important; }
+        /* ניווט שאלות בנייד - 4 בשורה */
+        [data-testid="column"] [data-testid="stButton"] button {
+            padding: 0.2rem 0.1rem !important;
+            font-size: 0.75rem !important;
+            min-height: 2rem !important;
+            height: 2rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap !important;
+            gap: 2px !important;
+        }
         /* שינוי טקסט כפתורים בנייד */
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
@@ -243,13 +252,17 @@ elif current_step == "exam_run":
 
     with col_nav:
         st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
+        nav_active = st.session_state.nav_active_questions
+        current_q = st.session_state.current_q
+
+        # בנייד — HTML grid; במחשב — כפתורי סטרימליט
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 n = r + i + 1
                 if n <= 25:
-                    is_active = (n in st.session_state.nav_active_questions) and not is_time_up
-                    label = f"**{n}**" if n == st.session_state.current_q else str(n)
+                    is_active = (n in nav_active) and not is_time_up
+                    label = f"**{n}**" if n == current_q else str(n)
                     if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
                         st.session_state.current_q = n
                         st.rerun()
