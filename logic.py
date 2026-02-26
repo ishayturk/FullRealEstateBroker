@@ -54,9 +54,15 @@ def load_exam():
     st.session_state.exam_questions = {}
     st.session_state.user_answers = {}
     st.session_state.nav_active_questions = set()
-    st.session_state.q1_ready = False
     st.session_state.finish_button_visible = False
     st.session_state.exam_start_time = None
+    # טעינת שאלה 1 מיידית
+    q1 = data.get("questions", {}).get("1")
+    if q1:
+        st.session_state.exam_questions[1] = q1
+        st.session_state.q1_ready = True
+    else:
+        st.session_state.q1_ready = False
     return True
 
 # --- SECTION: QUESTION MANAGEMENT ---
