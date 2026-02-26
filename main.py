@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 19 | Expand iframe on timeout, disable buttons via parent.document
+# Claude 20 | Unanswered questions shown in feedback
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -280,20 +280,31 @@ elif current_step == "feedback":
         if not q:
             continue
         user = st.session_state.user_answers.get(n, {})
-        user_label = user.get("label", "לא ענה")
-        user_text = q.get("options", {}).get(user_label, "")
+        user_label = user.get("label", None)
         correct_label = q.get("correct_label", "")
         correct_text = q.get("options", {}).get(correct_label, "")
-        is_correct = logic.get_points(n) == 4
-        mark = "✅" if is_correct else "❌"
-        bg = "#f0fff0" if is_correct else "#fff0f0"
-        st.markdown(f"""
-            <div style="background:{bg}; border-radius:8px; padding:12px; margin-bottom:10px;">
-                <p style="font-weight:bold; margin-bottom:6px;">{mark} שאלה {n} — {q['text']}</p>
-                <p style="margin:2px 0;">תשובתך: {user_label}. {user_text}</p>
-                {"" if is_correct else f'<p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>'}
-            </div>
-        """, unsafe_allow_html=True)
+
+        if user_label is None:
+            # לא נענה
+            st.markdown(f"""
+                <div style="background:#f5f5f5; border-radius:8px; padding:12px; margin-bottom:10px;">
+                    <p style="font-weight:bold; margin-bottom:6px;">⬜ שאלה {n} — {q['text']}</p>
+                    <p style="margin:2px 0; color:#888;">לא נענה</p>
+                    <p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            user_text = q.get("options", {}).get(user_label, "")
+            is_correct = logic.get_points(n) == 4
+            mark = "✅" if is_correct else "❌"
+            bg = "#f0fff0" if is_correct else "#fff0f0"
+            st.markdown(f"""
+                <div style="background:{bg}; border-radius:8px; padding:12px; margin-bottom:10px;">
+                    <p style="font-weight:bold; margin-bottom:6px;">{mark} שאלה {n} — {q['text']}</p>
+                    <p style="margin:2px 0;">תשובתך: {user_label}. {user_text}</p>
+                    {"" if is_correct else f'<p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>'}
+                </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("בחינה חדשה"):
