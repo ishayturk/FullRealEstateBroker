@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 16 | Time up replaces question content only
+# Claude 17 | Time up inside exam_run, no step change
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -63,10 +63,6 @@ if not st.session_state.get("exam_file"):
     logic.load_exam()
     st.rerun()
 
-# --- זיהוי פג זמן לפני ציור הדף ---
-if st.query_params.get("timeout") == "1" and st.session_state.get("step") == "exam_run":
-    st.session_state.step = "time_up"
-    st.rerun()
 
 # --- סטריפ עליון מחשב ---
 h1, h2, h3 = st.columns([2, 1, 2])
@@ -117,7 +113,7 @@ if current_step == "instructions":
                 st.rerun()
 
 # ===== מהלך הבחינה =====
-elif current_step in ("exam_run", "time_up"):
+elif current_step == "exam_run":
     rem_sec = logic.get_remaining_seconds()
     header_html = f"""
     <style>
@@ -154,11 +150,15 @@ elif current_step in ("exam_run", "time_up"):
     """
     components.html(header_html, height=50)
 
+    is_time_up = st.query_params.get("timeout") == "1" or st.session_state.get("timed_out", False)
+    if is_time_up:
+        st.session_state.timed_out = True
+
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
         st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
 
-        if st.session_state.get("step") == "time_up":
+        if is_time_up:
             st.markdown('<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">זמן הבחינה תם</p>', unsafe_allow_html=True)
             st.markdown('<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">נא ללחוץ על סיים בחינה</div>', unsafe_allow_html=True)
             if st.button("**סיים בחינה**", type="primary"):
@@ -179,9 +179,9 @@ elif current_step in ("exam_run", "time_up"):
                 existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
                 existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
-                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
+                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed", disabled=is_time_up)
 
-                if chosen is not None:
+                if chosen is not None and not is_time_up:
                     chosen_label = options_labels[options_list.index(chosen)]
                     logic.record_answer(idx, chosen_label)
                     if idx == 25:
@@ -194,7 +194,7 @@ elif current_step in ("exam_run", "time_up"):
                     if idx < 25:
                         next_ready = (idx + 1) in st.session_state.exam_questions
                         has_answer = idx in st.session_state.user_answers
-                        if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
+                        if st.button("לשאלה הבאה", key="btn_next", disabled=is_time_up or not (has_answer and next_ready)):
                             st.session_state.current_q += 1
                             st.session_state.nav_active_questions.add(st.session_state.current_q)
                             if idx <= 23:
@@ -202,7 +202,7 @@ elif current_step in ("exam_run", "time_up"):
                             st.rerun()
                 with b_p:
                     if idx > 1:
-                        if st.button("לשאלה הקודמת", key="btn_prev"):
+                        if st.button("לשאלה הקודמת", key="btn_prev", disabled=is_time_up):
                             st.session_state.current_q -= 1
                             st.rerun()
                 with b_f:
@@ -267,7 +267,7 @@ elif current_step == "feedback":
     if st.button("בחינה חדשה"):
         for key in ["step","current_q","exam_questions","user_answers",
                     "nav_active_questions","finish_button_visible","exam_start_time",
-                    "exam_file","_exam_raw","q1_ready"]:
+                    "exam_file","_exam_raw","q1_ready","timed_out"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
