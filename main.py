@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 29 | timeout via location.href, time_up page in question area
+# Claude 29b | Restore s-- in clock
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -152,6 +152,7 @@ elif current_step == "exam_run":
             parent.location.href = parent.location.pathname + '?timeout=1';
             return;
         }}
+        s--;
     }}
     u(); setInterval(u, 1000);
     </script>
