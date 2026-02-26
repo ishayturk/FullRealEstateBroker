@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 33 | Remove bidi marks
+# Claude 32 | Fix RTL display with bidi marks
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -189,7 +189,7 @@ elif current_step == "exam_run":
 
                 options_dict = q.get("options", {})
                 options_labels = list(options_dict.keys())
-                options_list = [f"{k}. {v}" for k, v in options_dict.items()]
+                options_list = [f"\u202b{k}. {v}\u202c" for k, v in options_dict.items()]
 
                 existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
                 existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
