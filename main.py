@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 12 | Timeout via URL param
+# Claude 13 | Fix double header and rerun on timeout
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -84,7 +84,8 @@ current_step = st.session_state.get("step", "instructions")
 # זיהוי פג זמן דרך פרמטר
 if st.query_params.get("timeout") == "1" and current_step == "exam_run":
     st.session_state.step = "time_up"
-    current_step = "time_up"
+    st.query_params.clear()
+    st.rerun()
 
 # בדיקת פג זמן
 if current_step == "exam_run" and logic.get_remaining_seconds() == 0:
