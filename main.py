@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 08 | Nav column shifted left on desktop
+# Claude 09 | Reduced spacing between answers and buttons on desktop
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -21,6 +21,7 @@ st.markdown("""
         .question-area { padding-right: 8%; padding-left: 8%; }
         .mobile-header { display: none !important; }
         [data-testid="column"]:last-child { margin-left: -6ch !important; }
+        [data-testid="stRadio"] { margin-bottom: 0.3rem !important; }
     }
 
     /* --- SECTION: MOBILE --- */
@@ -45,6 +46,7 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
+        /* שינוי טקסט כפתורים בנייד */
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
         #btn_prev button p { font-size: 0; }
@@ -59,6 +61,7 @@ logic.initialize_exam_state()
 # --- טעינת בחינה בפעם הראשונה ---
 if not st.session_state.get("exam_file"):
     logic.load_exam()
+    st.rerun()
 
 # --- סטריפ עליון מחשב ---
 h1, h2, h3 = st.columns([2, 1, 2])
@@ -159,6 +162,7 @@ elif current_step == "exam_run":
             options_labels = list(options_dict.keys())
             options_list = [f"{k}. {v}" for k, v in options_dict.items()]
 
+            # קבלת תשובה קיימת
             existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
             existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
@@ -170,7 +174,7 @@ elif current_step == "exam_run":
                 if idx == 25:
                     st.session_state.finish_button_visible = True
 
-            st.divider()
+            st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
 
             b_n, b_p, b_f = st.columns([1, 1, 1.2])
             with b_n:
@@ -236,9 +240,9 @@ elif current_step == "feedback":
                 st.markdown(f"**תשובה נכונה:** {correct_label}. {correct_text}")
     st.divider()
     if st.button("בחינה חדשה"):
-        for key in ["step","current_q","exam_questions","user_answers",
+        for key in ["step","current_q","exam_questions","answer_key","user_answers",
                     "nav_active_questions","finish_button_visible","exam_start_time",
-                    "exam_file","_exam_raw","q1_ready"]:
+                    "test_path","ans_path","q1_ready"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
