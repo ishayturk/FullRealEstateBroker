@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 13 | Fix double header and rerun on timeout
+# Claude 15 | Time up shown inside question area
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -63,6 +63,11 @@ if not st.session_state.get("exam_file"):
     logic.load_exam()
     st.rerun()
 
+# --- זיהוי פג זמן לפני ציור הדף ---
+if st.query_params.get("timeout") == "1" and st.session_state.get("step") == "exam_run":
+    st.session_state.step = "time_up"
+    st.rerun()
+
 # --- סטריפ עליון מחשב ---
 h1, h2, h3 = st.columns([2, 1, 2])
 with h1: st.markdown(f'<div class="desktop-header" style="text-align: left; font-weight: bold; font-size: 1.1rem;">🏠 מתווך בקליק</div>', unsafe_allow_html=True)
@@ -80,17 +85,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 current_step = st.session_state.get("step", "instructions")
-
-# זיהוי פג זמן דרך פרמטר
-if st.query_params.get("timeout") == "1" and current_step == "exam_run":
-    st.session_state.step = "time_up"
-    st.query_params.clear()
-    st.rerun()
-
-# בדיקת פג זמן
-if current_step == "exam_run" and logic.get_remaining_seconds() == 0:
-    st.session_state.step = "time_up"
-    current_step = "time_up"
 
 # ===== דף הוראות =====
 if current_step == "instructions":
@@ -163,54 +157,64 @@ elif current_step == "exam_run":
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
         st.markdown('<div class="question-area" style="margin-top:8px;">', unsafe_allow_html=True)
-        idx = st.session_state.current_q
-        q = st.session_state.exam_questions.get(idx)
 
-        if q:
-            st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
-            st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
-
-            options_dict = q.get("options", {})
-            options_labels = list(options_dict.keys())
-            options_list = [f"{k}. {v}" for k, v in options_dict.items()]
-
-            # קבלת תשובה קיימת
-            existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
-            existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
-
-            chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
-
-            if chosen is not None:
-                chosen_label = options_labels[options_list.index(chosen)]
-                logic.record_answer(idx, chosen_label)
-                if idx == 25:
-                    st.session_state.finish_button_visible = True
-
-            st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
-
-            b_n, b_p, b_f = st.columns([1, 1, 1.2])
-            with b_n:
-                if idx < 25:
-                    next_ready = (idx + 1) in st.session_state.exam_questions
-                    has_answer = idx in st.session_state.user_answers
-                    if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
-                        st.session_state.current_q += 1
-                        st.session_state.nav_active_questions.add(st.session_state.current_q)
-                        if idx <= 23:
-                            logic.ensure_question_exists(idx + 2)
-                        st.rerun()
-            with b_p:
-                if idx > 1:
-                    if st.button("לשאלה הקודמת", key="btn_prev"):
-                        st.session_state.current_q -= 1
-                        st.rerun()
-            with b_f:
-                if st.session_state.get("finish_button_visible"):
-                    if st.button("**סיים בחינה**", type="primary"):
-                        st.session_state.step = "feedback"
-                        st.rerun()
+        if st.session_state.get("step") == "time_up":
+            st.markdown('<h2 style="color:#cc0000; text-align:center;">נסיון נסיון</h2>', unsafe_allow_html=True)
+            st.markdown('<p style="text-align:center; font-size:1.2rem;">זמן הבחינה תם</p>', unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            _, c, _ = st.columns([1, 1, 1])
+            with c:
+                if st.button("**סיים בחינה**", type="primary"):
+                    st.session_state.step = "feedback"
+                    st.rerun()
         else:
-            st.info("טוען שאלה...")
+            idx = st.session_state.current_q
+            q = st.session_state.exam_questions.get(idx)
+
+            if q:
+                st.markdown(f'<p style="color: #888; font-weight: bold; font-size: 1.1rem; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
+                st.markdown(f'<div style="font-size:0.9rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
+
+                options_dict = q.get("options", {})
+                options_labels = list(options_dict.keys())
+                options_list = [f"{k}. {v}" for k, v in options_dict.items()]
+
+                existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
+                existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
+
+                chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
+
+                if chosen is not None:
+                    chosen_label = options_labels[options_list.index(chosen)]
+                    logic.record_answer(idx, chosen_label)
+                    if idx == 25:
+                        st.session_state.finish_button_visible = True
+
+                st.markdown('<div class="btn-area"></div>', unsafe_allow_html=True)
+
+                b_n, b_p, b_f = st.columns([1, 1, 1.2])
+                with b_n:
+                    if idx < 25:
+                        next_ready = (idx + 1) in st.session_state.exam_questions
+                        has_answer = idx in st.session_state.user_answers
+                        if st.button("לשאלה הבאה", key="btn_next", disabled=not (has_answer and next_ready)):
+                            st.session_state.current_q += 1
+                            st.session_state.nav_active_questions.add(st.session_state.current_q)
+                            if idx <= 23:
+                                logic.ensure_question_exists(idx + 2)
+                            st.rerun()
+                with b_p:
+                    if idx > 1:
+                        if st.button("לשאלה הקודמת", key="btn_prev"):
+                            st.session_state.current_q -= 1
+                            st.rerun()
+                with b_f:
+                    if st.session_state.get("finish_button_visible"):
+                        if st.button("**סיים בחינה**", type="primary"):
+                            st.session_state.step = "feedback"
+                            st.rerun()
+            else:
+                st.info("טוען שאלה...")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -226,11 +230,6 @@ elif current_step == "exam_run":
                     if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
                         st.session_state.current_q = n
                         st.rerun()
-
-# ===== זמן תם =====
-elif current_step == "time_up":
-    st.markdown('<h2 style="text-align:center; color:#cc0000;">נסיון נסיון</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align:center; font-size:1.2rem;">זמן הבחינה תם</p>', unsafe_allow_html=True)
 
 # ===== משוב =====
 elif current_step == "feedback":
