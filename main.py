@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 09 | Reduced spacing between answers and buttons on desktop
+# Claude 11 | Test timer 1 min + time_up step
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -81,6 +81,11 @@ st.markdown(f"""
 
 current_step = st.session_state.get("step", "instructions")
 
+# בדיקת פג זמן
+if current_step == "exam_run" and logic.get_remaining_seconds() == 0:
+    st.session_state.step = "time_up"
+    current_step = "time_up"
+
 # ===== דף הוראות =====
 if current_step == "instructions":
     st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
@@ -141,7 +146,8 @@ elif current_step == "exam_run":
             el.innerHTML = (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
             if (s <= 600) el.style.color = "red";
         }}
-        if (s > 0) s--;
+        if (s <= 0) {{ window.location.reload(); return; }}
+        s--;
     }}
     u(); setInterval(u, 1000);
     </script>
@@ -214,6 +220,11 @@ elif current_step == "exam_run":
                     if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
                         st.session_state.current_q = n
                         st.rerun()
+
+# ===== זמן תם =====
+elif current_step == "time_up":
+    st.markdown('<h2 style="text-align:center; color:#cc0000;">נסיון נסיון</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align:center; font-size:1.2rem;">זמן הבחינה תם</p>', unsafe_allow_html=True)
 
 # ===== משוב =====
 elif current_step == "feedback":
