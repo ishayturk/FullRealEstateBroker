@@ -117,7 +117,7 @@ if current_step == "instructions":
                 st.rerun()
 
 # ===== מהלך הבחינה =====
-elif current_step == "exam_run":
+elif current_step in ("exam_run", "time_up"):
     rem_sec = logic.get_remaining_seconds()
     header_html = f"""
     <style>
