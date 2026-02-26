@@ -158,18 +158,18 @@ elif current_step == "exam_run":
             st.markdown(f'<p style="color: #888; font-weight: bold; margin-bottom: 2px;">שאלה {idx}</p>', unsafe_allow_html=True)
             st.markdown(f'<div style="font-size:1.2rem; font-weight:bold; margin-bottom:15px;">{q["text"]}</div>', unsafe_allow_html=True)
 
-            options_list = list(q["options"].values())
-            options_labels = list(q["options"].keys())
+            options_dict = q.get("options", {})
+            options_labels = list(options_dict.keys())
+            options_list = [f"{k}. {v}" for k, v in options_dict.items()]
 
             # קבלת תשובה קיימת
-            existing_answer = st.session_state.user_answers.get(idx, {})
-            existing_label = existing_answer.get("label", None)
+            existing_label = st.session_state.user_answers.get(idx, {}).get("label", None)
             existing_index = options_labels.index(existing_label) if existing_label in options_labels else None
 
-            choice_index = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
+            chosen = st.radio("", options_list, index=existing_index, key=f"r_{idx}", label_visibility="collapsed")
 
-            if choice_index is not None:
-                chosen_label = options_labels[options_list.index(choice_index)]
+            if chosen is not None:
+                chosen_label = options_labels[options_list.index(chosen)]
                 logic.record_answer(idx, chosen_label)
                 if idx == 25:
                     st.session_state.finish_button_visible = True
@@ -229,14 +229,15 @@ elif current_step == "feedback":
             continue
         user = st.session_state.user_answers.get(n, {})
         user_label = user.get("label", "לא ענה")
+        user_text = q.get("options", {}).get(user_label, "")
         correct_label = q.get("correct_label", "")
+        correct_text = q.get("options", {}).get(correct_label, "")
         is_correct = logic.get_points(n) == 4
-        color = "#d4edda" if is_correct else "#f8d7da"
         mark = "✅" if is_correct else "❌"
         with st.expander(f"{mark} שאלה {n} — {q['text'][:60]}..."):
-            st.markdown(f"**תשובתך:** {user_label}. {user.get('text', '')}")
+            st.markdown(f"**תשובתך:** {user_label}. {user_text}")
             if not is_correct:
-                st.markdown(f"**תשובה נכונה:** {correct_label}. {q.get('correct_text', '')}")
+                st.markdown(f"**תשובה נכונה:** {correct_label}. {correct_text}")
     st.divider()
     if st.button("בחינה חדשה"):
         for key in ["step","current_q","exam_questions","answer_key","user_answers",
