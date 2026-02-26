@@ -218,11 +218,18 @@ elif current_step == "exam_run":
 # ===== משוב =====
 elif current_step == "feedback":
     score = logic.get_total_score()
-    st.markdown(f'<h2 style="text-align:center;">תוצאות הבחינה</h2>', unsafe_allow_html=True)
-    st.markdown(f'<h3 style="text-align:center;">ציון: {score} / 100</h3>', unsafe_allow_html=True)
-    pass_fail = "עברת! 🎉" if score >= 60 else "לא עברת 😔"
-    st.markdown(f'<h3 style="text-align:center;">{pass_fail}</h3>', unsafe_allow_html=True)
-    st.divider()
+    correct_count = sum(1 for n in range(1, 26) if logic.get_points(n) == 4)
+    score_color = "#1a7a1a" if score >= 60 else "#cc0000"
+
+    st.markdown(f"""
+        <div style="border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 16px;">
+            <p style="font-size:1rem; margin:0;">
+                ענית על <strong>{correct_count}</strong> שאלות נכון.
+                ציונך הוא: <strong style="color:{score_color}; font-size:1.2rem;">{score}</strong>
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
     for n in range(1, 26):
         q = st.session_state.exam_questions.get(n)
         if not q:
@@ -234,15 +241,20 @@ elif current_step == "feedback":
         correct_text = q.get("options", {}).get(correct_label, "")
         is_correct = logic.get_points(n) == 4
         mark = "✅" if is_correct else "❌"
-        with st.expander(f"{mark} שאלה {n} — {q['text'][:60]}..."):
-            st.markdown(f"**תשובתך:** {user_label}. {user_text}")
-            if not is_correct:
-                st.markdown(f"**תשובה נכונה:** {correct_label}. {correct_text}")
-    st.divider()
+        bg = "#f0fff0" if is_correct else "#fff0f0"
+        st.markdown(f"""
+            <div style="background:{bg}; border-radius:8px; padding:12px; margin-bottom:10px;">
+                <p style="font-weight:bold; margin-bottom:6px;">{mark} שאלה {n} — {q['text']}</p>
+                <p style="margin:2px 0;">תשובתך: {user_label}. {user_text}</p>
+                {"" if is_correct else f'<p style="margin:2px 0; color:#cc0000;">תשובה נכונה: {correct_label}. {correct_text}</p>'}
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("בחינה חדשה"):
-        for key in ["step","current_q","exam_questions","answer_key","user_answers",
+        for key in ["step","current_q","exam_questions","user_answers",
                     "nav_active_questions","finish_button_visible","exam_start_time",
-                    "test_path","ans_path","q1_ready"]:
+                    "exam_file","_exam_raw","q1_ready"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
