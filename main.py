@@ -1,11 +1,14 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 39 | Fix timer with Date.now() - works across tab switches and phone sleep
+# Claude 40 | Security fixes: timeout/finish/user validation
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
-user_name = st.query_params.get("user", "אורח")
+user_name = st.query_params.get("user", "").strip()
+if not user_name:
+    st.error("גישה לא מורשית — יש להיכנס דרך האפליקציה הראשית.")
+    st.stop()
 
 st.markdown("""
     <style>
@@ -83,8 +86,14 @@ st.markdown(f"""
 
 current_step = st.session_state.get("step", "instructions")
 
-# זיהוי לחיצת סיים בחינה מה-iframe
-if st.query_params.get("finish") == "1":
+# מניעת קפיצה ישירה לדף משוב ללא בחינה
+if current_step == "feedback" and not st.session_state.get("exam_start_time"):
+    st.session_state.step = "instructions"
+    current_step = "instructions"
+    st.rerun()
+
+# זיהוי לחיצת סיים בחינה מה-iframe — רק אם הבחינה באמת התחילה
+if st.query_params.get("finish") == "1" and st.session_state.get("step") == "exam_run" and st.session_state.get("exam_start_time"):
     st.session_state.step = "feedback"
     st.rerun()
 
@@ -177,7 +186,7 @@ elif current_step == "exam_run":
     """
     components.html(header_html, height=50)
 
-    is_time_up = st.query_params.get("timeout") == "1" or logic.get_remaining_seconds() == 0
+    is_time_up = (st.query_params.get("timeout") == "1" and st.session_state.get("exam_start_time") is not None) or logic.get_remaining_seconds() == 0
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
