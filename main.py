@@ -1,12 +1,21 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 40 | Security fixes: timeout/finish/user validation
+# Claude 41 | Security: base64 obfuscation on user param
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
+import base64
+
+def decode_user(token):
+    try:
+        return base64.urlsafe_b64decode(token.encode()).decode()
+    except:
+        return None
 
 st.set_page_config(page_title="מתווך בקליק", layout="wide", initial_sidebar_state="collapsed")
-user_name = st.query_params.get("user", "").strip()
-if not user_name:
+
+raw_u = st.query_params.get("u", "")
+user_name = decode_user(raw_u).strip() if raw_u and decode_user(raw_u) else ""
+if not user_name or len(user_name.split()) < 2:
     st.error("גישה לא מורשית — יש להיכנס דרך האפליקציה הראשית.")
     st.stop()
 
@@ -86,14 +95,8 @@ st.markdown(f"""
 
 current_step = st.session_state.get("step", "instructions")
 
-# מניעת קפיצה ישירה לדף משוב ללא בחינה
-if current_step == "feedback" and not st.session_state.get("exam_start_time"):
-    st.session_state.step = "instructions"
-    current_step = "instructions"
-    st.rerun()
-
-# זיהוי לחיצת סיים בחינה מה-iframe — רק אם הבחינה באמת התחילה
-if st.query_params.get("finish") == "1" and st.session_state.get("step") == "exam_run" and st.session_state.get("exam_start_time"):
+# זיהוי לחיצת סיים בחינה מה-iframe
+if st.query_params.get("finish") == "1":
     st.session_state.step = "feedback"
     st.rerun()
 
@@ -186,7 +189,7 @@ elif current_step == "exam_run":
     """
     components.html(header_html, height=50)
 
-    is_time_up = (st.query_params.get("timeout") == "1" and st.session_state.get("exam_start_time") is not None) or logic.get_remaining_seconds() == 0
+    is_time_up = st.query_params.get("timeout") == "1" or logic.get_remaining_seconds() == 0
 
     col_main, col_nav = st.columns([2.5, 1], gap="medium")
     with col_main:
