@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 37b | Revert nav CSS
+# Claude 39 | Fix timer with Date.now() - works across tab switches and phone sleep
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -27,10 +27,10 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .block-container { padding-top: 30px !important; }
+        .block-container { padding-top: 60px !important; }
         .mobile-up { margin-top: 0px !important; }
         .nav-title { margin-top: 10px !important; text-align: center; display: block; }
-        iframe { width: 100% !important; height: 80px !important; }
+        iframe { width: 100% !important; height: 50px !important; }
         .desktop-header { display: none !important; }
         .mobile-header {
             display: flex !important;
@@ -39,16 +39,14 @@ st.markdown("""
             align-items: center;
             gap: 0;
             width: fit-content;
-            margin: 0px auto 0px auto;
-            font-size: 1.3rem;
+            margin: 4px auto 4px auto;
+            font-size: 1.1rem;
             font-weight: bold;
         }
         .mobile-header-spacer {
             display: inline-block;
             width: 3em;
         }
-        /* הזזת תוכן הוראות שמאלה */
-        .instructions-wrap { padding-right: 0 !important; padding-left: 2rem !important; }
         /* שינוי טקסט כפתורים בנייד */
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
@@ -100,7 +98,6 @@ if current_step == "instructions":
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
         _, center_col, _ = st.columns([1, 1.2, 1])
         with center_col:
-            st.markdown('<div class="instructions-wrap">', unsafe_allow_html=True)
             instructions = [
                 "המבחן כולל 25 שאלות.",
                 "זמן מוקצב: 90 דקות.",
@@ -109,7 +106,7 @@ if current_step == "instructions":
                 "ציון עובר: 60.",
             ]
             for i, txt in enumerate(instructions, 1):
-                st.markdown(f"&nbsp;&nbsp;{i}. {txt}", unsafe_allow_html=True)
+                st.write(f"{i}. {txt}")
             st.write("")
             f_cols = st.columns([1, 1])
             with f_cols[0]:
@@ -126,7 +123,6 @@ if current_step == "instructions":
                     st.session_state.exams_done_session = st.session_state.get("exams_done_session", 0) + 1
                     logic.ensure_question_exists(2)
                     st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
 # ===== מהלך הבחינה =====
 elif current_step == "exam_run":
@@ -142,9 +138,9 @@ elif current_step == "exam_run":
         .c-text {{ font-size: 2rem; font-weight: bold; margin-right: 30px; direction: ltr; }}
         #timeout-msg {{ display:none; direction:rtl; color:#cc0000; font-weight:bold; font-size:0.8rem; text-align:center; margin-top:2px; }}
         @media (max-width: 768px) {{
-            .wrapper {{ flex-direction: column !important; gap: 0 !important; margin-top: 2px !important; margin-bottom: 0 !important; }}
-            .t-text {{ font-size: 1.2rem !important; }}
-            .c-text {{ font-size: 1.8rem !important; margin-right: 0 !important; color: #000; }}
+            .wrapper {{ gap: 15px !important; margin-top: 2px !important; margin-bottom: 2px !important; }}
+            .t-text {{ font-size: 1rem !important; }}
+            .c-text {{ font-size: 1rem !important; margin-right: 0 !important; }}
             #timeout-msg {{ font-size:0.7rem !important; }}
         }}
     </style>
@@ -154,8 +150,10 @@ elif current_step == "exam_run":
     </div>
     <div id="timeout-msg">זמן הבחינה הסתיים — לחץ על כפתור לשאלה הקודמת</div>
     <script>
-    var s = {rem_sec};
+    var deadline = Date.now() + {rem_sec} * 1000;
     function u() {{
+        var s = Math.round((deadline - Date.now()) / 1000);
+        if (s < 0) s = 0;
         var m = Math.floor(s / 60); var sec = s % 60;
         var el = document.getElementById('clock-val');
         if (el) {{
@@ -173,7 +171,6 @@ elif current_step == "exam_run":
             parent.location.href = parent.location.pathname + '?timeout=1';
             return;
         }}
-        s--;
     }}
     u(); setInterval(u, 1000);
     </script>
@@ -243,17 +240,13 @@ elif current_step == "exam_run":
 
     with col_nav:
         st.markdown('<div class="nav-title">מפת שאלות:</div>', unsafe_allow_html=True)
-        nav_active = st.session_state.nav_active_questions
-        current_q = st.session_state.current_q
-
-        # בנייד — HTML grid; במחשב — כפתורי סטרימליט
         for r in range(0, 25, 4):
             cols = st.columns(4)
             for i in range(4):
                 n = r + i + 1
                 if n <= 25:
-                    is_active = (n in nav_active) and not is_time_up
-                    label = f"**{n}**" if n == current_q else str(n)
+                    is_active = (n in st.session_state.nav_active_questions) and not is_time_up
+                    label = f"**{n}**" if n == st.session_state.current_q else str(n)
                     if cols[i].button(label, key=f"n_{n}", disabled=not is_active):
                         st.session_state.current_q = n
                         st.rerun()
