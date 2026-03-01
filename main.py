@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 43 | Mobile padding-top reduced
+# Claude 44 | Mobile: clock size, instructions indent, button text, question padding
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -51,7 +51,11 @@ st.markdown("""
         #btn_next button p { font-size: 0; }
         #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
         #btn_prev button p { font-size: 0; }
-        #btn_prev button p::before { content: "הקודמת"; font-size: 1rem; }
+        #btn_prev button p::before { content: "קודמת"; font-size: 1rem; }
+        /* הזחת הוראות שמאלה */
+        .instructions-wrap { padding-right: 0 !important; padding-left: 2rem !important; }
+        /* צמצום padding שאלה */
+        .question-area { padding-right: 2% !important; padding-left: 2% !important; margin-top: 0 !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -104,6 +108,7 @@ if current_step == "instructions":
         st.markdown('<h2 style="text-align: center;">הוראות למבחן רישוי מתווכים</h2>', unsafe_allow_html=True)
         _, center_col, _ = st.columns([1, 1.2, 1])
         with center_col:
+            st.markdown('<div class="instructions-wrap">', unsafe_allow_html=True)
             instructions = [
                 "המבחן כולל 25 שאלות.",
                 "זמן מוקצב: 90 דקות.",
@@ -112,7 +117,8 @@ if current_step == "instructions":
                 "ציון עובר: 60.",
             ]
             for i, txt in enumerate(instructions, 1):
-                st.write(f"{i}. {txt}")
+                st.markdown(f"&nbsp;&nbsp;{i}. {txt}", unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             st.write("")
             f_cols = st.columns([1, 1])
             with f_cols[0]:
