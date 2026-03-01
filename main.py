@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 45 | Mobile: nowrap buttons + short labels CSS
+# Claude 45b | Revert mobile buttons CSS
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -47,12 +47,11 @@ st.markdown("""
             display: inline-block;
             width: 3em;
         }
-        /* כפתורי ניווט בנייד - שורה אחת */
-        div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; }
-        #btn_next button p::before { content: "הבאה ▶"; }
-        #btn_prev button p::before { content: "◀ קודמת"; }
-        #btn_next button p, #btn_prev button p { font-size: 0; }
-        #btn_next button p::before, #btn_prev button p::before { font-size: 1rem; }
+        /* שינוי טקסט כפתורים בנייד */
+        #btn_next button p { font-size: 0; }
+        #btn_next button p::before { content: "הבאה"; font-size: 1rem; }
+        #btn_prev button p { font-size: 0; }
+        #btn_prev button p::before { content: "קודמת"; font-size: 1rem; }
         /* הזחת הוראות שמאלה */
         .instructions-wrap { padding-right: 0 !important; padding-left: 2rem !important; }
         /* צמצום padding שאלה */
