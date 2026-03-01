@@ -1,5 +1,5 @@
 # Project: מתווך בקליק - מערכת בחינות | File: main.py
-# Claude 42 | Mobile clock larger + security fixes
+# Claude 43 | Mobile padding-top reduced
 import streamlit as st
 import logic
 import streamlit.components.v1 as components
@@ -27,7 +27,7 @@ st.markdown("""
 
     /* --- SECTION: MOBILE --- */
     @media (max-width: 768px) {
-        .block-container { padding-top: 60px !important; }
+        .block-container { padding-top: 38px !important; }
         .mobile-up { margin-top: 0px !important; }
         .nav-title { margin-top: 10px !important; text-align: center; display: block; }
         iframe { width: 100% !important; height: 50px !important; }
