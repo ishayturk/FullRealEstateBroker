@@ -267,11 +267,30 @@ elif current_step == "exam_run":
 elif current_step == "feedback":
     score = logic.get_total_score()
     correct_count = sum(1 for n in range(1, 26) if logic.get_points(n) == 4)
-    score_color = "#1a7a1a" if score >= 60 else "#cc0000"
     pass_text = "עבר" if score >= 60 else "נכשל"
     pass_color = "#1a7a1a" if score >= 60 else "#cc0000"
 
-    # מציאת שאלה ראשונה שלא נענה
+    # איסוף שאלות שגויות
+    wrong_questions = [n for n in range(1, 26) if n in st.session_state.user_answers and logic.get_points(n) == 0]
+    wrong_questions_data = []
+    for n in wrong_questions:
+        q = st.session_state.exam_questions.get(n)
+        if not q:
+            continue
+        user_label = st.session_state.user_answers.get(n, {}).get("label", "")
+        correct_label = q.get("correct_label", "")
+        wrong_questions_data.append({
+            "question_text": q.get("text", ""),
+            "user_text": q.get("options", {}).get(user_label, ""),
+            "correct_text": q.get("options", {}).get(correct_label, ""),
+        })
+
+    # שמירת תוצאות למעין — פעם אחת בלבד
+    if user_name == logic.MAAYAN_NAME and not st.session_state.get("result_saved"):
+        logic.save_maayan_result(score, wrong_questions_data)
+        st.session_state.result_saved = True
+
+    # מציאת שאלה ראשונה שלא נענתה
     first_unanswered = None
     for n in range(1, 26):
         if n not in st.session_state.user_answers:
@@ -285,15 +304,14 @@ elif current_step == "feedback":
     if first_unanswered:
         st.markdown(f'<p style="color:#888; font-size:0.9rem; margin-bottom:12px;">משאלה {first_unanswered} והלאה לא ענית על השאלות — הציון על שאלות אלו הוא 0</p>', unsafe_allow_html=True)
 
-    # שאלות שענה נכון
+    # שאלות שענתה נכון
     correct_questions = [n for n in range(1, 26) if n in st.session_state.user_answers and logic.get_points(n) == 4]
     if correct_questions:
         st.markdown('<h3 style="margin-top:16px; margin-bottom:8px;">שאלות שענית נכון</h3>', unsafe_allow_html=True)
         for n in correct_questions:
             st.markdown(f'<p style="margin:2px 0;">שאלה {n} &nbsp;<span style="color:#1a7a1a; font-weight:bold;">✓</span></p>', unsafe_allow_html=True)
 
-    # שאלות שענה לא נכון
-    wrong_questions = [n for n in range(1, 26) if n in st.session_state.user_answers and logic.get_points(n) == 0]
+    # שאלות שענתה לא נכון
     if wrong_questions:
         st.markdown('<h3 style="margin-top:16px; margin-bottom:8px;">שאלות שענית לא נכון</h3>', unsafe_allow_html=True)
         for n in wrong_questions:
@@ -321,7 +339,7 @@ elif current_step == "feedback":
         if st.button("בחינה חדשה"):
             for key in ["step","current_q","exam_questions","user_answers",
                         "nav_active_questions","finish_button_visible","exam_start_time",
-                        "exam_file","_exam_raw","q1_ready","timed_out"]:
+                        "exam_file","_exam_raw","q1_ready","timed_out","result_saved"]:
                 if key in st.session_state:
                     del st.session_state[key]
             st.session_state.step = "instructions"
