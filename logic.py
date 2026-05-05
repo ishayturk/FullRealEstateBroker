@@ -4,6 +4,37 @@ import streamlit as st
 import os, json, random, time
 
 EXAMS_DIR = "exams_data"
+MAAYAN_NAME = "מעין טורק"
+MAAYAN_HISTORY_FILE = "maayan_exam_history.json"
+
+# --- SECTION: MAAYAN EXAM HISTORY ---
+def _load_maayan_history():
+    if not os.path.exists(MAAYAN_HISTORY_FILE):
+        return {"seen": [], "pool": []}
+    with open(MAAYAN_HISTORY_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def _save_maayan_history(data):
+    with open(MAAYAN_HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _pick_exam_for_maayan(all_files):
+    history = _load_maayan_history()
+    seen = history.get("seen", [])
+    pool = history.get("pool", [])
+
+    # אם ה-pool ריק — מאפסים ומתחילים מחדש
+    if not pool:
+        pool = [f for f in all_files if f not in seen] or list(all_files)
+        seen = []
+
+    # בוחרים אקראית מה-pool
+    chosen = random.choice(pool)
+    pool.remove(chosen)
+    seen.append(chosen)
+
+    _save_maayan_history({"seen": seen, "pool": pool})
+    return chosen
 
 # --- SECTION: EXAM FILE SELECTION ---
 def get_exam_files():
@@ -15,6 +46,14 @@ def pick_random_exam():
     files = get_exam_files()
     if not files:
         return None
+
+    user_name = st.query_params.get("user", "")
+
+    # ניהול מיוחד למעין טורק
+    if user_name == MAAYAN_NAME:
+        return _pick_exam_for_maayan(files)
+
+    # שאר הלומדים — התנהגות מקורית
     used = st.session_state.get("used_exams", set())
     available = [f for f in files if f not in used]
     if not available:
@@ -102,4 +141,5 @@ def get_remaining_seconds():
         return 5400
     elapsed = time.time() - st.session_state.exam_start_time
     return max(0, int(5400 - elapsed))
+
 # סוף קובץ
