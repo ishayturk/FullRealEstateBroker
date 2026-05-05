@@ -6,18 +6,29 @@ import google.generativeai as genai
 
 EXAMS_DIR = "exams_data"
 MAAYAN_NAME = "מעין טורק"
-MAAYAN_HISTORY_FILE = "maayan_exam_history.json"
-MAAYAN_RESULTS_FILE = "maayan_results.json"
+MAAYAN_EMAIL = "maayanturk@gmail.com"
+
+def _user_dir(email):
+    path = os.path.join("users", email)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+def _maayan_history_file():
+    return os.path.join(_user_dir(MAAYAN_EMAIL), "exam_history.json")
+
+def _maayan_results_file():
+    return os.path.join(_user_dir(MAAYAN_EMAIL), "results.json")
 
 # --- SECTION: MAAYAN EXAM HISTORY ---
 def _load_maayan_history():
-    if not os.path.exists(MAAYAN_HISTORY_FILE):
+    f_path = _maayan_history_file()
+    if not os.path.exists(f_path):
         return {"seen": [], "pool": []}
-    with open(MAAYAN_HISTORY_FILE, "r", encoding="utf-8") as f:
+    with open(f_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def _save_maayan_history(data):
-    with open(MAAYAN_HISTORY_FILE, "w", encoding="utf-8") as f:
+    with open(_maayan_history_file(), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def _pick_exam_for_maayan(all_files):
@@ -38,7 +49,6 @@ def _pick_exam_for_maayan(all_files):
 
 # --- SECTION: MAAYAN RESULTS ---
 def _infer_topic(question_text, correct_text):
-    """מסיק נושא מתוך טקסט השאלה והתשובה הנכונה באמצעות AI."""
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         model = genai.GenerativeModel("gemini-2.5-flash-lite")
@@ -55,11 +65,11 @@ def _infer_topic(question_text, correct_text):
         return "לא זוהה"
 
 def save_maayan_result(score, wrong_questions_data):
-    """שומר תוצאות בחינה של מעין לקובץ הנתונים."""
-    if not os.path.exists(MAAYAN_RESULTS_FILE):
+    f_path = _maayan_results_file()
+    if not os.path.exists(f_path):
         results = {"exams": []}
     else:
-        with open(MAAYAN_RESULTS_FILE, "r", encoding="utf-8") as f:
+        with open(f_path, "r", encoding="utf-8") as f:
             results = json.load(f)
 
     exam_name = os.path.basename(st.session_state.get("exam_file", "לא ידוע"))
@@ -75,16 +85,14 @@ def save_maayan_result(score, wrong_questions_data):
             "תשובה נכונה": item["correct_text"],
         })
 
-    exam_entry = {
+    results["exams"].append({
         "תאריך": date_str,
         "בחינה": exam_name,
         "ציון": score,
         "שאלות שגויות": wrong_list,
-    }
+    })
 
-    results["exams"].append(exam_entry)
-
-    with open(MAAYAN_RESULTS_FILE, "w", encoding="utf-8") as f:
+    with open(f_path, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
 # --- SECTION: EXAM FILE SELECTION ---
