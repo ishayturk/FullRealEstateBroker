@@ -2,10 +2,12 @@
 # Exam Engine | JSON-based
 import streamlit as st
 import os, json, random, time
+import google.generativeai as genai
 
 EXAMS_DIR = "exams_data"
 MAAYAN_NAME = "מעין טורק"
 MAAYAN_HISTORY_FILE = "maayan_exam_history.json"
+MAAYAN_RESULTS_FILE = "maayan_results.json"
 
 # --- SECTION: MAAYAN EXAM HISTORY ---
 def _load_maayan_history():
@@ -23,18 +25,67 @@ def _pick_exam_for_maayan(all_files):
     seen = history.get("seen", [])
     pool = history.get("pool", [])
 
-    # אם ה-pool ריק — מאפסים ומתחילים מחדש
     if not pool:
         pool = [f for f in all_files if f not in seen] or list(all_files)
         seen = []
 
-    # בוחרים אקראית מה-pool
     chosen = random.choice(pool)
     pool.remove(chosen)
     seen.append(chosen)
 
     _save_maayan_history({"seen": seen, "pool": pool})
     return chosen
+
+# --- SECTION: MAAYAN RESULTS ---
+def _infer_topic(question_text, correct_text):
+    """מסיק נושא מתוך טקסט השאלה והתשובה הנכונה באמצעות AI."""
+    try:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        prompt = f"""להלן שאלה מבחינת רישוי מתווכים בישראל:
+
+שאלה: {question_text}
+תשובה נכונה: {correct_text}
+
+זהה את הנושא המשפטי הספציפי של השאלה — למשל: "חוק המתווכים – דמי תיווך", "חוק המקרקעין – הערת אזהרה", "מס שבח – דירת מגורים מזכה", וכו'.
+החזר נושא קצר בלבד, עד 6 מילים, ללא הסברים."""
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except:
+        return "לא זוהה"
+
+def save_maayan_result(score, wrong_questions_data):
+    """שומר תוצאות בחינה של מעין לקובץ הנתונים."""
+    if not os.path.exists(MAAYAN_RESULTS_FILE):
+        results = {"exams": []}
+    else:
+        with open(MAAYAN_RESULTS_FILE, "r", encoding="utf-8") as f:
+            results = json.load(f)
+
+    exam_name = os.path.basename(st.session_state.get("exam_file", "לא ידוע"))
+    date_str = time.strftime("%d/%m/%Y %H:%M")
+
+    wrong_list = []
+    for item in wrong_questions_data:
+        topic = _infer_topic(item["question_text"], item["correct_text"])
+        wrong_list.append({
+            "נושא": topic,
+            "שאלה": item["question_text"],
+            "ענתה": item["user_text"],
+            "תשובה נכונה": item["correct_text"],
+        })
+
+    exam_entry = {
+        "תאריך": date_str,
+        "בחינה": exam_name,
+        "ציון": score,
+        "שאלות שגויות": wrong_list,
+    }
+
+    results["exams"].append(exam_entry)
+
+    with open(MAAYAN_RESULTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
 
 # --- SECTION: EXAM FILE SELECTION ---
 def get_exam_files():
@@ -49,11 +100,9 @@ def pick_random_exam():
 
     user_name = st.query_params.get("user", "")
 
-    # ניהול מיוחד למעין טורק
     if user_name == MAAYAN_NAME:
         return _pick_exam_for_maayan(files)
 
-    # שאר הלומדים — התנהגות מקורית
     used = st.session_state.get("used_exams", set())
     available = [f for f in files if f not in used]
     if not available:
@@ -95,7 +144,6 @@ def load_exam():
     st.session_state.nav_active_questions = set()
     st.session_state.finish_button_visible = False
     st.session_state.exam_start_time = None
-    # טעינת שאלה 1 מיידית
     q1 = data.get("questions", {}).get("1")
     if q1:
         st.session_state.exam_questions[1] = q1
@@ -128,7 +176,6 @@ def get_points(q_num):
     q = st.session_state.exam_questions.get(q_num)
     if not q:
         return 0
-    # אם השאלה מסומנת "כל התשובות מתקבלות" — כל תשובה מזכה ב-4 נקודות
     if "כל התשובות מתקבלות" in q.get("_note", ""):
         return 4 if q_num in st.session_state.user_answers else 0
     user_label = st.session_state.user_answers.get(q_num, {}).get("label", "")
