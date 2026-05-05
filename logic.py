@@ -128,6 +128,9 @@ def get_points(q_num):
     q = st.session_state.exam_questions.get(q_num)
     if not q:
         return 0
+    # אם השאלה מסומנת "כל התשובות מתקבלות" — כל תשובה מזכה ב-4 נקודות
+    if "כל התשובות מתקבלות" in q.get("_note", ""):
+        return 4 if q_num in st.session_state.user_answers else 0
     user_label = st.session_state.user_answers.get(q_num, {}).get("label", "")
     correct = q.get("correct_label", "")
     return 4 if user_label == correct else 0
